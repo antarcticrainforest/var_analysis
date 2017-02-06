@@ -5,10 +5,10 @@ Os=platform.system()
 global sleep
 sleep = 0.2
 if Os.lower() == 'darwin':
-    Os='mac'
+    Os='Osx'
     Path='/opt/local'
 else:
-    Os='linux'
+    Os='Linux'
     Path='/usr'
 
 def file_search(file):
@@ -29,8 +29,8 @@ FC=checkenv('FC','gfortran')
 CC=checkenv('CC','gcc')
 FFLAGS=checkenv('FFLAGS','-ffixed-line-length-0 -std=legacy -g -O3 -fimplicit-none -fsign-zero -fbounds-check -Wpedantic -fno-automatic')
 CFLAGS=checkenv('CFLAGS','-O3 -Wpedantic')
-INCLUDE=checkenv('INCLUDE',os.path.join(Path,'include'))
-LDFLAGS=checkenv('LDFLAGS',os.path.join(Path,'lib'))
+INCLUDE=checkenv('INCLUDE',os.path.join(Path,'include')).replace(':',',')
+LDFLAGS=checkenv('LD_LIBRARYPATH',os.path.join(Path,'lib')).replace(':',',')
 FLIBS=checkenv('FLIBS','netcdff')
 CLIBS=checkenv('CLIBS','netcdf,m')
 PREFIX=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -52,7 +52,7 @@ try:
             CFLAGS=a.split('=')[-1].replace(',',' ')
         if a.startswith('INCLUDE'):
             INCLUDE=a.split('=')[-1]
-        if a.startswith('LDFLAGS'):
+        if a.startswith('LD_LIBRARYPATH'):
             LDFLAGS=a.split('=')[-1]
         if a.startswith('CLIBS'):
             CLIBS=a.split('=')[-1]
@@ -82,24 +82,24 @@ Installation directories:
     for instance --prefix=$HOME
 
 Some influential environment variables:
-     FC          Fortran compiler command
-                 [default gfortran]
-     CC          C compiler command
-                 [default gcc]
-     FCFLAGS     Fortran compiler flags
-                 [default -O3 -Wpedantic -fimplicit-none -fsign-zero]
-     CFLAGS     C compiler flags
-                 [default -O3 -Wpedantic]
-     LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
-                 nonstandard directory <lib dir>
-                 [default %s]
-     INCLUDE     include flags e.g. -I<include dir> in a
-                 the headers in a nonstandard directory <include dir>
-                 [default %s]
-     FLIBS       fortran libraries to pass to the linker, e.g. -l<library>
-                 [default netcdff]
-     CLIBS       c libraries to pass to the linker, e.g. -l<library>
-                 [default netcdf,m]
+     FC             Fortran compiler command
+                    [default gfortran]
+     CC             C compiler command
+                    [default gcc]
+     FCFLAGS        Fortran compiler flags
+                    [default -O3 -Wpedantic -fimplicit-none -fsign-zero]
+     CFLAGS         C compiler flags
+                    [default -O3 -Wpedantic]
+     LD_LIBRAYPATH  linker flags, e.g. -L<lib dir> if you have libraries in a
+                    nonstandard directory <lib dir>
+                    [default %s]
+     INCLUDE        include flags e.g. -I<include dir> in a
+                    the headers in a nonstandard directory <include dir>
+                    [default %s]
+     FLIBS          fortran libraries to pass to the linker, e.g. -l<library>
+                    [default netcdff]
+     CLIBS          c libraries to pass to the linker, e.g. -l<library>
+                    [default netcdf,m]
     
     Use these variables to override the choices made by %s or to help
     it to find libraries and programs with nonstandard names/locations.
@@ -113,9 +113,13 @@ if help:
 altnames=dict(sed='sed',awk='awk',date='date')
 
 LDFLAGS=LDFLAGS.split(',')
+
+
+missing_package=[]
+
 checkbin=(\
         ('gnu make','make',1),
-        ('%s compiler'%FC,FC,1),
+        ('fortran compiler',FC,1),
         ('nc-config','nc-config',1),
         ('ncap','ncap',1),
         ('ncat','ncat',1),
@@ -134,7 +138,7 @@ checkbin=(\
         ('date','date',2),
         ('awk','awk',2),
         ('sed','sed',2),
-        ('gdl/idl','gdl',2)
+        ('gdl or idl','gdl',2)
         )
 for w,file,stats in checkbin:
     sys.stdout.flush()
@@ -154,12 +158,14 @@ for w,file,stats in checkbin:
                 sys.stdout.write('%s\n'%fn)
             else:
                 sys.stdout.write('error, not found\n')
-                sys.exit(1)
+                missing_package.append(w)
         elif status == 1:
                 sys.stdout.write('error, not found\n')
-                sys.exit(1)
+                missing_package.append(w)
         elif status == 0:
                 sys.stdout.write('warning, not found\n')
+missing_module=[]
+
 for module in ['netCDF4','datetime','numpy']:
     sys.stdout.flush()
     sys.stdout.write('Checking for python module %s ... '%module)
@@ -167,11 +173,22 @@ for module in ['netCDF4','datetime','numpy']:
     sys.stdout.flush()
     try:
         __import__(module)
+        sys.stdout.write('ok\n')
     except ImportError:
         sys.stdout.write('module %s not found\n'%module)
-        sys.exit(1)
-    sys.stdout.write('ok\n')
+        missing_module.append(module)
 
+if len(missing_module) > 0 or  len(missing_package) > 0:
+    if len(missing_module):
+        sys.stderr.write("Error: The following %s packages aren't installed:\n"\
+            "\t %s\n if they are installed try changing the PATH environment variable \n"%(Os,' '.join(missing_package)))
+    if len(missing_package):
+        sys.stderr.write("Error: The following python modules aren't installed:\n"\
+            "\t %s\n if they are installed try changing the PYTHONPATH environment variable \n"%(' '.join(missing_module)))
+    sys.exit(1)
+
+
+version_conflict=[]
 for command,min_v in (('sed',3.5),('bash',3.5),('date',6.0),('awk',3.5)):
     try:
         cmd=altnames[command]
@@ -187,13 +204,18 @@ for command,min_v in (('sed',3.5),('bash',3.5),('date',6.0),('awk',3.5)):
     fl = float('.'.join(re.findall(r'\d+',output.split('\n')[0])[0:2]))
     if fl < min_v:
         sys.stdout.write('%2.2f < %2.2f\n'%(fl,min_v))
-        sys.exit()
+        version_conflict.append(command)
     else:
         sys.stdout.write('%2.2f\n'%fl)
-for LIBS in (CLIBS.split(','),FLIBS.split(',')):
-    for l in LIBS:
+
+if len(version_conflict):
+    sys.stderr.write('the following packages are out of date, and need to be updated:\n'
+            '\t %s\n'%(' '.join(version_conflict)))
+    sys.exit(1)
+for libs in (CLIBS.split(','),FLIBS.split(',')):
+    for l in libs:
         status=False
-        sys.stdout.write('Checking status of %s... '%l)
+        sys.stdout.write('checking status of %s... '%l)
         time.sleep(sleep)
         for path in LDFLAGS:
             if len(glob.glob(os.path.join(path,'*'+l+'*'))):
@@ -202,7 +224,8 @@ for LIBS in (CLIBS.split(','),FLIBS.split(',')):
             sys.stdout.write('ok \n')
         else:
             sys.stdout.write('missing\n')
-            sys.exit()
+            sys.stdout.write('if this library is installed try changing your LD_LIBRARYPATH variable, note that you MUST have installed the Fortran AND C netcdf libraries\n')
+            sys.exit(1)
 
 try:
     os.mkdir(os.path.join(os.path.dirname(__file__),'test'))
@@ -212,7 +235,7 @@ except OSError:
 makefile_var ="""
 # Makefile for variational analysis code, and various testing routines.
 #
-# 
+#
 # created %s
 #
 #
@@ -221,8 +244,8 @@ PREFIX		= %s
 FCFLAGS		= %s
 LDFLAGS		= %s
 INCLUDE 	= %s
-LIBS		= -l%s
-FFLAGS		= $(FCFLAGS) -L$(LDFLAGS) -I$(INCLUDE)
+LIBS		= %s
+FFLAGS		= $(FCFLAGS) $(LDFLAGS) $(INCLUDE)
 
 SOURCE 		= portable.f90 \\
                 constants.f90 \\
@@ -283,7 +306,7 @@ install:
 		mv test/3d_put $(PREFIX)/
 		mv test/variational_analysis $(PREFIX)/
 		cd ./raerr; make install
-"""%(datetime.datetime.today().strftime("%e. %B %Y"),FC,PREFIX,FFLAGS,' -L'.join(LDFLAGS),' -I'.join(INCLUDE.split(',')),' -l'.join(FLIBS.split(',')))
+"""%(datetime.datetime.today().strftime("%e. %B %Y"),FC,PREFIX,FFLAGS,'-L'+' -L'.join(LDFLAGS),'-I'+' -I'.join(INCLUDE.split(',')),'-l'+' -l'.join(FLIBS.split(',')))
 makefile_radar ="""
 # Makefile for radar error code, and various testing routines.
 #
@@ -296,8 +319,8 @@ PREFIX		= %s
 CCFLAGS		= %s
 LDFLAGS		= %s
 INCLUDE 	= %s
-LIBS		= -l%s
-CFLAGS		= $(CCFLAGS) -L$(LDFLAGS) -I$(INCLUDE)
+LIBS		= %s
+CFLAGS		= $(CCFLAGS) $(LDFLAGS) $(INCLUDE)
 
 SOURCE		= radar_error.c \
 			  read_command.c \
@@ -321,7 +344,7 @@ clean:
 			rm -f $(OBJS) core $(EXE)
 install:
 			mv ../test/process_rain/$(EXE) $(PREFIX)/process_rain/
-"""%(datetime.datetime.today().strftime("%e. %B %Y"),CC,PREFIX,CFLAGS,' -L'.join(LDFLAGS),' -I'.join(INCLUDE.split(',')),' -l'.join(CLIBS.split(',')))
+"""%(datetime.datetime.today().strftime("%e. %B %Y"),CC,PREFIX,CFLAGS,'-L'+' -L'.join(LDFLAGS),'-I'+' -I'.join(INCLUDE.split(',')),'-l'+' -l'.join(CLIBS.split(',')))
 
 
 

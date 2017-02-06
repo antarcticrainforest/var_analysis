@@ -1,0 +1,123 @@
+#!/bin/ksh
+
+###########################################################################
+#
+# concatenate the 3 hr averaged rain rates into 100 forcing files for a
+# specified period of time
+#
+#
+##########################################################################
+
+path_prefix='~/SCM_forcing_ensemble/'
+ipt_dir="data/Rainfall_data/domain_avg_3hr/"
+opt_dir="va_inputs/radar_rain/0506season/"
+
+
+
+
+# time period for which we make the timeseries
+date_start=20051110
+time_start=0000
+
+date_end=20060430
+time_end=1800
+
+# this needs to match what is used in the avg file creation script
+t_avg=3
+
+###########################################################################
+
+if [[ $# -gt 0 ]]
+then
+     if [[ $# -ne 9 ]]
+     then
+          echo "wrong number of arguments"
+	  exit
+     else
+	  path_prefix=$1
+	  ipt_dir=$2
+ 	  opt_dir=$3
+	  date_start=$4
+	  time_start=$5
+	  date_end=$6
+	  time_end=$7
+	  base_date=$8
+	  t_avg=$9
+     fi
+fi
+
+##########################################################################
+
+
+
+b_seconds=$(gdate -u -d "$base_date 0000" +%s )
+
+ipt_dir=${path_prefix}${ipt_dir}
+opt_dir=${path_prefix}${opt_dir}
+
+
+rm -f $ipt_dir/*_temp.nc
+
+thefile=$(find ${ipt_dir}*${date_start}_${time_start}*.nc)
+filesuffix=$(echo ${thefile} | sed "s/.*\(${time_start}\)\(.*\)/\2/")
+#"
+
+
+seconds_start=$(gdate -u -d "${date_start} ${time_start}" +%s )
+seconds_end=$(gdate -u -d "${date_end} ${time_end}" +%s )
+
+
+
+j=0
+   echo "creating best estimate"
+# make 100 ensemble members
+   let seconds_in=$seconds_start
+   while [ $seconds_in -le $seconds_end ]; do
+      
+      
+      t_in[j]=$(gdate -u -d @$seconds_in +%Y%m%d_%H%M )
+      file_in[j]="${thefile%${date_start}_${time_start}$filesuffix}${t_in[j]}$filesuffix"
+      # Concatenate files and create time variable 
+      if [[ -f ${file_in[j]} ]]
+      then
+
+        
+	     ncks -O -v rain_rate,"time",num_radar_scans ${file_in[j]} "${file_in[j]%.nc}_temp.nc"
+	     ncap  -O -s "time=($seconds_in-$b_seconds)^1/86400.0" "${file_in[j]%.nc}_temp.nc" "${file_in[j]%.nc}_temp.nc"
+        
+      else
+         
+             ncks -O -v rain_rate,"time",num_radar_scans ${thefile} "${file_in[j]%.nc}_temp.nc"
+	     ncap  -O -s "num_radar_scans=0" -s "rain_rate=-99.000" -s "time=($seconds_in-$b_seconds)/86400.0" "${file_in[j]%.nc}_temp.nc" "${file_in[j]%.nc}_temp.nc"
+        
+      fi
+      
+      let seconds_in=seconds_in+$t_avg*3600
+      let j=j+1
+   done
+ 
+
+       outfile="${opt_dir}pret_0${t_avg}h_NOGAUGE_${date_start:4:4}${date_end:4:4}.nc"
+       ncecat -O $ipt_dir/*_temp.nc ${outfile}
+       ncrename -v rain_rate,pret -d "record,time" ${outfile}
+
+       
+
+      
+   
+   # rm temporary files
+   rm $ipt_dir/*_temp.nc
+   
+   # make look nice
+   ncap -O -s "bdate=$base_date" ${outfile} ${outfile}
+   ncatted -a long_name,bdate,o,c,"baseline date" ${outfile}
+   ncatted -a units,bdate,o,c,"yyyymmdd" ${outfile}
+   ncatted -a long_name,pret,o,c,"Domain averaged three hourly precipitation rate" ${outfile}
+   ncatted -a input_files,num_radar_scans,d,, ${outfile}
+   ncatted -a missing_value,pret,m,d,-99.000 ${outfile}
+
+   ncatted -a nco_openmp_thread_number,global,d,, ${outfile}
+   ncatted -a history,global,o,c,"Domain averaged and temporarly averaged to three hours by create_ensemble" -h ${outfile}
+   ncatted -a history,global,a,c,"time series assembled by create_timeseries" -h ${outfile}
+
+ 

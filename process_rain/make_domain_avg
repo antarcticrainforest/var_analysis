@@ -1,0 +1,42 @@
+#!/bin/bash
+#
+# Create a domain average of rain rate based on the domain given in the mask file
+#
+###############################################################################
+# arguments
+infile=$1
+outfile=$2
+
+maskfile=$3
+let best_est_only=$4
+##############################################################################
+
+ncbo -op_typ=mlt -O -o "${outfile}" -v rain_rate ${infile} ${maskfile} 
+ncwa -m rain_rate -M -1.0 -T gt -a i,j -O "${outfile}" ${outfile}
+if [[ best_est_only -eq 1 ]]
+then
+   continue
+else   
+    #ncbo -op_typ=mlt -O -o "${outfile%.nc}_tmp.nc" -v rain_rate_pdf ${infile} ${maskfile%.nc}_pdf.nc 
+    ncwa -m rain_rate_pdf -M -1.0 -T gt -a i,j -O -o ${outfile%.nc}_tmp.nc ${infile}
+    ncks -A -v rain_rate_pdf,percentile ${outfile%.nc}_tmp.nc ${outfile}
+    rm ${outfile%.nc}_tmp.nc
+fi
+
+
+ncatted -a units,rain_rate,o,c,"mm/hr" ${outfile}
+ncatted -a long_name,rain_rate,o,c,"domain averaged rain rate" ${outfile}
+
+if [[ $best_est_only -eq 1 ]]
+then
+   continue
+else   
+   ncatted -a units,rain_rate_pdf,o,c,"mm/hr" ${outfile}
+   ncatted -a long_name,rain_rate_pdf,o,c,"dom avg rain rate pdf" ${outfile}
+fi
+
+ncatted -a history,global,o,c,"Domain averaged by create_dom_avg" -h ${outfile}
+ncatted -a nco_openmp_thread_number,global,d,, -h ${outfile}
+
+
+

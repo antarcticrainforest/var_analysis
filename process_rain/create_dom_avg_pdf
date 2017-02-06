@@ -1,0 +1,114 @@
+#!/bin/bash
+
+##################################################################################
+# This code is not very good. It is slow, and a little prone to difficult to 
+# debug errors. Sorry. MS
+#
+#
+# takes radar rain rates in netcdf format and creates 100 percentile estimates
+# of the rain rate based on the parameters in errfile.txt.
+#
+# Spatially averages these files to give grid averaged rain rates at every
+# 10 minutes. The average is over a domain specified by mask.nc
+#
+#
+# input files are netcdf format as created by ascii_to_netcdf. The filenames convention
+# is currently:
+#
+# cpol_rainr_zh_cappi_2.5km_yyyymmdd_0000.nc
+#
+#
+# Currently also zips the 10 minute radar pdfs as they are rather large.
+#
+#
+# This code takes about 10 seconds per file. Thus it takes 24 minutes per
+# day of data. 12 hours per month. This is a lot.
+#
+##################################################################################
+# Default parameters
+
+###################################################################################
+# Some settings we don't bother passing in. Hopefully changing these will still
+# allow other subroutines to work.
+
+pdf_suffix="_pdf"		# suffix to pdf files
+domavg_suffix="domavg_pdf"	# suffix to domain averaged files
+
+
+###################################################################################
+
+# set the full paths to input and output directories
+old_dir=${1%/}
+format=${2%/}
+workdir=${3%/}
+base_date=${4}
+dates=${@:5}
+ipt_dir=${old_dir%/}/new
+
+if [ "${format}" == 'ascii' ];then
+    end='ascii'
+else
+    end='nc'
+fi
+
+opt1_dir=${ipt_dir%/}/pdf_10min/
+opt2_dir=${ipt_dir%/}/domain_avg_10min/
+
+mkdir -p ${opt2_dir}
+mkdir -p ${opt1_dir}
+
+
+# These for loops exist to break up the argument list to 'find'.
+# put in the months and first digit of dates you want.
+# code will only operate on those files that haven't already been done.
+# no errors will result from asking for files that don't exist
+
+
+for date in ${dates[*]};do
+    echo "Finding files for ${date}"
+	 for file in $(ls ${old_dir%/}/*${date}_*.${end} 2> /dev/null); do
+	      infile=${file##*/}
+        outfile=$(echo $infile|sed "s/${end}/nc/g")
+        if [ ! -f ${ipt_dir%/}/${outfile} ];then
+            if [ ${format} == 'ascii' ];then
+                echo "Creating $outfile"
+                ${workdir%/}/cappi_read_radar_rain -I ${old_dir%/}/${infile} -O ${ipt_dir%/}/${outfile}
+            else
+                python2.7 ${workdir%/}/create_netcdf.py ${old_dir%/}/${infile} ${ipt_dir%/}/${outfile}
+            fi
+            file=${ipt_dir%/}/${outfile}
+	          pdffile=${opt1_dir%/}/${outfile%.nc}${pdf_suffix}.nc
+	          # only do anything if there is no zip file existing. Existence of zip file
+	          # implies everythng is done.
+	          if [ ! -f ${pdffile} ] ; then
+		        echo "Creating percentiles for $file"
+                  ${workdir%/}/radar_error -i ${file} -e ${workdir%/}/errfile.txt -o ${pdffile}
+                  python2.7 ${workdir%/}/correct_rain.py ${pdffile} 'full'
+	        fi
+	        # create domain averaged rainfall pdfs
+	        avgfile=${file##*/}
+	        avgfile=${opt2_dir%/}/${avgfile%.nc}${domavg_suffix}.nc
+	        if [ ! -f ${avgfile} ];then
+                echo "Domain averaging ${avgfiles}"
+		        # do the domain average
+		        python2.7 ${workdir%/}/make_domain_avg.py ${pdffile} ${avgfile} ${workdir%/}/mask.nc 0
+                #python ${workdir%/}/correct_rain.py ${avgfile} 'time'
+            fi
+        fi
+	  done
+    if [ "$(find ${ipt_dir%/}/*${date}_*.nc 2> /dev/null)" ];then
+         ${workdir%/}/create_time_avg ${workdir%/} \
+             ${opt1_dir%/} ${ipt_dir%/}/ 6 1 "full"  ${base_date} ${date}
+         if [ $? != 0 ];then
+                echo "full avg for $date failed"
+        fi
+         ${workdir%/}/create_time_avg ${workdir%/} \
+             ${opt2_dir%/} ${ipt_dir%/}/ 6 1 "avg" ${base_date} ${date}
+         if [ $? != 0 ];then
+                echo "dom avg for $date failed"
+        fi
+
+    fi
+    done
+
+

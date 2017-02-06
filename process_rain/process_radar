@@ -1,0 +1,119 @@
+#!/bin/bash
+##################################################################################
+# 
+# Wrapper script for processing radar data with a given set of distribution
+# parameters
+#
+# Should work if the date and time of each file are formatted yyyymmdd_hhmm
+#
+# Also has option to do best estimate only.
+#
+#
+# Rough estimtes for computation times (on apple PowerPC, 2GHz Dual, 1 GB DDR2 RAM)
+#
+#   ascii - netcdf: 	    ~2 sec per file	8 min per day	 4 hours per month
+#
+#   domain average:  
+#	Best estimate only: 			1  min per day	30 min per month
+#	Full ensemble	  : ~3 sec per file	12 min per day  6 hours per month
+#
+#   time average:
+#
+#	Best estimate only: 			1  min per day	30 min per month
+#	Full ensemble	  : ~30 sec per file	2 min per day    1 hour per month
+#
+#   time series
+#	Best estimate only: 					30 sec per month
+#	Full ensemble	  : 					50 min per month
+#
+#   TOTAL
+#	Best estimate only: 					 5 hours per month
+#	Full ensemble	  : 					12 hours per month
+
+#
+#
+##################################################################################
+#
+
+# which processes do we run?
+run_ascii_convert=0
+run_domain_avg=0
+run_time_avg=1
+run_time_series=0
+
+# Do we want the full pdf (or just the best estimate)
+full_pdf=1
+
+#################################################################################
+# parameters and settings
+#
+
+# directories
+
+path_prefix='/Users/mss/SCM_forcing_ensemble/' 	# The parent directory (all other directories are wrt to this one)
+
+ascii_dir='data/Rainfall_data/ascii_data/0607season/'			# location of ascii data
+netcdf_dir='data/Rainfall_data/netcdf_10min/0607season/'		# location of 10 min netcdf files
+pdf_dir='data/Rainfall_data/pdf_10min/0607season/'			# location of 10 min pdf files
+
+dom_avg_dir='data/Rainfall_data/domain_avg_10min/0607season/'		# location of domain avgeraged 10 minutely data
+#dom_avg_dir='data/Rainfall_data/domain_avg_10min_best_est/0405season/'
+
+time_avg_dir='data/Rainfall_data/domain_avg_6hr/0607season/'		# location of time averaged files
+#time_avg_dir='data/Rainfall_data/domain_avg_6hr_best_est/0405season/'
+
+va_dir="va_inputs/0607season/radar_rain/0607season_6hr_p4/"		# location of va_ready data
+
+# parameters
+
+t_avg=6									# length of averaging time (hrs)
+
+
+# time period for which we make the timeseries
+# the start time must have a file asscosiated with it.
+date_start=20070120
+time_start=0600
+
+date_end=20070419
+time_end=0000
+
+base_date=20061001
+
+
+
+#
+# run the scripts
+#
+
+
+if [[ run_ascii_convert -eq 1 ]]
+then
+    ./create_netcdf $path_prefix $ascii_dir $netcdf_dir
+fi
+
+if [[ run_domain_avg -eq 1 ]]
+then
+   if [[ full_pdf -eq 1 ]]
+   then
+      ./create_dom_avg_pdf $path_prefix $netcdf_dir $pdf_dir $dom_avg_dir
+   else
+      ./create_dom_avg_best_est $path_prefix $netcdf_dir $dom_avg_dir
+   fi 
+fi
+
+if [[ run_time_avg -eq 1 ]]
+then
+    ./create_time_avg $path_prefix $dom_avg_dir $time_avg_dir $t_avg $full_pdf
+fi
+
+if [[ run_time_series -eq 1 ]]
+then
+   if [[ full_pdf -eq 1 ]]
+   then
+      ./create_timeseries $path_prefix $time_avg_dir $va_dir $date_start $time_start $date_end $time_end $base_date $t_avg
+   else
+     ./create_timeseries_best_est $path_prefix $time_avg_dir $va_dir $date_start $time_start $date_end $time_end $base_date $t_avg
+   fi 
+
+
+fi

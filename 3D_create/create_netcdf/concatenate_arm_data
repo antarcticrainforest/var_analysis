@@ -1,0 +1,101 @@
+#!/bin/bash
+
+###############################################################################
+#
+# This scirpt takes ARM format ECMWF monthly files, and concatenates them
+# into a single timeseries for the length required.
+#
+# Two files are produced - one for upper air variables, one for surface variables
+#
+# The base time must be consistent with the other input files to the
+# variational analysis. Currently base time is set as the begining of the first month
+# of data specified by 'months'.
+#
+##############################################################################
+# Options
+
+# Set the begin and end time ###########
+date=$(which gdate 2> /dev/null)
+if [ -z "$date" ];then
+    date=$(which date)
+fi
+if [ -z "$date" ];then
+    echo "Can't find date or gdate, if you are on osx considere installing coreutils"
+    exit 1
+fi
+
+#           yyyymmdd hhmm
+date_begin="${3} 0000"
+date_end="$($date -d "${@:(-1):1} 0000 + 1 month - 1 day" "+%Y%m%d 1200")"
+declare -a months=${@:3}
+echo $date_end
+# these are the months we need #########
+
+#set -A months -- "20041001" "20041101" "20041201" "20050101" "20050201" "20050301" "20050401"
+
+# Input directories ####################
+
+ipt_dir_upa=${1%/}
+ipt_dir_surf=${1%/}
+opt_dir=${2%/}
+
+if [ ! -z $opt_dir ];then
+    mkdir -p ${opt_dir}
+fi
+
+# OUTPUT FILES #########################
+
+fileout_upa="${2%/}/upa_p.nc"
+fileout_surf="${2%/}/surf_p.nc"
+
+##############################################################################
+
+in_dir_upa=${ipt_dir_upa}
+in_dir_surf=${ipt_dir_surf}
+
+# Get file names #############################################################
+ 
+for mon in ${months[*]}
+do
+ # Find the files required
+   filein_upa[$i]=$(find ${in_dir_upa%/}/*upa*${mon}*)
+   filein_surf[$i]=$(find ${in_dir_surf%/}/*surf*${mon}*)
+
+   i=$(($i+1))
+done
+# Set baseline dates and time cutoffs ########################################
+
+
+base_date=${@:3:1}
+base_time=$($date -u -d "${base_date}" +%s )
+
+
+t_begin=$(($($date -u -d "${date_begin}" +%s ) - $($date -u -d "${base_date}" +%s )))
+t_begin=$(echo $t_begin|awk '{printf("%.2f",$1/86400.0)}')
+t_end=$(($($date -u -d "${date_end}" +%s ) - $($date -u -d "${base_date}" +%s )))
+t_end=$(echo $t_end|awk '{printf("%.2f",$1/86400.0)}')
+
+base_date=$($date -u -d @$(($base_time)) +%Y-%m-%d )
+
+# Print some stuff to screen ###############################################s
+echo " ************************************"
+echo " "
+echo "       Creating 2D_put file"
+echo " "
+echo " ************************************"
+echo " "
+echo "Time-series defined:"
+echo "from time = $t_begin to $t_end days after $base_date"
+echo " "
+
+# Do the concatenation, and clean up a few things #############################
+
+ncrcat -h -O -o ${fileout_upa} ${filein_upa[*]}
+ncap -h -O -s "time = time_offset^1/86400.0" ${fileout_upa} ${fileout_upa}
+ncatted -h -a units,time,a,c,"days since ${base_date}" ${fileout_upa}
+ncks -h -O -d time,${t_begin},${t_end} ${fileout_upa} ${fileout_upa}
+
+ncrcat -h -O -o ${fileout_surf} ${filein_surf[*]}
+ncap -h -O -s "time = time_offset^1/86400.0" ${fileout_surf} ${fileout_surf}
+ncatted -h -a units,time,a,c,"days since ${base_date}" ${fileout_surf}
+ncks -h -O -d time,${t_begin},${t_end} ${fileout_surf} ${fileout_surf}

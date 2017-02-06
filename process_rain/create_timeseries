@@ -1,0 +1,126 @@
+#!/bin/bash
+
+###########################################################################
+#
+# concatenate the 3 hr averaged rain rates into 100 forcing files for a
+# specified period of time
+#
+#
+##########################################################################
+
+###########################################################################
+if [[ $# -gt 0 ]]
+then
+     if [[ $# -ne 8 ]]
+     then
+          echo "wrong number of arguments"
+	  exit
+     else
+	  ipt_dir=${1%/}/
+ 	  opt_dir=${2%/}
+	  date_start=${3}
+	  time_start=${4}
+	  date_end=${5}
+	  time_end=${6}
+	  base_date=${7}
+	  t_avg=$8
+     fi
+fi
+
+base_string=$(python2.7 -c "from datetime import datetime;print datetime.strptime('${base_date}','%Y%m%d').strftime('%Y-%m-%d')")
+
+mkdir -p ${opt_dir}
+##########################################################################
+if [  "$(command -v gdate 2> /dev/null)" ];then
+    cmd='gdate'
+else
+    cmd='date'
+fi
+
+
+
+b_seconds=$(${cmd} -u -d "${base_date} 0000" +%s )
+
+rm -f $ipt_dir/*_temp.nc
+
+thefile=$(find ${ipt_dir}*${date_start}_${time_start}*.nc)
+filesuffix=$(echo ${thefile} | sed "s/.*\(${time_start}\)\(.*\)/\2/")
+
+seconds_start=$(${cmd} -u -d "${date_start} ${time_start}" +%s )
+seconds_end=$(${cmd} -u -d "${date_end} ${time_end}" +%s )
+
+
+i=0
+j=0
+
+# make 100 ensemble members
+while [ $i -le 100 ]; do
+   let seconds_in=${seconds_start}
+   while [ ${seconds_in} -le ${seconds_end} ]; do
+      
+      t_in[j]=$(${cmd} -u -d @${seconds_in} +%Y%m%d_%H%M )
+      file_in[j]="${thefile%${date_start}_${time_start}$filesuffix}${t_in[j]}$filesuffix"
+      # Concatenate files and create time variable 
+      if [[ -f ${file_in[j]} ]]
+      then
+
+         if [ $i -eq 100 ];then
+	        ncks -O -v rain_rate,"time",num_radar_scans ${file_in[j]} "${file_in[j]%.nc}_temp.nc"
+	        ncap2  -O -s "time=($seconds_in-$b_seconds)^1/86400.0" "${file_in[j]%.nc}_temp.nc" "${file_in[j]%.nc}_temp.nc"
+         else
+	        ncks -O -v rain_rate_pdf,"time",num_radar_scans -d percentile,$i,$i ${file_in[j]} "${file_in[j]%.nc}_temp.nc"
+	        ncap  -O -s "time=($seconds_in-$b_seconds)^1/86400.0" "${file_in[j]%.nc}_temp.nc" "${file_in[j]%.nc}_temp.nc"
+         fi
+
+      else
+         if [ $i -eq 100 ];then
+             ncks -O -v rain_rate,"time",num_radar_scans ${thefile} "${file_in[j]%.nc}_temp.nc"
+	        ncap2  -O -s "num_radar_scans=0" -s "rain_rate=-99.000d" -s "time=($seconds_in-$b_seconds)/86400.0" "${file_in[j]%.nc}_temp.nc" "${file_in[j]%.nc}_temp.nc"
+            #python -c "from netCDF4 import Dataset as nc;import numpy as np;f=nc('${file_in[j]%.nc}_temp.nc','a');f.variables['rain_rate_pdf'][:]=np.array([-99.0]);f.close()"
+        else
+	        ncks -O -v rain_rate_pdf,"time",num_radar_scans -d percentile,$i,$i ${thefile} "${file_in[j]%.nc}_temp.nc"
+            ncap2  -O -s "num_radar_scans=0" -s "rain_rate_pdf=array(-99.000d,1,percentile)" -s "time=(($seconds_in-$b_seconds)^1)/86400.0" "${file_in[j]%.nc}_temp.nc" "${file_in[j]%.nc}_temp.nc"
+            #python -c "from netCDF4 import Dataset as nc;import numpy as np;f=nc('${file_in[j]%.nc}_temp.nc','a');f.variables['rain_rate_pdf'][:]=np.array([-99.0]);f.close()"
+         fi
+      fi
+      let seconds_in=seconds_in+$t_avg*3600
+      let j=j+1
+   done
+   num=$(echo $((99-$i))|awk '{printf("%02d\n",$1)}')
+   if [[ $i -eq 99 ]]
+   then
+      num=00
+   fi
+   echo "creating percentile: ${num}"
+   if [ $i -eq 100 ]
+   then
+       outfile="${opt_dir%/}/pret_0${t_avg}h_NOGAUGE_${date_start:4:4}${date_end:4:4}.nc"
+       ncecat -3 -O ${ipt_dir%/}/*_temp.nc ${outfile}
+       ncrename -v rain_rate,pret -d "record,time" ${outfile} 1> /dev/null
+       
+   else
+      outfile="${opt_dir%/}/pret_0${t_avg}h_p${num}_${date_start:4:4}${date_end:4:4}.nc"
+      ncecat -3 -O ${ipt_dir%/}/*_temp.nc ${outfile}
+      ncrename -v rain_rate_pdf,pret -d "record,time" ${outfile} 1> /dev/null
+      ncwa -O -a percentile ${outfile} ${outfile} 
+   fi
+ 
+ 
+   # rm temporary files
+   rm $ipt_dir/*_temp.nc
+   
+   # make look nice
+   ncap -O -s "bdate=${base_date}" ${outfile} ${outfile}
+   ncatted -a long_name,bdate,o,c,"baseline date" ${outfile}
+   ncatted -a units,bdate,o,c,"yyyymmdd" ${outfile}
+   ncatted -a long_name,pret,o,c,"Domain averaged three hourly precipitation rate" ${outfile}
+   ncatted -a input_files,num_radar_scans,d,, ${outfile}
+   ncatted -a missing_value,pret,m,d,-99.00 ${outfile}
+
+   ncatted -a nco_openmp_thread_number,global,d,, ${outfile}
+   ncatted -a history,global,o,c,"Domain averaged and temporarly averaged to three hours by create_ensemble" -h ${outfile}
+   ncatted -a history,global,a,c,"time series assembled by create_timeseries" -h ${outfile}
+   ncatted -O -a units,time,o,c,"days since ${base_string} 00:00:00" ${outfile}
+   let i=i+1
+done
+ 

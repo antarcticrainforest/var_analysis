@@ -1,0 +1,344 @@
+import os,sys,glob,datetime,platform,time,re
+from subprocess import Popen,PIPE
+Os=platform.system()
+
+global sleep
+sleep = 0.2
+if Os.lower() == 'darwin':
+    Os='mac'
+    Path='/opt/local'
+else:
+    Os='linux'
+    Path='/usr'
+
+def file_search(file):
+    time.sleep(sleep)
+    for path in os.environ['PATH'].split(':'):
+        fn=os.path.join(path,file)
+        if os.path.isfile(os.path.join(path,fn)):
+            return True,fn
+    return None,None
+
+def checkenv(var,alt):
+    try:
+        return os.environ[var]
+    except KeyError:
+        return alt
+
+FC=checkenv('FC','gfortran')
+CC=checkenv('CC','gcc')
+FFLAGS=checkenv('FFLAGS','-ffixed-line-length-0 -std=legacy -g -O3 -fimplicit-none -fsign-zero -fbounds-check -Wpedantic -fno-automatic')
+CFLAGS=checkenv('CFLAGS','-O3 -Wpedantic')
+INCLUDE=checkenv('INCLUDE',os.path.join(Path,'include'))
+LDFLAGS=checkenv('LDFLAGS',os.path.join(Path,'lib'))
+FLIBS=checkenv('FLIBS','netcdff')
+CLIBS=checkenv('CLIBS','netcdf,m')
+PREFIX=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+try:
+    ar=sys.argv[1:]
+    help=False
+    for b in ar:
+        a=b.replace('--','').upper()
+        if b.startswith('-h') or b.startswith('--h'):
+            help=True
+        if b.lower().startswith('--prefix'):
+            PREFIX = a.lower().split('=')[1]
+        if a.startswith('FC'):
+            FC=a.split('=')[-1]
+        if a.startswith('FFLAGS'):
+            FCFLAGS=a.split('=')[-1].replace(',',' ')
+        if a.startswith('CFLAGS'):
+            CFLAGS=a.split('=')[-1].replace(',',' ')
+        if a.startswith('INCLUDE'):
+            INCLUDE=a.split('=')[-1]
+        if a.startswith('LDFLAGS'):
+            LDFLAGS=a.split('=')[-1]
+        if a.startswith('CLIBS'):
+            CLIBS=a.split('=')[-1]
+        if a.startswith('FLIBS'):
+            FLIBS=a.split('=')[-1]
+
+except IndexError:
+    print(help)
+    help=True
+txt="""
+%s configures variational analysis to adapt to many kinds of systems.
+Usage: %s [OPTION]... [VAR=VALUE]...
+
+To assign environment variables (e.g., CC, CFLAGS...), specify them as
+VAR=VALUE.  See below for descriptions of some of the useful variables.
+
+Defaults for the options are specified in brackets
+
+Configuration:
+    -h, --help              display this help and exit
+
+Installation directories:
+    --prefix=PREFIX         install architecture-independent files in PREFIX
+                            [default: %s]
+    By default, 'make' will install all the files in
+    %s etc.  You can specify and installation prefix by using --prefix
+    for instance --prefix=$HOME
+
+Some influential environment variables:
+     FC          Fortran compiler command
+                 [default gfortran]
+     CC          C compiler command
+                 [default gcc]
+     FCFLAGS     Fortran compiler flags
+                 [default -O3 -Wpedantic -fimplicit-none -fsign-zero]
+     CFLAGS     C compiler flags
+                 [default -O3 -Wpedantic]
+     LDFLAGS     linker flags, e.g. -L<lib dir> if you have libraries in a
+                 nonstandard directory <lib dir>
+                 [default %s]
+     INCLUDE     include flags e.g. -I<include dir> in a
+                 the headers in a nonstandard directory <include dir>
+                 [default %s]
+     FLIBS       fortran libraries to pass to the linker, e.g. -l<library>
+                 [default netcdff]
+     CLIBS       c libraries to pass to the linker, e.g. -l<library>
+                 [default netcdf,m]
+    
+    Use these variables to override the choices made by %s or to help
+    it to find libraries and programs with nonstandard names/locations.
+
+    Report bugs to <martin.bergemann@met.fu-berlin.de>.
+
+""" %(sys.argv[0],sys.argv[0],PREFIX,PREFIX,os.path.join(Path,'libs'),os.path.join(Path,'include'),sys.argv[0])
+if help:
+   sys.exit(txt)
+
+altnames=dict(sed='sed',awk='awk',date='date')
+
+LDFLAGS=LDFLAGS.split(',')
+checkbin=(\
+        ('gnu make','make',1),
+        ('%s compiler'%FC,FC,1),
+        ('nc-config','nc-config',1),
+        ('ncap','ncap',1),
+        ('ncat','ncat',1),
+        ('ncatted','ncatted',1),
+        ('ncbo','ncbo',1),
+        ('ncdiff','ncdiff',1),
+        ('ncdump','ncdump',1),
+        ('ncea','ncea',1),
+        ('ncecat','ncecat',1),
+        ('nces','nces',1),
+        ('ncgen','ncgen',1),
+        ('ncks','ncks',1),
+        ('ncrcat','ncrcat',1),
+        ('ncrename','ncrename',1),
+        ('ncwa','ncwa',1),
+        ('date','date',2),
+        ('awk','awk',2),
+        ('sed','sed',2),
+        ('gdl/idl','gdl',2)
+        )
+for w,file,stats in checkbin:
+    sys.stdout.flush()
+    sys.stdout.write('Checking for %s ... '%w)
+    sys.stdout.flush()
+    status,fn=file_search(file)
+    if status:
+        sys.stdout.write('%s\n'%fn)
+    else:
+        if stats == 2:
+            if file != 'gdl':
+                status,fn=file_search('g%s'%file)
+                altnames[file]='g%s'%file
+            else:
+                status,fn=file_search('idl')
+            if status:
+                sys.stdout.write('%s\n'%fn)
+            else:
+                sys.stdout.write('error, not found\n')
+                sys.exit(1)
+        elif status == 1:
+                sys.stdout.write('error, not found\n')
+                sys.exit(1)
+        elif status == 0:
+                sys.stdout.write('warning, not found\n')
+for module in ['netCDF4','datetime','numpy']:
+    sys.stdout.flush()
+    sys.stdout.write('Checking for python module %s ... '%module)
+    time.sleep(sleep)
+    sys.stdout.flush()
+    try:
+        __import__(module)
+    except ImportError:
+        sys.stdout.write('module %s not found\n'%module)
+        sys.exit(1)
+    sys.stdout.write('ok\n')
+
+for command,min_v in (('sed',3.5),('bash',3.5),('date',6.0),('awk',3.5)):
+    try:
+        cmd=altnames[command]
+    except KeyError:
+        cmd=command
+    sys.stdout.flush()
+    sys.stdout.write('checking version for %s ... '%command)
+    sys.stdout.flush()
+    time.sleep(sleep)
+    process=Popen([cmd,'--version'],stdout=PIPE)
+    (output, err) = process.communicate()
+    exit_code = process.wait()
+    fl = float('.'.join(re.findall(r'\d+',output.split('\n')[0])[0:2]))
+    if fl < min_v:
+        sys.stdout.write('%2.2f < %2.2f\n'%(fl,min_v))
+        sys.exit()
+    else:
+        sys.stdout.write('%2.2f\n'%fl)
+for LIBS in (CLIBS.split(','),FLIBS.split(',')):
+    for l in LIBS:
+        status=False
+        sys.stdout.write('Checking status of %s... '%l)
+        time.sleep(sleep)
+        for path in LDFLAGS:
+            if len(glob.glob(os.path.join(path,'*'+l+'*'))):
+                status=True
+        if status:
+            sys.stdout.write('ok \n')
+        else:
+            sys.stdout.write('missing\n')
+            sys.exit()
+
+try:
+    os.mkdir(os.path.join(os.path.dirname(__file__),'test'))
+except OSError:
+    pass
+
+makefile_var ="""
+# Makefile for variational analysis code, and various testing routines.
+#
+# 
+# created %s
+#
+#
+FC		= %s
+PREFIX		= %s
+FCFLAGS		= %s
+LDFLAGS		= %s
+INCLUDE 	= %s
+LIBS		= -l%s
+FFLAGS		= $(FCFLAGS) -L$(LDFLAGS) -I$(INCLUDE)
+
+SOURCE 		= portable.f90 \\
+                constants.f90 \\
+                physics.f90 \\
+                lu.f90 \\
+                settings.f90 \\
+                numerics.f90 \\
+                time.f90 \\
+                io.f90 \\
+                variational_analysis.f90 \\
+                3d_put.f90 \\
+                2d_put.f90 \\
+                budget_put.f90 \\
+                process_va_output.f90
+
+OBJS		:= $(SOURCE:.f90=.o)
+
+.SUFFIXES:
+.SUFFIXES:	.o .f90 .mod
+
+.f90.o:
+		$(FC) -c $(FFLAGS) $*.f90
+
+.f90.mod:
+		$(FC) -c $(FFLAGS) $*.f90
+
+all: untar source
+
+untar :
+	@echo "############## EXTRACTING TESTFILES ############################"
+	tar xvjf test.tar.bz2
+source:		$(OBJS)
+		$(FC) $(FFLAGS) variational_analysis.o time.o lu.o constants.o settings.o portable.o physics.o numerics.o \\
+			io.o -o test/variational_analysis $(LIBS)
+		$(FC) $(FFLAGS) time.o lu.o constants.o portable.o settings.o 3d_put.o io.o physics.o numerics.o \\
+			-o test/3d_put $(LIBS)
+		$(FC) $(FFLAGS) time.o lu.o constants.o portable.o settings.o 2d_put.o io.o physics.o numerics.o \\
+			-o test/2d_put $(LIBS)
+		$(FC) $(FFLAGS) time.o lu.o constants.o portable.o settings.o budget_put.o io.o physics.o numerics.o \\
+			-o test/budget_put $(LIBS)
+		$(FC) $(FFLAGS) lu.o time.o constants.o portable.o settings.o process_va_output.o io.o physics.o numerics.o \\
+			-o test/process_va_output $(LIBS)
+		cd ./raerr; make
+		@echo "########### MAKE TESTS #############################"
+		cd test ; ./preprocess.sh all 2> ../test.out
+		@echo    Test output wirtten to test.out
+		@echo    Check test result for errors if desired
+		@echo "########### TESTS DONE ############################"
+		@echo " Now type 'make install' and 'make clean' "
+
+clean:
+		rm -rf *.o lu.mod constants.mod io.mod settings.mod portable.mod physics.mod numerics.mod time.mod core $(PREFIX)/variational_analysis $(PREFIX)/*_put $(PREFIX)/process_va_output test test.out
+		cd ./raerr; make clean
+install:
+		mv test/process_va_output $(PREFIX)/
+		mv test/budget_put $(PREFIX)/
+		mv test/2d_put $(PREFIX)/
+		mv test/3d_put $(PREFIX)/
+		mv test/variational_analysis $(PREFIX)/
+		cd ./raerr; make install
+"""%(datetime.datetime.today().strftime("%e. %B %Y"),FC,PREFIX,FFLAGS,' -L'.join(LDFLAGS),' -I'.join(INCLUDE.split(',')),' -l'.join(FLIBS.split(',')))
+makefile_radar ="""
+# Makefile for radar error code, and various testing routines.
+#
+# 
+# created %s
+#
+#
+CC		= %s
+PREFIX		= %s
+CCFLAGS		= %s
+LDFLAGS		= %s
+INCLUDE 	= %s
+LIBS		= -l%s
+CFLAGS		= $(CCFLAGS) -L$(LDFLAGS) -I$(INCLUDE)
+
+SOURCE		= radar_error.c \
+			  read_command.c \
+			  read_error_stats.c \
+			  deallocate.c \
+			  read_radar_data.c \
+			  calculate_pdfs.c \
+			  distance.c \
+			  find_percentile_error.c \
+			  lncdf.c \
+			  write_pdfs.c
+OBJS		:= $(SOURCE:.c=.o)
+EXE			= radar_error
+.SUFFIXES:	.o .c
+.c.o:
+			$(CC) -c $(CFLAGS) $*.c
+all:		$(EXE)
+$(EXE):		$(OBJS)
+			$(CC) $(CFLAGS) $(OBJS) $(LIBS) -o ../test/process_rain/$(EXE)
+clean:
+			rm -f $(OBJS) core $(EXE)
+install:
+			mv ../test/process_rain/$(EXE) $(PREFIX)/process_rain/
+"""%(datetime.datetime.today().strftime("%e. %B %Y"),CC,PREFIX,CFLAGS,' -L'.join(LDFLAGS),' -I'.join(INCLUDE.split(',')),' -l'.join(CLIBS.split(',')))
+
+
+
+
+
+
+
+sys.stdout.flush()
+sys.stdout.write("Creating Makefiles ... ")
+sys.stdout.flush()
+time.sleep(2)
+f=open('Makefile','w')
+f.write(makefile_var)
+f.close()
+f=open(os.path.join(os.path.dirname(__file__),'raerr','Makefile'),'w')
+f.write(makefile_radar)
+f.close()
+sys.stdout.write("ok\n")
+sys.stdout.write("Now type 'make' to compile the source code and 'make install' to install the VA programms\n")
+

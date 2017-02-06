@@ -1,0 +1,64 @@
+#!/bin/bash
+
+######################################################
+#
+# This script reformats the output of the idl script
+# into a format that is required for the fortran
+# version of the variational analysis.
+#
+# The two routines:
+#
+#	reformat_vht_data
+#	reformat_ht_data
+#
+# do all the work. This wrapper script just provides
+# the filenames.
+#
+######################################################
+script_dir=$(dirname $(readlink -f $0))
+work_dir=${1%/}
+outdir=${2%/}
+
+mkdir -p $outdir
+# input variables
+
+vht_in=${work_dir%/}/"analysis.agrid"
+
+surf_in[0]=${work_dir%/}/"surf_T.agrid"
+surf_in[1]=${work_dir%/}/"surf_u.agrid"
+surf_in[2]=${work_dir%/}/"surf_v.agrid"
+surf_in[3]=${work_dir%/}/"surf_z.agrid"
+surf_in[4]=${work_dir%/}/"surf_rh.agrid"
+surf_in[5]=${work_dir%/}/"surf_p.agrid"
+
+######################################################
+
+# 3D data ##############
+
+   vht_out="${vht_in}.reformat"
+
+   if [[ -f ${vht_in} ]]
+   then
+      ${script_dir%/}/reformat_vht_data $vht_in > $vht_out
+   else
+      echo "Can't find file $vht_in"
+   fi
+
+# 2D data ##############
+
+  
+   for ht_in in ${surf_in[*]}
+   do
+
+      ht_out="${ht_in}.reformat"
+   
+      if [[ -f ${ht_in} ]]
+      then
+         ${script_dir%/}/reformat_ht_data $ht_in > $ht_out
+      else
+         echo "Can't find file $ht_in"
+      fi
+   done
+   
+######################################################
+#cp ${work_dir%/}/*".reformat" ${outdir%/}/

@@ -1,0 +1,98 @@
+#!/bin/ksh
+
+##################################################################################
+# This code is not very good. It is slow, and a little prone to difficult to 
+# debug errors. Sorry. MS
+#
+#
+# takes radar rain rates in netcdf format and spatially averages
+# to give grid averaged rain rates at every 10 minutes. 
+# The average is over a domain specified by mask.nc
+#
+#
+# input files are netcdf format as created by create_netcdf. The filenames convention
+# is currently:
+#
+# cpol_rainr_zh_cappi_2.5km_yyyymmdd_0000.nc
+#
+#
+##################################################################################
+# Default parameters
+
+# Set where relevant files are located
+path_prefix='/Volumes/Models/SCM/marty/SCM_forcing_ensemble/'
+ipt_dir='data/Rainfall_data/netcdf_10min/'
+opt_dir='data/Rainfall_data/domain_avg_10min/'
+
+
+# Read the Command line ############################################################
+# all or nothing approach - can't supply some of the arguments
+
+if [[ $# -gt 0 ]]
+then
+     if [[ $# -ne 3 ]]
+     then
+          echo "wrong number of arguments"
+	  exit
+     else
+	  path_prefix=$1
+	  ipt_dir=$2
+	  opt_dir=$3
+     fi
+fi
+
+
+###################################################################################
+# Some settings we don't bother passing in. Hopefully changing these will still
+# allow other subroutines to work.
+
+domavg_suffix="domavg_bestest"	# suffix to domain averaged files
+
+
+###################################################################################
+
+# set the full paths to input and output directories
+ipt_dir=${path_prefix}${ipt_dir}
+opt_dir=${path_prefix}${opt_dir}
+
+
+# These for loops exist to break up the argument list to 'find'.
+# put in the months and first digit of dates you want.
+# code will only operate on those files that haven't already been done.
+# no errors will result from asking for files that don't exist
+
+
+for month in 01 02 03 04 05 06 07 08 09 10 11 12
+do
+   for week in 0 1 2 3
+   do
+      for day in 0 1 2 3 4 5 6 7 8 9
+      do
+         echo "Finding files ${month}/${week}${day}" 
+	 for file in $(find ${ipt_dir}*${month}${week}${day}_*.nc 2>/dev/null)
+         do
+	   
+	    thefile=${file##*/}
+    
+	    # create domain averaged rainfall pdfs
+	    avgfile=${file##*/}
+	    avgfile=${opt_dir}${avgfile%.nc}${domavg_suffix}.nc
+	    
+	        if [[ ! -f ${avgfile} ]]
+	        then
+	          # make a mask for the domain average
+		  if [[ ! -f mask.nc ]]
+	          then
+		    ./make_mask -i $file -o mask.nc -d pentagon
+		  fi
+		  echo processing $thefile
+		  # do the domain average
+		  ./make_domain_avg ${file} ${avgfile} mask.nc 1
+
+	     fi
+	  done	 
+      done
+   done
+done
+
+

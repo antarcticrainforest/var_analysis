@@ -1,0 +1,76 @@
+#!/bin/bash
+#
+# This script reformats data which is read by the IDL IPT_HT procedure into a similar format which is more readily ingested
+# by Fortran 95 programs (see the comments in the Fortran 95 IPT_HT subroutine for the modified data format).
+#
+# Tim Hume.
+# 6 March 2007
+
+export PATH=/bin:/usr/bin:/opt/local/bin:~/bin
+
+idlfile=${1:-analysis.agrid}
+
+if [[ ! -f "${idlfile}" ]]
+then
+	echo "E: No such file: ${idlfile}"
+	exit 1
+fi
+
+awk \
+'BEGIN{
+	section		= "header";
+}
+
+(section == "data") && ($1 != "d(nv,nst,nt)"){
+	for (ii=1; ii<=NF; ++ii) printf("%-12.5f\n",$ii);
+}
+
+(section == "times") && ($1 != "t(nt)"){
+	if ($1 == "d(nv,nst,nt)"){
+		section	= "data";
+	} else {
+		for (ii=1; ii<=NF; ++ii) printf("%-8.4f\n",$ii);
+	}
+}
+
+(section == "lats") && ($1 != "lon(nst)"){
+	if ($1 == "t(nt)"){
+		section	= "times";
+	} else {
+		for (ii=1; ii<=NF; ++ii) printf("%-8.4f\n",$ii);
+	}
+}
+
+(section == "lons") && ($1 != "lon(nst)"){
+	if ($1 == "lat(nst)"){
+		section	= "lats";
+	} else {
+		for (ii=1; ii<=NF; ++ii) printf("%-8.4f\n",$ii);
+	}
+}
+
+(section == "stnnames") && ($1 != "st(nst)"){
+	if ($1 == "lon(nst)"){
+		section	= "lons";
+	} else {
+		for (ii=1; ii<=NF; ++ii) printf("%-20s\n",$ii);
+	}
+}
+
+(section == "varnames") && ($1 != "v(nv)"){
+	if ($1 == "st(nst)"){
+		section = "stnnames";
+	} else {
+		for (ii=1; ii<=NF; ++ii) printf("%s\n",$ii);
+	}
+}
+
+(section == "sizes") && ($1 != "nv,nst,nt"){
+	for (ii=1; ii<=3; ++ii) printf("%d\n",int($ii));
+	section	= "varnames";
+}
+
+(section == "header"){
+	printf("%s\n",$0);
+	section	= "sizes";
+}' < "${idlfile}"

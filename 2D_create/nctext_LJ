@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# This script prints a NetCDF variable in tabular format.
+#
+# Tim Hume.
+# 31 August 2004.
+
+
+file=""
+var=""
+
+while [[ ${#*} -gt 0 ]]
+do
+	if [[ "${1}" == "-v" ]] || [[ "${1}" == "-V" ]]
+	then
+		var="${2:-""}"
+		shift; shift
+	else
+		file="${1}"
+		shift
+	fi
+done
+
+if [[ "${file}" == "" ]] || [[ "$var}" == "" ]]
+then
+	echo "E: ${0##*/}> Must enter a file name and variable"
+	exit 1
+fi
+
+if [[ ! -f ${file} ]]
+then
+	echo "E: ${0##*/}> No such file ${file}"
+	exit 1
+fi
+
+ncks -H -C -v "${var}" "${file}" | sed -r \
+	-e 's/\<[[:alnum:]][[:alnum:]_]*\[[[:digit:]]+\]=//g' \
+	-e 's/[[:space:]]+/\t/g' -e '/^[[:space:]]*$/d'

@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+#
+# This script simply determines if a point is inside a polygon. We assume the coordinates are
+# cartesian.
+#
+# Tim Hume.
+# 20 July 2006.
+
+export PATH=/bin:/usr/bin:/opt/local/bin:~/bin
+
+#
+# Read the command line.
+#
+nx=0
+ny=0
+infile="-"
+
+while [[ $# -gt 1 ]]
+do
+	case "${1}" in
+		( "-PX" | "-px" )
+		shift
+		while [[ $(echo ${1} | awk '{print ($1 == ($1+0)) ? 1 : 0}') -eq 1 ]]
+		do
+			poly_x[${nx}]=${1}
+			nx=$((${nx}+1))
+			shift;
+		done
+		;;
+		( "-PY" | "-py" )
+		shift
+		while [[ $(echo ${1} | awk '{print ($1 == ($1+0)) ? 1 : 0}') -eq 1 ]]
+		do
+			poly_y[${ny}]=${1}
+			ny=$((${ny}+1))
+			shift;
+		done
+		;;
+		( "-I" | "-i" )
+		infile=${2:-"-"}
+		shift; shift
+		;;
+		( * )
+		echo "E: Unknown option: ${1}"
+		exit 2
+		;;
+	esac
+done
+
+if [[ "${infile}" != "-" ]] && [[ ! -f "${infile}" ]]
+then
+	echo "E: No such file: ${infile}"
+	exit 1
+fi
+
+
+if [[ ${nx} -lt 3 ]] || [[ ${ny} -lt 3 ]]
+then
+	echo "E: You must enter 3 or more polygon points."
+	exit 1
+fi
+
+if [[ ${nx} -ne ${ny} ]]
+then
+	echo "E: Number of polygon x and y coordinates is different: ${nx} != ${ny}"
+	exit 1
+fi
+
+#
+# Now determine if the (x, y) points lie within the polygon.
+# The algorithm was taken from: http://alienryderflex.com/polygon/
+#
+awk -v poly_x="${poly_x[*]}" -v poly_y="${poly_y[*]}" \
+'BEGIN{
+	np = split(poly_x, xp);
+	np = split(poly_y, yp);
+}
+{
+	#
+	# Check the test points are OK before we test if they are in the polygon.
+	#
+	if (($1 == ($1+0)) && ($2 == ($2+0))){
+		ii		= 1;
+		jj		= 1;
+		inside	= 0;
+
+		for (ii=1; ii<=np; ++ii){
+			++jj;
+			if (jj > np) jj = 1;
+			if  (((yp[ii] < $2) && (yp[jj] >= $2)) || ((yp[jj] < $2) && (yp[ii] >= $2))){
+				if ((xp[ii] + ($2 - yp[ii])/(yp[jj] - yp[ii])*(xp[jj] - xp[ii])) < $1){
+					inside = !inside;
+				}
+			}
+		}
+		printf("%f\t%f\t%d\n",$1,$2,inside);
+	}
+}' "${infile}"

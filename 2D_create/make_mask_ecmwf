@@ -1,0 +1,141 @@
+#!/usr/bin/env bash
+
+# This is adapted from a script written by ITm hume to make a mask for the radar data. Here we use it
+# to make a mask for the ECMWF data.
+#
+#
+# Marty Singh
+# 5th June 2009
+
+#
+# Make a NetCDF maks for use in determining if a given radar grid point is inside or outside of a
+# user specified polygon.
+#
+# Tim Hume.
+# 24 July 2006.
+
+
+# Specify the domain.
+#
+# Options are:	pentagon (Southern Surveyor, Pirlangimpi, Cape Don, Point Stuart, Mount Bundy)
+#				land
+#				sea
+#				radar (circle centred around the radar)
+#
+#domain="sqdom1-5"
+
+#
+# Read the name of an example radar file from the command line. All this file is used for is getting the longitudes
+# and latitudes of the gridded rainfall product.
+#
+#infile="/Volumes/atmos/user/ladavies/KWAJVA/ECMWFData/outputsurface.nc"
+#outfile="mask01.nc"
+
+while [[ $# -gt 1 ]]
+do
+	case "${1}" in
+		( "-I" | "-i" )
+		infile="${2:-./instn_20060105.2020_e0.51_rbKZ.nc}"
+		shift; shift
+		;;
+		( "-O" | "-o" )
+		outfile="${2:-mask.nc}"
+		shift; shift
+		;;
+		( "-D" | "-d" )
+		domain="${2:-pentagon}"
+		shift; shift
+		;;
+		( * )
+		echo "E: No such option: ${2}"
+		exit 2
+		;;
+	esac
+done
+
+wrkdir=$(dirname $(readlink -f $0))
+
+#
+# Set the domain (corners of the polygon defining the domain).
+#
+if [[ ! -f "${infile}" ]]
+then
+	echo "E: No such file: ${infile}"
+	exit 1
+fi
+
+if [[ "${domain}" == "pentagon" ]]
+then
+    declare -a domain_x=("131.7651"	"131.7609"	"131.1355"	"129.8"	"130.41669")
+    declare -a domain_y=("-11.3081"	"-12.5858"	"-13.2287"	"-12.4"	"-11.40891")
+elif [[ "${domain}" == "KWdomain" ]]
+then
+    declare -a domain_x=("167.7" "168.7" "169.1" "168.7" "167.7" "166.8" "166.4" "166.8")
+    declare -a domain_y=("7.4"   "7.8" 	"8.7"  "9.6"  "10.0"   "9.6"   "8.7"   "7.8")
+elif [[ "${domain}" == "KWdomainTWP-ICE" ]]
+then
+    declare -a domain_x=("166.8" "168.7" "168.7" "166.8")
+    declare -a domain_y=("8.0"   "8.0" 	"9.3"  "9.3")
+elif [[ "${domain}" == "KWdomain2" ]]
+then
+    declare -a domain_x=("167.5" "168.0" "168.0" "167.5")
+    declare -a domain_y=("8.5"   "8.5" 	"9.0"  "9.0")
+elif [[ "${domain}" == "KWdomain3" ]]
+then
+    declare -a domain_x=("167.3" "168.2" "168.2" "167.3")
+    declare -a domain_y=("8.2"   "8.2" 	"9.1"  "9.1")
+elif [[ "${domain}" == "KWdomain4" ]]
+then
+    declare -a domain_x=("167.5" "168.0" "168.0" "167.5")
+    declare -a domain_y=("9.4"   "9.4"  "9.9"  "9.9")
+elif [[ "${domain}" == "KWdomain4a" ]]
+then
+    declare -a domain_x=("167.5" "168.0" "168.0" "167.5")
+    declare -a domain_y=("7.5"   "7.5" 	"8.0"  "8.0")
+else
+	echo "E: Unknown domain: ${domain}"
+	exit 1
+fi
+
+# PT WARNING for the purpose of the 2012 project the domain set here MUST BE THE SAME
+# as that set in /create_RainData/make_mask_RR
+ 
+#
+# Create the NetCDF file.
+#
+
+ncks -O -v latitude,longitude,sktsfc "${infile}" "${outfile}" -h
+
+ncwa -O -C -a time "${outfile}" "${outfile}" -h
+
+ncap -O -s "lat=latitude+sktsfc-sktsfc" -s "lon=longitude+sktsfc-sktsfc" "${outfile}" "${outfile}" -h
+
+$wrkdir/nctext_LJ -v lon "${outfile}" | awk '{print $NF}' > lonlat.tmp
+ 
+ncatted -O -a long_name,sktsfc,m,c,"Inside domain flag" \
+-a units,sktsfc,m,c,"0 or 1" "${outfile}" -h
+
+ncdump -v lon,lat,latitude,longitude "${outfile}" > mask.cdl
+lines=$(wc -l mask.cdl | awk '{print $1-1}')
+head -n${lines} mask.cdl > mask.tmp
+
+$wrkdir/nctext_LJ -v lat "${outfile}" | awk '{print $NF}' | paste lonlat.tmp - | \
+$wrkdir/polygon -px ${domain_x[*]} -py ${domain_y[*]} | awk \
+	'BEGIN{
+		printf("sktsfc = ");
+		oldline="";
+	}
+	{
+		if (oldline != "") printf("%s, ",oldline);
+		oldline = ($NF == 0) ? -99.99 : 0.00000;
+	}
+	END{
+		printf("%s;\n}\n",oldline);
+	}' | cat mask.tmp - > mask.cdl
+
+ncgen -o "${outfile}" mask.cdl
+ncrename -v sktsfc,masking_var "${outfile}"
+#
+# Remove temporary files.
+#
+rm -f mask.{tmp,cdl} lonlat.tmp

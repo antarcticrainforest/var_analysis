@@ -16,6 +16,7 @@
 *.tmp
 *.cdl
 *test*
+!test.tar.bz2
 *radar_error
 *.~
 *.DS_Store

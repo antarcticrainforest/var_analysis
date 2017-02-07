@@ -166,7 +166,7 @@ for w,file,stats in checkbin:
                 sys.stdout.write('warning, not found\n')
 missing_module=[]
 
-for module in ['netCDF4','datetime','numpy']:
+for module in ['netCDF4','datetime','numpy','glob']:
     sys.stdout.flush()
     sys.stdout.write('Checking for python module %s ... '%module)
     time.sleep(sleep)

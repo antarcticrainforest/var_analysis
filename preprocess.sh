@@ -16,72 +16,6 @@
 # Where was the data from the ARM-FTP-Server downloaded?
 
 
-dates () {
-    #What is the working folder
-    DIRS=${1%/}/
-    HEAD='*ecmwf*surf*'
-    
-    #Get all dates
-    FILES=($(find ${DIRS}${HEAD}.* 2> /dev/null))
-    file=$(basename ${FILES[1]})
-    head1=$(echo $file|cut -d . -f1)
-    head2=$(echo $file|cut -d . -f2)
-    HEAD=${head1}.${head2}
-
-
-    local DATES=($(echo ${FILES[*]}|python2 -c "import sys;from datetime import datetime;\
-        files=sys.stdin.read().strip('\n').split(' ');\
-        dates=[\
-        datetime.strptime(i,\"${DIRS}\"+'${HEAD}.%Y%m%d.000000.cdf')\
-        .strftime('%Y%m%d') for i in files\
-        ];\
-        print ' '.join(dates)"))
-   
-    if [ "${rainformat}" == 'ascii' ];then
-        end='ascii'
-    else
-        end='nc'
-    fi
-    if [  "$(command -v gdate 2> /dev/null)" ];then
-        cmd='gdate'
-    else
-        cmd='date'
-    fi
-
-
-    bool=false
-    
-    for (( d=0;d<${#DATES[*]};d++ )) {
-        local RDATES=$(ls ${raininput%/}/*${DATES[$d]}*.${end} 2> /dev/null)
-
-        if [ -z "${RDATES[*]}" ] && [ "$bool" = false ];then
-            DATES=(${DATES[@]/${DATES[${d}]}})
-        else
-            bool=true
-        fi
-
-
-    }
-    if [ -z "$(ls ${raininput%/}/*${DATES[0]}*.${end} 2> /dev/null)" ];then
-            DATES=(${DATES[@]/${DATES[0]}})
-    fi
-
-
-
-    rain=($(find ${raininput%/}/*${array[$n]}* 2>/dev/null))
-    while [ -z "$files" ];do
-        n=$n+1
-        files=($(find ${raininput%/}/*${array[$n]}* 2>/dev/null))
-    done
-    if [ ${#files[*]} -le 144 ];then
-        n=$n+1
-    fi
-
-
-    local  DATES_LAST="$(${cmd} -d "${DATES[@]:(-1)} 1800 + 1 month - 1 day" "+%Y%m%d")"
-    echo ${DATES[*]}
-
-}
 
 get_2d_input () {
 
@@ -365,9 +299,8 @@ get_num_process(){
 
 ###########################################
 #              FOR DEBUGGING              #
-prefix="/home/wilfred/Work/"
-input="${prefix%/}/Input/ARM/0405/"
-raininput="${prefix%/}/CPOL/0405/"
+input="$HOME/Work/Input/ARM/0405/"
+raininput="$HOME/Work/CPOL/0405/"
 rainformat='ascii'
 output="${prefix%/}/va_inputs/0405/"
 filename="ecmwf.nc"
@@ -376,9 +309,10 @@ va_output="${prefix%/}/va_output/0405"
 ##########################################
 
 #####Get dates:
-#DATES=($(dates ${input%/}/))
-DATES=20050301
-
+DATES=$(python2 get_dates.py $raininput)
+#DATES=20050301
+echo $DATES
+exit
 
 #Call the create_2d_input_files script
 if [ ! -d "$output" ];then
@@ -391,7 +325,7 @@ fi
 #exit
 #get_3d_input
 #####Get the microwave input data
-get_micro_input 'smet' 'mwrlos'
+#get_micro_input 'smet' 'mwrlos'
 ####Prepare the raindata
 #get_rain_input
 exit

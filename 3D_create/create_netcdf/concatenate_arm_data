@@ -25,13 +25,12 @@ if [ -z "$date" ];then
 fi
 
 #           yyyymmdd hhmm
-date_begin="${3} 0000"
-date_end="$($date -d "${@:(-1):1} 0000 + 1 month - 1 day" "+%Y%m%d 1200")"
-declare -a months=${@:3}
-echo $date_end
+# Set the times we require
+date_begin=$(echo ${3}|sed s"/_/ /g")
+date_end=$(echo ${4}|sed s"/_/ /g")
+declare -a months=${@:5}
 # these are the months we need #########
 
-#set -A months -- "20041001" "20041101" "20041201" "20050101" "20050201" "20050301" "20050401"
 
 # Input directories ####################
 
@@ -66,36 +65,37 @@ done
 # Set baseline dates and time cutoffs ########################################
 
 
-base_date=${@:3:1}
+base_date=$(echo $months|awk '{print $1}')
 base_time=$($date -u -d "${base_date}" +%s )
 
 
 t_begin=$(($($date -u -d "${date_begin}" +%s ) - $($date -u -d "${base_date}" +%s )))
-t_begin=$(echo $t_begin|awk '{printf("%.2f",$1/86400.0)}')
 t_end=$(($($date -u -d "${date_end}" +%s ) - $($date -u -d "${base_date}" +%s )))
+
+t_begin=$(echo $t_begin|awk '{printf("%.2f",$1/86400.0)}')
 t_end=$(echo $t_end|awk '{printf("%.2f",$1/86400.0)}')
 
-base_date=$($date -u -d @$(($base_time)) +%Y-%m-%d )
+base_date=$($date -u -d $(($base_date)) +%Y-%m-%d )
+delta=$(echo $t_end $t_begin |awk {'printf("%.2f",$1-$2)'})
 
 # Print some stuff to screen ###############################################s
 echo " ************************************"
 echo " "
-echo "       Creating 2D_put file"
+echo "       Creating 3D_put file"
 echo " "
 echo " ************************************"
 echo " "
 echo "Time-series defined:"
-echo "from time = $t_begin to $t_end days after $base_date"
+echo "from $($date -d "$date_begin" +"%d. %b %Y %H:%M") to $($date -d "$date_end" +"%d. %b %Y %H:%M") (${delta} days) after $base_date"
 echo " "
-
 # Do the concatenation, and clean up a few things #############################
-
 ncrcat -h -O -o ${fileout_upa} ${filein_upa[*]}
 ncap -h -O -s "time = time_offset^1/86400.0" ${fileout_upa} ${fileout_upa}
 ncatted -h -a units,time,a,c,"days since ${base_date}" ${fileout_upa}
+ncatted -h -a units,time,a,c,"days since ${base_date} 00:00:00 UTC" ${fileout_upa}
 ncks -h -O -d time,${t_begin},${t_end} ${fileout_upa} ${fileout_upa}
 
 ncrcat -h -O -o ${fileout_surf} ${filein_surf[*]}
 ncap -h -O -s "time = time_offset^1/86400.0" ${fileout_surf} ${fileout_surf}
-ncatted -h -a units,time,a,c,"days since ${base_date}" ${fileout_surf}
+ncatted -h -a units,time,a,c,"days since ${base_date} 00:00:00 UTC" ${fileout_surf}
 ncks -h -O -d time,${t_begin},${t_end} ${fileout_surf} ${fileout_surf}

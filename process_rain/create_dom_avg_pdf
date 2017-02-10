@@ -71,7 +71,7 @@ for date in ${dates[*]};do
         outfile=$(echo $infile|sed "s/${end}/nc/g")
         if [ ! -f ${ipt_dir%/}/${outfile} ];then
             if [ ${format} == 'ascii' ];then
-                echo "Creating $outfile"
+              echo "Creating $(basename $outfile)"
                 ${workdir%/}/cappi_read_radar_rain -I ${old_dir%/}/${infile} -O ${ipt_dir%/}/${outfile}
             else
                 python2.7 ${workdir%/}/create_netcdf.py ${old_dir%/}/${infile} ${ipt_dir%/}/${outfile}

@@ -9,6 +9,10 @@ process_mwrlos_a1_darwin.pro
 *mask.nc
 process_smet_a1_darwin.pro
 interpolate_model.pro
+.first
+.last
+.years
+.months
 *budget_put
 *process_va_output
 *2d_put

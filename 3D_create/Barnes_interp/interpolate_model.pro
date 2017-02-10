@@ -86,7 +86,7 @@ end
 ; files as distributed by ARM. 
 ; See the directory create_ncdf for details. 
 
-   inputr1='/home/wilfred/Work/va_inputs/0405//3D_put/upa_p.nc'
+   inputr1='/home/wilfred/Work/va_inputs/0405/3D_put/upa_p.nc'
    inputr2='/home/wilfred/Work/va_inputs/0405/3D_put/surf_p.nc'
    
 ; an example sounding file. 

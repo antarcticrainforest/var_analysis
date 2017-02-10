@@ -91,7 +91,7 @@ get_3d_input(){
     barnes="${workdir}/3D_create/Barnes_interp/.interpolate_model.pro"
 
     #Adjust the idl-script according to the output
-    cat ${barnes} | sed "s%inputr1='XXXX'%inputr1='${output%}/3D_put/upa_p.nc'%g" \
+    cat ${barnes} | sed "s%inputr1='XXXX'%inputr1='${output%/}/3D_put/upa_p.nc'%g" \
         | sed "s%inputr2='XXXX'%inputr2='${output%/}/3D_put/surf_p.nc'%g"\
         | sed "s%output3d='XXXX'%output3d='${output%/}/3D_put/analysis.agrid'%g"\
         | sed "s%dir_out='XXXX'%dir_out='${output%/}/3D_put/'%g" > tmp.pro
@@ -121,42 +121,38 @@ get_micro_input(){
    mkdir -p "${workdir%s}/process_MWR/temp"
 
 #   IFS=' ' read -a DATES <<< "$DATES"
-   init_time="julday(${DATES[0]:4:2,2},1,${DATES[0]:0:4},0,0,0)-0.5"
-   if [ ${#DATES[*]} -eq 1 ];then
-        years_str="['${DATES[0]:0:4}']"
-        years_int="[${DATES[0]:0:4}]"
-        mon_str="['${DATES[0]:4:2}']"
-   elif [ ${#DATES[*]} -eq 2 ];then
-        years_str="['${DATES[0]:0:4}','${DATES[1]:0:4}']"
-        years_int="[${DATES[0]:0:4},${DATES[1]:0:4}]"
-        mon_str="['${DATES[0]:4:2}','${DATES[1]:4:2}']"
-  else
-       years_str="['${DATES[0]:0:4}'"
-       years_int="[${DATES[0]:0:4}"
-       mon_str="['${DATES[0]:4:2}'"
-       for i in ${DATES[*]:1};do
-            years_str="${years_str},'${i:0:4}'"
-            years_int="${years_int},${i:0:4}"
-            mon_str="${mon_str},'${i:4:2}'"
-        done
-        years_str="${years_str}]"
-        years_int="${years_int}]"
-        mon_str="${mon_str}]"
-   fi
-    if [ ! -d ${output%/}/MWR-DATA ];then
-        mkdir -p ${output%}/MWR-DATA
-    fi
+    declare -a dates=${@:3}
+    python2 ${workdir%/}/process_MWR/date.py $dates
+    mapfile -t  years_str <  ${workdir%/}/process_MWR/.years
+    mapfile -t months_str < ${workdir%/}/process_MWR/.months
+    mapfile -t first < ${workdir%/}/process_MWR/.first
+    mapfile -t last < ${workdir%/}/process_MWR/.last
     
+    echo ${months_str[*]}|sed "s/'//g" > ${workdir%/}/process_MWR/.months
+    echo ${years_str[*]}|sed "s/'//g" > ${workdir%/}/process_MWR/.years
+
+    mapfile -t  years_int <  ${workdir%/}/process_MWR/.years
+    mapfile -t  months_int <  ${workdir%/}/process_MWR/.months
+    
+    fy=$(echo ${years_int}|cut -d , -f1)
+    fm=$(echo ${months_int}|cut -d , -f1 )
+    fd=$(echo ${first}|cut -d , -f1)
+   init_time="julday(${fm},$fd,${fy},0,0,0)-0.5"
+   init_time2="julday(${fm},1,${fy},0,0,0)-0.5"
+   base_date="${fy}${fm}${fd}"
     cat ${workdir%/}/process_MWR/.process_${1}_a1_darwin.pro| \
        sed "s%@WRKDIR/%@${workdir%/}/%g" |\
        sed "s%path_prefix='WRKDIR'%path_prefix='${workdir%/}/'%g" |\
        sed "s%data_path='INPUT'%data_path='${input%/}/'%g"|\
        sed "s%file_id='ID'%file_id='${1}'%g"|\
        sed "s%out_dir='OUTPUT'%out_dir='${output%/}/MWR-DATA/'%g"|\
-       sed "s%years_int=XXX%years_int=${years_int}%g" |\
-       sed "s%years_str=XXX%years_str=${years_str}%g" |\
-       sed "s%months=XXX%months=${mon_str}%g" |\
-       sed "s%ini_time=XXX%ini_time=${init_time}%g"> tmp.pro
+       sed "s%years_int=XXX%years_int=[${years_int}]%g" |\
+       sed "s%years_str=XXX%years_str=[${years_str}]%g" |\
+       sed "s%months=XXX%months=[${months_str}]%g" |\
+       sed "s%ini_time=XXX%ini_time=${init_time}%g"|\
+       sed "s%ini_time2=XXX%ini_time2=${init_time2}%g"|\
+       sed "s%first=XXX%first=[${first}]%g"|\
+       sed "s%last=XXX%last=[${last}]%g"> tmp.pro
     chmod +x tmp.pro
     seas=$(echo ${output}|rev|cut -d / -f2 |rev)
     mv tmp.pro ${workdir%/}/process_MWR/process_${1}_a1_darwin.pro
@@ -166,15 +162,18 @@ get_micro_input(){
        sed "s%data_path='INPUT'%data_path='${input%/}/'%g"|\
        sed "s%file_id='ID'%file_id='${2}'%g"|\
        sed "s%out_dir='OUTPUT'%out_dir='${output%/}/MWR-DATA/'%g"|\
-       sed "s%years_int=XXX%years_int=${years_int}%g" |\
-       sed "s%years_str=XXX%years_str=${years_str}%g" |\
-       sed "s%months=XXX%months=${mon_str}%g" |\
+       sed "s%years_int=XXX%years_int=[${years_int}]%g" |\
+       sed "s%years_str=XXX%years_str=[${years_str}]%g" |\
+       sed "s%months=XXX%months=[${months_str}]%g" |\
        sed "s%ini_time=XXX%ini_time=${init_time}%g"|\
+       sed "s%ini_time2=XXX%ini_time2=${init_time2}%g"|\
        sed "s%hourly_path='INPUT'%hourly_path='${output%/}/MWR-DATA/'%g"|\
        sed "s%ascii_path='OUTPUT'%ascii_path='${output%/}/MWR-DATA/ascii_out/'%g"|\
        sed "s%OUTPUT=XXX%OUTPUT='${output%/}/MWR-DATA/'%g"|\
        sed "s%seas=XXX%seas='${seas}'%g"|\
-       sed "s%XXbase_timeXX%${DATES[0]}%g"> tmp.pro
+       sed "s%XXbase_timeXX%${base_date}%g"|\
+       sed "s%first=XXX%first=[${first}]%g"|\
+       sed "s%last=XXX%last=[${last}]%g"> tmp.pro
 
     mkdir -p ${output%/}/MWR-DATA/Plot
     mkdir -p ${output%/}/MWR-DATA/ascii_out
@@ -187,25 +186,16 @@ get_micro_input(){
     .r process_${2}_a1_darwin.pro
     exit
 EOF
-    
-    let ntimes=$(expr $(ncdump -h ${output%/}/MWR-DATA/mwrlos_6h_${seas}_C3_interp3.nc|\
-        grep 'time ='|cut -d \( -f2 |awk '{print $1}') - 1)
-    let ntimes2=$(expr $(ncdump -h ${output%/}/2D_put/${filename}|\
-        grep 'time ='|cut -d \( -f2 |awk '{print $1}') - 1)
-    ntimes=$(($ntimes<$ntimes2?$ntimes:$ntimes2))
-    
     units=$(ncdump -h ${output%/}/2D_put/${filename}|grep 'time:units'|cut -d = -f2|sed 's/;//'|sed 's/^ *//'|sed 's/\"//g'|sed 's/[ \t]*$//g')
+    units="days since $fy-$fm-$fd 00:00:00 UTC"
     if [ -f "${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp3.nc" ];then
         rm ${output}mwrlos_6h_${seas}_interp3.nc
     fi
     
-    ncks -O -d time,0,${ntimes} \
-        ${output%/}/MWR-DATA/mwrlos_6h_${seas}_C3_interp3.nc \
-        ${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp.nc
-
+    mv  ${output%/}/MWR-DATA/mwrlos_6h_${seas}_C3_interp3.nc ${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp.nc
     ncatted -a units,time,o,c,"$units" ${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp.nc
 
-    #rm  ${output%/}/MWR-DATA/mwrlos_6h_${seas}_C3_interp3.nc
+
     mv ${output%/}/MWR-DATA/*.asc ${output%/}/MWR-DATA/ascii_out/
 
 
@@ -218,20 +208,10 @@ get_rain_input(){
     if [ -z "$cmd" ];then
         cmd=$(which date)
     fi
-
-    #First merge all 10 min files to monthly files together
-    if [ ${#DATES[*]} -eq 1 ];then
-        DATES_LAST=$(python2 -c "from datetime import datetime,timedelta as td;\
-            from calendar import monthrange;\
-            time=datetime.strptime('${DATES[0]}','%Y%m%d');\
-            days=monthrange(time.year,time.month)[1];\
-            print (time+td(days=days)).strftime('%Y%m%d') ")
-    else
-        #DATES_LAST="$(${cmd} -d "${DATES[@]:(-1)} 1800 + 1 month - 1 day" "+%Y%m%d")"
-        DATES_LAST=${DATES[@]:(-1)}
-    fi
+    DATES_LAST=$(echo ${DATES[1]}|cut -d _ -f1)
+    DATES_FIRST=$(echo ${DATES[0]}|cut -d _ -f1)
     dates=$(python2 -c "from datetime import datetime, timedelta as td;\
-        d1,d2=datetime.strptime('${DATES[0]}','%Y%m%d'),\
+        d1,d2=datetime.strptime('${DATES_FIRST}','%Y%m%d'),\
         datetime.strptime('${DATES_LAST}','%Y%m%d');\
         dt=d2-d1;d=[(d1+td(days=i)).strftime('%Y%m%d') for i in xrange(dt.days+1)];\
         print ' '.join(d).strip('\n')")
@@ -242,8 +222,9 @@ get_rain_input(){
     base_date=$(python2 -c "from datetime import datetime;\
         d1=datetime.strptime('${array[0]}','%Y%m%d');\
         print d1.strftime('%Y%m01')")
+    #echo $base_date
     let nproc=$(get_num_process)
-    let nproc=1
+    #let nproc=1
     #Loop through all dates and distribute the parallel threads
     for d in ${dates[*]};do
         #Do the averaging
@@ -259,24 +240,18 @@ get_rain_input(){
         if [ "$(jobs |wc -l)" == '0' ];then
             echo '  done'
         fi
-    #exit
+        rm -fr ${raininput%/}/new/*${d}*.nc
+        rm -fr ${raininput%/}/new/domain_avg_10min/*${d}*.nc
+        rm -fr ${raininput%/}/new/pdf_10min/*${d}*.nc
+        rm -fr ${raininput%/}/new/pdf_6hr/*${d}*.nc
     done
     wait
+    
     # Create the rain ensemble time series
-    let n=0
-    files=($(find ${raininput%/}/new/*${array[$n]}* 2>/dev/null))
-    while [ -z "$files" ];do
-        files=($(find ${raininput%/}/new/*${array[$n]}* 2>/dev/null))
-        n=$n+1
-    done
-    if [ ${#files[*]} -le 144 ];then
-        n=$n+1
-    fi
-    ${workdir%/}/process_rain/create_timeseries \
+        ${workdir%/}/process_rain/create_timeseries \
         ${raininput%/}/new/domain_avg_6hr ${output%/}/radar_rain \
-        ${array[0]} 0000 ${array[${#array[@]} - 2]} 1200 ${base_date} 6
-    #> out.err
-
+        ${array[0]} 0000 ${array[${#array[@]} - 1]} 2300 ${base_date} 6
+    rm -rf ${raininput%/}/new
 }
 
 get_num_process(){
@@ -302,33 +277,29 @@ get_num_process(){
 input="$HOME/Work/Input/ARM/0405/"
 raininput="$HOME/Work/CPOL/0405/"
 rainformat='ascii'
-output="${prefix%/}/va_inputs/0405/"
+output="$HOME/Work/va_inputs/0405/"
 filename="ecmwf.nc"
-workdir="${prefix%/}/run"
-va_output="${prefix%/}/va_output/0405"
+workdir=$(dirname $(readlink -f $0))
+va_output="$HOME/Work/va_output/0405"
 ##########################################
 
 #####Get dates:
 DATES=$(python2 get_dates.py $raininput)
-#DATES=20050301
-echo $DATES
-exit
-
+DATES="20050301_0000 20050331_1800 20050301"
+IFS=' ' read -a DATES <<< "$DATES"
 #Call the create_2d_input_files script
 if [ ! -d "$output" ];then
     mkdir -p ${output}
 fi
-#${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
-#echo "#############################"
+${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
 #####Get the 3d_data
-#${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
-#exit
-#get_3d_input
+${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
+get_3d_input
 #####Get the microwave input data
-#get_micro_input 'smet' 'mwrlos'
+get_micro_input 'smet' 'mwrlos' ${DATES[*]}
 ####Prepare the raindata
-#get_rain_input
-exit
+get_rain_input
+#exit
 
 echo -e "Pre-processing done now. Do you want to run the following command:\n \n \
     \t ${workdir%/}/process.sh ${output} ${va_outut} [Y/n]\n"

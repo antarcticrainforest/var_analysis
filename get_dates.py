@@ -7,6 +7,20 @@ def lookup(f):
     """
     s = '_'.join(f.replace('-','_').replace('.','_').split('_')[-3:-1])
     return datetime.datetime.strptime(s,'%Y%m%d_%H%M')
+
+def roundupdown(a,b):
+    a+=datetime.timedelta(hours=24)
+    b-=datetime.timedelta(hours=24)
+    a=datetime.datetime(a.year,a.month,a.day,0,0)
+    b=datetime.datetime(b.year,b.month,b.day,18,0)
+
+    return a.strftime('%Y%m%d_%H%M'),b.strftime('%Y%m%d_%H%M')
+    h1=(6-a.hour%6)*(int(bool(a.hour%6)))
+    h2=(b.hour%6)*(int(bool(b.hour%6)))
+    a+=datetime.timedelta(seconds=h1*60**2)
+    b-=datetime.timedelta(seconds=h2*60**2)
+    return a.strftime('%Y%m%d_%H%M'),b.strftime('%Y%m%d_%H%M')
+
     
 def get_filenames(folder,months=range(1,13)):
     """
@@ -14,11 +28,9 @@ def get_filenames(folder,months=range(1,13)):
     """
     rainfiles=glob.glob(os.path.join(folder,'*_????????_????.*'))
     dates=np.array([lookup(f) for f in rainfiles])
-    MIN,MAX=dates.min().strftime('%Y%m%d'),dates.max().strftime('%Y%m')+'01'
-    if MIN == MAX:
-        return MIN
-    #else
-    
+    dates.sort()
+    MIN,MAX=dates.min(),dates.max()
+    return MIN,MAX,np.unique(np.array([d.strftime('%Y%m'+'01') for d in dates]))
 def main(folder):
     """
     Get the start and the end of days that have CPOL data within a rain season
@@ -28,8 +40,12 @@ def main(folder):
     Returns:
         days (str-object): String with all days withing the season
     """
+
+    Min,Max,dates = get_filenames(folder)
+    Min,Max = roundupdown(Min,Max)
+    return Min+' '+Max+' '+' '.join(list(dates))
+
     
-    return ' '.join(get_filenames(folder))
 
 
 if __name__ == '__main__':

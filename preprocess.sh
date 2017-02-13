@@ -223,13 +223,13 @@ get_rain_input(){
         d1=datetime.strptime('${array[0]}','%Y%m%d');\
         print d1.strftime('%Y%m01')")
     #echo $base_date
-    let nproc=$(get_num_process)
-    #let nproc=1
+    #let nproc=$(get_num_process)
+    let nproc=1
     #Loop through all dates and distribute the parallel threads
     for d in ${dates[*]};do
         #Do the averaging
         ${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} \
-            ${rainformat} ${workdir%/}/process_rain/ $base_date ${d} &
+            ${rainformat} ${workdir%/}/process_rain/ $base_date ${d} #&
         if [ "$(jobs |wc -l)" == "${nproc}" ];then
             echo -n "NOW WAITING FOR THE ${nproc} JOBS TO FINISH ......"
         fi
@@ -240,13 +240,13 @@ get_rain_input(){
         if [ "$(jobs |wc -l)" == '0' ];then
             echo '  done'
         fi
-        rm -fr ${raininput%/}/new/*${d}*.nc
+       # rm -fr ${raininput%/}/new/*${d}*.nc
         rm -fr ${raininput%/}/new/domain_avg_10min/*${d}*.nc
         rm -fr ${raininput%/}/new/pdf_10min/*${d}*.nc
         rm -fr ${raininput%/}/new/pdf_6hr/*${d}*.nc
     done
     wait
-    
+    #mkdir -p ${output%}/radar_rain
     # Create the rain ensemble time series
         ${workdir%/}/process_rain/create_timeseries \
         ${raininput%/}/new/domain_avg_6hr ${output%/}/radar_rain \

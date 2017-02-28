@@ -17,7 +17,7 @@ def file_search(file):
         fn=os.path.join(path,file)
         if os.path.isfile(os.path.join(path,fn)):
             return True,fn
-    return None,None
+    return False,None
 
 def checkenv(var,alt):
     try:
@@ -25,16 +25,18 @@ def checkenv(var,alt):
     except KeyError:
         return alt
 
+netcdfmod=os.popen('locate netcdf.mod').read().strip()
+
 FC=checkenv('FC','gfortran')
 CC=checkenv('CC','gcc')
 FFLAGS=checkenv('FFLAGS','-ffixed-line-length-0 -std=legacy -g -O3 -fimplicit-none -fsign-zero -fbounds-check -Wpedantic -fno-automatic')
 CFLAGS=checkenv('CFLAGS','-O3 -Wpedantic')
 INCLUDE=checkenv('INCLUDE',os.path.join(Path,'include')).replace(':',',')
-LDFLAGS=checkenv('LD_LIBRARYPATH',os.path.join(Path,'lib')).replace(':',',')
+LDFLAGS=checkenv('LD_LIBRARY_PATH',os.path.join(Path,'lib')).replace(':',',')
 FLIBS=checkenv('FLIBS','netcdff')
 CLIBS=checkenv('CLIBS','netcdf,m')
 PREFIX=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+INCLUDE+=',%s'%os.path.dirname(netcdfmod)
 try:
     ar=sys.argv[1:]
     help=False
@@ -52,7 +54,7 @@ try:
             CFLAGS=a.split('=')[-1].replace(',',' ')
         if a.startswith('INCLUDE'):
             INCLUDE=a.split('=')[-1]
-        if a.startswith('LD_LIBRARYPATH'):
+        if a.startswith('LD_LIBRARY_PATH'):
             LDFLAGS=a.split('=')[-1]
         if a.startswith('CLIBS'):
             CLIBS=a.split('=')[-1]
@@ -90,7 +92,7 @@ Some influential environment variables:
                     [default -O3 -Wpedantic -fimplicit-none -fsign-zero]
      CFLAGS         C compiler flags
                     [default -O3 -Wpedantic]
-     LD_LIBRAYPATH  linker flags, e.g. -L<lib dir> if you have libraries in a
+     LD_LIBRAY_PATH  linker flags, e.g. -L<lib dir> if you have libraries in a
                     nonstandard directory <lib dir>
                     [default %s]
      INCLUDE        include flags e.g. -I<include dir> in a
@@ -159,10 +161,10 @@ for w,file,stats in checkbin:
             else:
                 sys.stdout.write('error, not found\n')
                 missing_package.append(w)
-        elif status == 1:
+        elif stats == 1 :
                 sys.stdout.write('error, not found\n')
                 missing_package.append(w)
-        elif status == 0:
+        elif stats == 0:
                 sys.stdout.write('warning, not found\n')
 missing_module=[]
 
@@ -179,10 +181,10 @@ for module in ['netCDF4','datetime','numpy','glob']:
         missing_module.append(module)
 
 if len(missing_module) > 0 or  len(missing_package) > 0:
-    if len(missing_module):
+    if len(missing_package):
         sys.stderr.write("Error: The following %s packages aren't installed:\n"\
             "\t %s\n if they are installed try changing the PATH environment variable \n"%(Os,' '.join(missing_package)))
-    if len(missing_package):
+    if len(missing_module):
         sys.stderr.write("Error: The following python modules aren't installed:\n"\
             "\t %s\n if they are installed try changing the PYTHONPATH environment variable \n"%(' '.join(missing_module)))
     sys.exit(1)
@@ -224,7 +226,7 @@ for libs in (CLIBS.split(','),FLIBS.split(',')):
             sys.stdout.write('ok \n')
         else:
             sys.stdout.write('missing\n')
-            sys.stdout.write('if this library is installed try changing your LD_LIBRARYPATH variable, note that you MUST have installed the Fortran AND C netcdf libraries\n')
+            sys.stdout.write('if this library is installed try changing your LD_LIBRARY_PATH variable, note that you MUST have installed the Fortran AND C netcdf libraries\n')
             sys.exit(1)
 
 try:

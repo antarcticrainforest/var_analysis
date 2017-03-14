@@ -95,6 +95,7 @@ Building
 ========
 The ``setup.py`` script in the ``src`` folder helps you creating a Makefile 
 for building the 3D Var program. Some important environment variables are:
+
 * FC             Fortran compiler command
                     [default gfortran]
 * CC             C compiler command

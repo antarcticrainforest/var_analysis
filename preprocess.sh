@@ -339,8 +339,12 @@ get_rain_input
 
 echo -e "Pre-processing done now. Do you want to run the following command:\n \n \
     \t ${workdir%/}/process.sh ${output} ${va_outut} [Y/n]\n"
-read question
 
+for i in {1..4};do
+  echo -n '.'
+  sleep 1
+done
+echo '.'
 if [ -z "${question}" ] || [ "${question}" == 'y' ] || [ "${question}" == 'Y' ] || [ "${question}" == 'yes' ] || [ "${question}" == 'Yes' ];then
     ${workdir%/}/process.sh ${output} ${va_output}
 fi

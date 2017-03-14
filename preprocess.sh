@@ -274,23 +274,59 @@ get_num_process(){
 
 ###########################################
 #              FOR DEBUGGING              #
-input="$HOME/Work/Input/ARM/0405/"
-raininput="$HOME/Work/CPOL/0405/"
+input="$HOME/Data/ARM/0506/"
+raininput="$HOME/Data/CPOL/0506/"
 rainformat='ascii'
-output="$HOME/Work/va_inputs/0405/"
+output="$HOME/Data/var_ana/va_inputs/0506/"
 filename="ecmwf.nc"
 workdir=$(dirname $(readlink -f $0))
-va_output="$HOME/Work/va_output/0405"
-##########################################
+va_output="$HOME/Data/var_ana/va_output/0506"
+#
+# Read the command line.
+#
+while [[ $# -ge 1 ]]
+do
+	typeset -l option="${1}"
+  echo $option
+	case "${option}" in
+		( "-a" | "--arminput" )
+		input="${2:-${input}}"
+		shift; shift
+		;;
+		( "-r" | "--raininput" )
+		raininput="${2:-${raininput}}"
+		shift; shift
+		;;
+		( "-o" | "--output" )
+		va_output="${2:-${va_output}}"
+		shift; shift
+		;;
+		( "-v" | "--va_input" )
+		output="${2:-${output}}"
+		shift; shift
+		;;
+		( * )
+		echo "E: Unknown option: ${1}"
+    echo "Usage:   ${0} [OPTIONS]"|sed "s#./##g"
+    echo "Options:"
+    echo "-a , --arminput  : Input dir of the atmospheric data"
+    echo "-r , --raininput : Input dir of the radar data"
+    echo "-o , --output    : Output dir of the varational analysis"
+    echo "-v , --va_input  : Input dir of the variational analysis"
+		exit 2
+		;;
+	esac
+done
 
+##########################################
+echo ${raininput} ${output} ${va_outut} ${input}
+exit
 #####Get dates:
 DATES=$(python2 get_dates.py $raininput)
-DATES="20050301_0000 20050331_1800 20050301"
 IFS=' ' read -a DATES <<< "$DATES"
 #Call the create_2d_input_files script
-if [ ! -d "$output" ];then
-    mkdir -p ${output}
-fi
+mkdir -p ${output}
+mkdir -p ${var_ouput}
 ${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
 #####Get the 3d_data
 ${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}

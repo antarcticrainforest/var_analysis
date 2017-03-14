@@ -1,5 +1,5 @@
-3D Variational Analysis of ECMWF Analysis Model Data
-+++++++++++++++++++++++++++++++++++++++++++++++++++++
+3D Variational Data Assimilation of ECMWF Analysis Model Data
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 This repository contains the source-code of a 3D Variational Analysis (3D Var)
 

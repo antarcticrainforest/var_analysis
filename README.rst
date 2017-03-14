@@ -149,4 +149,4 @@ documentation to testing to deployment scripts.
 
 Bugs
 ====
-Bugs should be filed to **martin.bergemann@monash.edu**
+Bugs should be discussed directly on Github

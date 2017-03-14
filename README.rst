@@ -1,8 +1,6 @@
 3D Variational Analysis of ECMWF Analysis Model Data
 +++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-This repository contains source-code for the recognition of coastal rainfall 
-project.
 This repository contains the source-code of a 3D Variational Analysis (3D Var)
 
 For more details, see the scientific publications:

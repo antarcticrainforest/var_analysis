@@ -4,10 +4,7 @@
 This repository contains the source-code of a 3D Variational Analysis (3D Var)
 
 For more details, see the scientific publications:
-
-`Developing long-term single-column model/cloud system - resolving model forcing
- data using numerical weather prediction products constrained by surface and top
- of the atmosphere observations <http://doi.org/10.1029/2003jd004045>`_
+`Developing long-term single-column model/cloud system - resolving model forcing  data using numerical weather prediction products constrained by surface and top of the atmosphere observations <http://doi.org/10.1029/2003jd004045>`_
 
 `Observed Large-Scale Structures and Diabatic Heating and Drying Profiles
 during TWP-ICE <http://doi.org/10.1175/2009jcli3071.1>`_

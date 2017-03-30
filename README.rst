@@ -1,7 +1,7 @@
 3D Variational Data Assimilation of ECMWF Analysis Model Data
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-This repository contains the source-code of a 3D Variational Analysis (3D Var)
+Bla This repository contains the source-code of a 3D Variational Analysis (3D Var)
 
 For more details, see the scientific publications:
 
@@ -95,32 +95,34 @@ Building
 ========
 The ``setup.py`` script in the ``src`` folder helps you creating a Makefile 
 for building the 3D Var program. Some important environment variables are:
-     FC             Fortran compiler command
+* FC Fortran compiler command
                     [default gfortran]
-     CC             C compiler command
+* CC               C compiler command
                     [default gcc]
-     FCFLAGS        Fortran compiler flags
+*     FCFLAGS      Fortran compiler flags
                     [default -O3 -Wpedantic -fimplicit-none -fsign-zero]
-     CFLAGS         C compiler flags
+*     CFLAGS       C compiler flags
                     [default -O3 -Wpedantic]
-     LD_LIBRAY_PATH  linker flags, e.g. -L<lib dir> if you have libraries in a
+*     LD_LIBRAY_PATH  linker flags, e.g. -L<lib dir> if you have libraries in a
                     nonstandard directory <lib dir>
                     [default %s]
-     INCLUDE        include flags e.g. -I<include dir> in a
+*     INCLUDE        include flags e.g. -I<include dir> in a
                     the headers in a nonstandard directory <include dir>
                     [default %s]
-     FLIBS          fortran libraries to pass to the linker, e.g. -l<library>
+*     FLIBS          fortran libraries to pass to the linker, e.g. -l<library>
                     [default netcdff]
-     CLIBS          c libraries to pass to the linker, e.g. -l<library>
+*     CLIBS          c libraries to pass to the linker, e.g. -l<library>
                     [default netcdf,m]
 
 Use these variables to override the choices made by setup.py or to help
 it to find libraries and programs with nonstandard names/locations.
 
 To create the Makefile simply type::
+
   python setup.py build
 
 Comiple the source code with::
+
   make && make install
 
 

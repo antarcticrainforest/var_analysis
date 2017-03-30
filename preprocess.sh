@@ -319,17 +319,19 @@ do
 done
 
 ##########################################
-echo ${raininput} ${output} ${va_outut} ${input}
-exit
 #####Get dates:
 DATES=$(python2 get_dates.py $raininput)
+DATES="20060201_0000 20060228_1800 20060201"
 IFS=' ' read -a DATES <<< "$DATES"
 #Call the create_2d_input_files script
 mkdir -p ${output}
-mkdir -p ${var_ouput}
+mkdir -p ${va_output}
+echo ${output}
+echo ${input}
 ${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
+exit
 #####Get the 3d_data
-${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
+#${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
 get_3d_input
 #####Get the microwave input data
 get_micro_input 'smet' 'mwrlos' ${DATES[*]}

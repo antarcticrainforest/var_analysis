@@ -86,8 +86,8 @@ end
 ; files as distributed by ARM. 
 ; See the directory create_ncdf for details. 
 
-   inputr1='/home/wilfred/Work/va_inputs/0405/3D_put/upa_p.nc'
-   inputr2='/home/wilfred/Work/va_inputs/0405/3D_put/surf_p.nc'
+   inputr1='/home/bergem/Data/var_ana/va_inputs/0506/3D_put/upa_p.nc'
+   inputr2='/home/bergem/Data/var_ana/va_inputs/0506/3D_put/surf_p.nc'
    
 ; an example sounding file. 
 ; We just use this to get the pressure levels 
@@ -113,13 +113,13 @@ end
    
 ; 3d filename
 
-   output3d='/home/wilfred/Work/va_inputs/0405/3D_put/analysis.agrid'
+   output3d='/home/bergem/Data/var_ana/va_inputs/0506/3D_put/analysis.agrid'
    
 ; 2d files are constructed from these variables
 ; will automatically suffix with .agrid
 ; e.g. '../Xie_format/surf_T.agrid'
 
-   dir_out='/home/wilfred/Work/va_inputs/0405/3D_put/'
+   dir_out='/home/bergem/Data/var_ana/va_inputs/0506/3D_put/'
    filesuffix=['p','rh','T','u','v','z']
    fileprefix = 'surf_'      
 

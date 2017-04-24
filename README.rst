@@ -51,7 +51,9 @@ On Arch 2012.07.15 and later::
   python2-netcdf4 gnudatalanguage (via AUR)
 
 On Gentoo Base System release 2.X and later::
+
   emerge numpy (with python2_7 use flag) netcdf netcdf4-python netcdf-fortran
+
 On Mac OS X 10.6 and later (via port reposetory system)::
    
    port install py27-numpy py27-netcdf4 gnudatalanguage netcdf-fortran

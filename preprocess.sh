@@ -333,7 +333,7 @@ get_3d_input
 #####Get the microwave input data
 get_micro_input 'smet' 'mwrlos' ${DATES[*]}
 ####Prepare the raindata
-get_rain_input
+#get_rain_input
 exit
 
 echo -e "Pre-processing done now. Do you want to run the following command:\n \n \

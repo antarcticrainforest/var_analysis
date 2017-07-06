@@ -16,6 +16,7 @@ def getlat(c,dw):
 
 try:
     infile=sys.argv[1]
+    print('infile',infile)
     outfile=sys.argv[2]
 except IndexError:
     sys.exit('Error: \n Usage: %s infile.nc outfile.nc' %sys.argv[0])
@@ -24,6 +25,7 @@ try:
 except IndexError:
     fn = os.path.basename(infile).replace('.nc','').replace('.nc4','').replace('-','_')
     head = fn.replace(re.search(r'\d{8}_\d{4}', fn).group(),'')
+
 #Get the working directory
 dirname=os.path.dirname(os.path.abspath(infile))
 
@@ -97,7 +99,9 @@ with nc(infile,'r') as s:
         Y,X=np.meshgrid(lat,lon)
 
         #Get the time 
-        time=datetime.strptime(infile,os.path.join(dirname,head)+'%Y%m%d_%H%M.nc')
+        #print('seltsamer name',os.path.join(dirname)+'CPOL'+'%Y%m%d_%H%M'*+'.nc')
+        time=datetime.strptime(infile,os.path.join(dirname)+'/'+'CPOL_'+'%Y%m%d_%H%M'+'_GRIDS_2500m.nc')
+        #time=datetime.strptime(infile,os.path.join(dirname,head)+'%Y%m%d_%H%M.nc')
 
         index=date2num(time,units)
 

@@ -15,7 +15,7 @@
 ##################################################################################
 # DEFAULTS
 
-
+echo '***************start create_time_avg*********************'
 path_prefix=${1%/}
 ipt_dir=${2%/}
 opt_dir=${3%/}
@@ -24,6 +24,10 @@ full_pdf=${5}
 domain=${6}
 base_date=${7}
 search_date=${8}
+
+echo 'search_date'
+echo $search_date
+
 
 base_string=$(python2.7 -c "from datetime import datetime;print datetime.strptime('${base_date}','%Y%m%d').strftime('%Y-%m-%d')")
 if [ "${domain}" == "full" ];then
@@ -34,6 +38,8 @@ fi
 
 mkdir -p ${opt_dir}
 
+echo 'optdir'
+echo $opt_dir
 
 ###################################################################################
 # Some settings we don't bother passing in. Hopefully changing these will still
@@ -50,15 +56,19 @@ seconds_end=0
 
 
 # find the date stamps for the min and max times. ##################################################
-
+echo 'ipt_dir'
+echo $ipt_dir
 # put file names in a file
 ls ${ipt_dir%/}/*${search_date}* > file_list.tmp
 i=0
 { while read myline;do
    
    file_list[$i]=$myline
+   echo 'file_list'
+   echo $file_list
    i=$(($i+1))
 done } < file_list.tmp
+
 
 if [  "$(command -v gdate 2> /dev/null)" ];then
     cmd='gdate'
@@ -68,7 +78,8 @@ fi
 
 if [[ ${#file_list} -ne 0 ]]
 then
-   
+   echo 'date1'
+   echo ${#date}
    unset date
    i=0
    while [[ ${#date} -eq 0 ]]
@@ -86,6 +97,9 @@ then
 
    unset date
    i=1
+   echo 'date2'
+   echo ${#date}
+
    while [[ ${#date} -eq 0 ]]
    do	 
       date=$(echo ${file_list[$((${#file_list[@]}-$i))]} | sed -n 's/.*\([0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]\)_\([0-9][0-9][0-9][0-9]\).*/\1/p')
@@ -211,3 +225,4 @@ while [ $((seconds)) -le $seconds_end ]; do
 
 done
 rm file_list.tmp
+

@@ -144,7 +144,7 @@ get_micro_input(){
        sed "s%@WRKDIR/%@${workdir%/}/%g" |\
        sed "s%path_prefix='WRKDIR'%path_prefix='${workdir%/}/'%g" |\
        sed "s%data_path='INPUT'%data_path='${input%/}/'%g"|\
-       sed "s%file_id='ID'%file_id='${1}'%g"|\
+       sed "s%file_id='ID'%file_id='met'%g"|\
        sed "s%out_dir='OUTPUT'%out_dir='${output%/}/MWR-DATA/'%g"|\
        sed "s%years_int=XXX%years_int=[${years_int}]%g" |\
        sed "s%years_str=XXX%years_str=[${years_str}]%g" |\
@@ -153,6 +153,7 @@ get_micro_input(){
        sed "s%ini_time2=XXX%ini_time2=${init_time2}%g"|\
        sed "s%first=XXX%first=[${first}]%g"|\
        sed "s%last=XXX%last=[${last}]%g"> tmp.pro
+       #sed "s%readvars=['base_time','time_offset','precip_mean','temp_mean','relh_mean','lo_wind_spd_vec_avg','lo_wind_dir_vec_avg','atmos_pressure']%readvars=['base_time','time_offset','org_precip_rate_mean','temp_mean','rh_mean','wspd_vec_mean','wdir_vec_mean','atmos_pressure']%g"|\
     chmod +x tmp.pro
     seas=$(echo ${output}|rev|cut -d / -f2 |rev)
     mv tmp.pro ${workdir%/}/process_MWR/process_${1}_a1_darwin.pro
@@ -167,7 +168,7 @@ get_micro_input(){
        sed "s%months=XXX%months=[${months_str}]%g" |\
        sed "s%ini_time=XXX%ini_time=${init_time}%g"|\
        sed "s%ini_time2=XXX%ini_time2=${init_time2}%g"|\
-       sed "s%hourly_path='INPUT'%hourly_path='${output%/}/MWR-DATA/'%g"|\
+       sed "s%hourly_path='INPUT'%hourly_path='${output%/}/MWR-DATA/ascii_out/'%g"|\
        sed "s%ascii_path='OUTPUT'%ascii_path='${output%/}/MWR-DATA/ascii_out/'%g"|\
        sed "s%OUTPUT=XXX%OUTPUT='${output%/}/MWR-DATA/'%g"|\
        sed "s%seas=XXX%seas='${seas}'%g"|\
@@ -186,6 +187,7 @@ get_micro_input(){
     .r process_${2}_a1_darwin.pro
     exit
 EOF
+
     units=$(ncdump -h ${output%/}/2D_put/${filename}|grep 'time:units'|cut -d = -f2|sed 's/;//'|sed 's/^ *//'|sed 's/\"//g'|sed 's/[ \t]*$//g')
     units="days since $fy-$fm-$fd 00:00:00 UTC"
     if [ -f "${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp3.nc" ];then
@@ -197,13 +199,13 @@ EOF
 
 
     mv ${output%/}/MWR-DATA/*.asc ${output%/}/MWR-DATA/ascii_out/
-
-
-
 }
 
+ 
 get_rain_input(){
-    
+
+    echo 'start rain input'
+
     cmd=$(which gdate 2> /dev/null)
     if [ -z "$cmd" ];then
         cmd=$(which date)
@@ -244,6 +246,7 @@ get_rain_input(){
         rm -fr ${raininput%/}/new/domain_avg_10min/*${d}*.nc
         rm -fr ${raininput%/}/new/pdf_10min/*${d}*.nc
         rm -fr ${raininput%/}/new/pdf_6hr/*${d}*.nc
+    
     done
     wait
     #mkdir -p ${output%}/radar_rain
@@ -329,11 +332,12 @@ mkdir -p ${va_output}
 ${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
 #####Get the 3d_data
 ${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
-get_3d_input
+#get_3d_input
 #####Get the microwave input data
-get_micro_input 'smet' 'mwrlos' ${DATES[*]}
+#get_micro_input 'smet' 'mwrlos' ${DATES[*]}
 ####Prepare the raindata
-#get_rain_input
+get_rain_input
+echo 'exit'
 exit
 
 echo -e "Pre-processing done now. Do you want to run the following command:\n \n \

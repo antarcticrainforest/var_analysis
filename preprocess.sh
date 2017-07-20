@@ -277,13 +277,13 @@ get_num_process(){
 
 ###########################################
 #              FOR DEBUGGING              #
-input="$HOME/Data/ARM/0506/"
-raininput="$HOME/Data/CPOL/0506/"
+input="/home/ljun0002/Data/ARM/0506/"
+raininput="/home/ljun0002/Data/CPOL/0506/"
 rainformat='nc'
-output="$HOME/Data/var_ana/va_inputs/0506/"
+output="/home/ljun0002/Data/var_ana/va_inputs/0506/"
 filename="ecmwf.nc"
 workdir=$(dirname $(readlink -f $0))
-va_output="$HOME/Data/var_ana/va_output/0506"
+va_output="/home/ljun0002/Data/var_ana/va_output/0506"
 #
 # Read the command line.
 #

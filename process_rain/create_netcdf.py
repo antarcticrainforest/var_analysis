@@ -24,7 +24,9 @@ try:
     head=sys.argv[3]
 except IndexError:
     fn = os.path.basename(infile).replace('.nc','').replace('.nc4','').replace('-','_')
-    head = fn.replace(re.search(r'\d{8}_\d{4}', fn).group(),'')
+    print(fn)
+    #head = fn.replace(re.search(r'\d{8}_\d{4}', fn).group(),'')
+    head = fn.replace(re.search(r'\d{8}_level2', fn).group(),'')
 
 #Get the working directory
 dirname=os.path.dirname(os.path.abspath(infile))
@@ -99,9 +101,9 @@ with nc(infile,'r') as s:
         Y,X=np.meshgrid(lat,lon)
 
         #Get the time 
-        #print('seltsamer name',os.path.join(dirname)+'CPOL'+'%Y%m%d_%H%M'*+'.nc')
-        time=datetime.strptime(infile,os.path.join(dirname)+'/'+'CPOL_'+'%Y%m%d_%H%M'+'_GRIDS_2500m.nc')
-        #time=datetime.strptime(infile,os.path.join(dirname,head)+'%Y%m%d_%H%M.nc')
+        print('seltsamer name',os.path.join(dirname)+'CPOL'+'%Y%m%d_%H%M'*+'.nc')
+        #time=datetime.strptime(infile,os.path.join(dirname)+'/'+'CPOL_'+'%Y%m%d_%H%M'+'_GRIDS_2500m.nc')
+        time=datetime.strptime(infile,os.path.join(dirname,head)+'%Y%m%d_level2.nc')
 
         index=date2num(time,units)
 

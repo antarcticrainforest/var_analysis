@@ -16,7 +16,6 @@ def getlat(c,dw):
 
 try:
     infile=sys.argv[1]
-    print('infile',infile)
     outfile=sys.argv[2]
 except IndexError:
     sys.exit('Error: \n Usage: %s infile.nc outfile.nc' %sys.argv[0])
@@ -24,7 +23,6 @@ try:
     head=sys.argv[3]
 except IndexError:
     fn = os.path.basename(infile).replace('.nc','').replace('.nc4','').replace('-','_')
-    print(fn)
     #head = fn.replace(re.search(r'\d{8}_\d{4}', fn).group(),'')
     head = fn.replace(re.search(r'\d{8}_level2', fn).group(),'')
 
@@ -101,18 +99,19 @@ with nc(infile,'r') as s:
         Y,X=np.meshgrid(lat,lon)
 
         #Get the time 
-        print('seltsamer name',os.path.join(dirname)+'CPOL'+'%Y%m%d_%H%M'*+'.nc')
+        #print('seltsamer name',os.path.join(dirname)+'CPOL'+'%Y%m%d_%H%M'*+'.nc')
         #time=datetime.strptime(infile,os.path.join(dirname)+'/'+'CPOL_'+'%Y%m%d_%H%M'+'_GRIDS_2500m.nc')
         time=datetime.strptime(infile,os.path.join(dirname,head)+'%Y%m%d_level2.nc')
 
         index=date2num(time,units)
 
         #Get the rain rate data
-        try:
-            rr = s.variables['rr'][:]
-        except KeyError:
-            rr = s.variables['rain_rate'][:]
-
+        for varname in ('rr','rain_rate','radar_estimated_rain_rate'):
+            try:
+                rr = s.variables[varname][:]
+                break
+            except KeyError:
+                pass
         #Assign all
         t.variables['lat'][:]=Y
         t.variables['lon'][:]=X
@@ -120,4 +119,4 @@ with nc(infile,'r') as s:
         t.variables['j'][:]=lon
         t.variables['time'][:]=index
         t.variables['rain_rate'][:]=rr
-
+print '%s: created %s' %(sys.argv[0],outfile)

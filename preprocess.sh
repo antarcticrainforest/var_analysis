@@ -232,6 +232,11 @@ get_rain_input(){
         #Do the averaging
         ${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} \
             ${rainformat} ${workdir%/}/process_rain/ $base_date ${d} #&
+        if [ $? -ne 0 ];then
+
+          exit 0
+        fi
+
         if [ "$(jobs |wc -l)" == "${nproc}" ];then
             echo -n "NOW WAITING FOR THE ${nproc} JOBS TO FINISH ......"
         fi
@@ -277,13 +282,13 @@ get_num_process(){
 
 ###########################################
 #              FOR DEBUGGING              #
-input="/home/ljun0002/Data/ARM/0506/"
-raininput="/home/ljun0002/Data/CPOL/0506/"
+input="/mnt/lustre/scratch/ljun0002/ARM/0506/"
+raininput="/mnt/lustre/scratch/ljun0002/CPOL/0506/"
 rainformat='nc'
-output="/home/ljun0002/Data/var_ana/va_inputs/0506/"
+output="/mnt/lustre/scratch/ljun0002/var_ana/va_inputs/0506/"
 filename="ecmwf.nc"
 workdir=$(dirname $(readlink -f $0))
-va_output="/home/ljun0002/Data/var_ana/va_output/0506"
+va_output="/mnt/lustre/scratch/ljun0002/var_ana/va_output/0506"
 #
 # Read the command line.
 #
@@ -323,15 +328,16 @@ done
 
 ##########################################
 #####Get dates:
-DATES=$(python2 get_dates.py $raininput)
+#echo $raininput
+#DATES=$(python2 get_dates.py $raininput)
 DATES="20060201_0000 20060228_1200 20060201"
 IFS=' ' read -a DATES <<< "$DATES"
 #Call the create_2d_input_files script
 mkdir -p ${output}
 mkdir -p ${va_output}
-${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
+#${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
 #####Get the 3d_data
-${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
+#${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
 #get_3d_input
 #####Get the microwave input data
 #get_micro_input 'smet' 'mwrlos' ${DATES[*]}

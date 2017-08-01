@@ -67,28 +67,40 @@ mkdir -p ${opt1_dir}
 
 for date in ${dates[*]};do
     echo "Finding files for ${date}"
-    echo ${date}
 	for file in $(ls ${old_dir%/}/*${date}_*.${end} 2> /dev/null); do
 	      infile=${file##*/}
-	      echo ${file##*/}
 
         outfile=$(echo $infile|sed "s/${end}/nc/g")
         if [ ! -f ${ipt_dir%/}/${outfile} ];then
             if [ ${format} == 'ascii' ];then
-              echo "Creating $(basename $outfile)"
+              echo "$0 : Creating $(basename $outfile)"
                 ${workdir%/}/cappi_read_radar_rain -I ${old_dir%/}/${infile} -O ${ipt_dir%/}/${outfile}
+                if [ $? -ne 0 ];then
+                  echo "$0 : cappi_read_radar_rain failed"
+                  exit 257
+                fi
             else
-		echo '**************** open create_netcdf.py ***********************'
+            		echo "$0 : call create_netcdf.py"
                 python2.7 ${workdir%/}/create_netcdf.py ${old_dir%/}/${infile} ${ipt_dir%/}/${outfile}
+                if [ $? -ne 0 ];then
+                  echo "$0 : create_netcdf failed"
+                  exit 257
+                fi
+
             fi
-            file=${ipt_dir%/}/${outfile}
+          file=${ipt_dir%/}/${outfile}
 	        pdffile=${opt1_dir%/}/${outfile%.nc}${pdf_suffix}.nc
 	        # only do anything if there is no zip file existing. Existence of zip file
-	          # implies everythng is done.
+	        # implies everythng is done.
 	        if [ ! -f ${pdffile} ] ; then
-		        echo "Creating percentiles for $file"
+		        echo "$0 : Creating percentiles for $file"
                   ${workdir%/}/radar_error -i ${file} -e ${workdir%/}/errfile.txt -o ${pdffile}
-                  python2.7 ${workdir%/}/correct_rain.py ${pdffile} 'full'
+                  #python2.7 ${workdir%/}/correct_rain.py ${pdffile} 'full'
+                  if [ $? -ne 0 ];then
+                    echo "$0 : radar_error failed"
+                    exit 257
+                fi
+
 	        fi
 	        # create domain averaged rainfall pdfs
 	        avgfile=${file##*/}
@@ -98,20 +110,24 @@ for date in ${dates[*]};do
 		        # do the domain average
 		        python2.7 ${workdir%/}/make_domain_avg.py ${pdffile} ${avgfile} ${workdir%/}/mask.nc 0
                 #python ${workdir%/}/correct_rain.py ${avgfile} 'time'
+              if [ $? -ne 0 ];then
+                    echo "$0 : radar_error failed"
+                    exit 257
+                fi
+
             fi
         fi
 	  done
     if [ "$(find ${ipt_dir%/}/*${date}_*.nc 2> /dev/null)" ];then
-	 echo '******* we want to start create_time_avg*****************'
          ${workdir%/}/create_time_avg ${workdir%/} \
              ${opt1_dir%/} ${ipt_dir%/}/ 6 1 "full"  ${base_date} ${date}
          if [ $? != 0 ];then
-                echo "full avg for $date failed"
+                echo "$0 : full avg for $date failed"
         fi
          ${workdir%/}/create_time_avg ${workdir%/} \
              ${opt2_dir%/} ${ipt_dir%/}/ 6 1 "avg" ${base_date} ${date}
          if [ $? != 0 ];then
-                echo "dom avg for $date failed"
+                echo "$0 : dom avg for $date failed"
         fi
 
     fi

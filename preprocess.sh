@@ -328,10 +328,10 @@ done
 
 ##########################################
 #####Get dates:
-#echo $raininput
+#Get the start and end date of the wet season (Radar rain availability)
 #DATES=$(python2 get_dates.py $raininput)
-DATES="20060201_0000 20060228_1200 20060201"
-IFS=' ' read -a DATES <<< "$DATES"
+DATES="20060201_0000 20060228_1200 20060201" #This is for debugging only
+IFS=' ' read -a DATES <<< "$DATES" #Make those dates an array
 #Call the create_2d_input_files script
 mkdir -p ${output}
 mkdir -p ${va_output}

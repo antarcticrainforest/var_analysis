@@ -57,7 +57,8 @@ opt2_dir=${ipt_dir%/}/domain_avg_10min/
 
 mkdir -p ${opt2_dir}
 mkdir -p ${opt1_dir}
-
+chmod -R 777 ${opt2_dir}
+chmod -R 777 ${opt1_dir}
 
 # These for loops exist to break up the argument list to 'find'.
 # put in the months and first digit of dates you want.

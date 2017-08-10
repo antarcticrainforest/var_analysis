@@ -24,7 +24,12 @@ def main(infile,outfile,maskfile,best_est_only):
     f.variables['time'].axis='T'
 
     f.createVariable('rain_rate','f',('time',),fill_value=-99.99)
-    f.variables['rain_rate'][:]=np.mean(i.variables['rain_rate'][:]*mask)
+    try:
+        f.variables['rain_rate'][:]=np.mean(i.variables['rain_rate'][:]*mask)
+    except ValueError:
+        mask=mask[2:-2,2:-2]
+        f.variables['rain_rate'][:]=np.mean(i.variables['rain_rate'][:]*mask)
+        
     f.variables['rain_rate'].units='mm/hr'
     f.variables['rain_rate'].long_name='Domain avg. rain rate'
     f.variables['rain_rate'].missing_value=-99.99

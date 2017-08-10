@@ -233,7 +233,6 @@ get_rain_input(){
         ${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} \
             ${rainformat} ${workdir%/}/process_rain/ $base_date ${d} #&
         if [ $? -ne 0 ];then
-
           exit 0
         fi
 

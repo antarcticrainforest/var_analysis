@@ -29,9 +29,9 @@ def main(infile,outfile,maskfile,best_est_only):
     except ValueError:
         mask=mask[2:-2,2:-2]
         try:
-            f.variables['rain_rate'][:]=np.mean(i.variables['rain_rate'][:]*mask).filled(-99.99)
+            f.variables['rain_rate'][:]=np.mean(i.variables['rain_rate'][:]*mask)
         except IndexError:
-            sys.exit(257)
+            f.variables['rain_rate'][:]=np.mean(i.variables['rain_rate'][:]*mask).filled(-99.99)
         
     f.variables['rain_rate'].units='mm/hr'
     f.variables['rain_rate'].long_name='Domain avg. rain rate'

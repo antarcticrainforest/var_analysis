@@ -15,7 +15,6 @@
 ##################################################################################
 # DEFAULTS
 
-echo '***************start create_time_avg*********************'
 path_prefix=${1%/}
 ipt_dir=${2%/}
 opt_dir=${3%/}
@@ -25,8 +24,6 @@ domain=${6}
 base_date=${7}
 search_date=${8}
 
-echo 'search_date'
-echo $search_date
 
 
 base_string=$(python2.7 -c "from datetime import datetime;print datetime.strptime('${base_date}','%Y%m%d').strftime('%Y-%m-%d')")
@@ -38,8 +35,6 @@ fi
 
 mkdir -p ${opt_dir}
 
-echo 'optdir'
-echo $opt_dir
 
 ###################################################################################
 # Some settings we don't bother passing in. Hopefully changing these will still
@@ -56,16 +51,12 @@ seconds_end=0
 
 
 # find the date stamps for the min and max times. ##################################################
-echo 'ipt_dir'
-echo $ipt_dir
 # put file names in a file
 ls ${ipt_dir%/}/*${search_date}* > file_list.tmp
 i=0
 { while read myline;do
    
    file_list[$i]=$myline
-   echo 'file_list'
-   echo $file_list
    i=$(($i+1))
 done } < file_list.tmp
 
@@ -78,8 +69,6 @@ fi
 
 if [[ ${#file_list} -ne 0 ]]
 then
-   echo 'date1'
-   echo ${#date}
    unset date
    i=0
    while [[ ${#date} -eq 0 ]]
@@ -97,8 +86,6 @@ then
 
    unset date
    i=1
-   echo 'date2'
-   echo ${#date}
 
    while [[ ${#date} -eq 0 ]]
    do	 
@@ -117,9 +104,8 @@ day_end=$($cmd -u -d @$(($seconds_end)) +%Y%m%d )
 
 #################################################################################################################
 
-echo "making $t_avg hourly averaged data"
-echo "for times between:"
-echo $day_start $day_end
+echo "$(basename $0) : making $t_avg hourly averaged data"
+echo "$(basename $0) : for times between: $day_start $day_end"
 
 
 
@@ -183,11 +169,11 @@ while [ $((seconds)) -le $seconds_end ]; do
       if [ $i -eq 0 ]
       then
       
-            echo "no input files to read for averaging period: $t_centre"
+        echo "$(basename $0) : no input files to read for averaging period: $t_centre"
 
       else
           #  Do the averaging
-          echo "creating time $domain averaged file for period $t_centre" 
+          echo "$(basename $0) : creating time $domain averaged file for period $t_centre" 
           seconds_day=$($cmd -u -d "${base_date} 0000" +%s )
           day_time=$((seconds-seconds_day)) 
 	  

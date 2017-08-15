@@ -117,9 +117,9 @@ nmonths=n_elements(months)-1
      ndays = ld - fd + 1
 	   
                 ; define variables to read from files
-		readvars=['base_time','time_offset','precip_mean',$
-			'temp_mean','relh_mean',$
-			'lo_wind_spd_vec_avg','lo_wind_dir_vec_avg','atmos_pressure']
+		readvars=['base_time','time_offset','org_precip_rate_mean',$
+			'temp_mean','rh_mean',$
+			'wspd_vec_mean','wdir_vec_mean','atmos_pressure']
 
 
 

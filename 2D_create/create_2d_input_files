@@ -52,7 +52,6 @@ wrkdir=$(dirname $(readlink -f $0))
 date_begin=$(echo ${4}|sed s"/_/ /g")
 date_end=$(echo ${5}|sed s"/_/ /g")
 # Names of all the months in between our two dates
-declare -a dates=${@:6}
 ##################################################################################
 
 
@@ -63,27 +62,10 @@ outfile=${opt_dir}${outfile}
 var1="time,time_offset,base_time,sktsfc,spsfc,no10usfc,no10vsfc,no2tsfc,no2dsfc,lccsfc,mccsfc,hccsfc,zsfc,twcsfc,srsfc"
 var2="ewsssfc,nssssfc,sshfsfc,slhfsfc,ssrsfc,strsfc,tsrsfc,ttrsfc,tccsfc,ssrdsfc,strdsfc"
 
-i=0
-for mon in ${dates[*]}
-do
-
- # Find the files required
-   file_surf[$i]=$(find ${ipt_dir}*surf*${mon}*)
-   file_supp[$i]=$(find ${ipt_dir}*supp*${mon}*)
-
-   file_tmp[$i]="${mon}_tmp.cdf"
-  
- # get the variables we need from the surf and supp files
-   ncks -h -O -v "${var1}" "${file_surf[i]}" "${file_tmp[i]}"
-   ncks -h -A -v "${var2}" "${file_supp[i]}" "${file_tmp[i]}"
-
-   i=$(($i+1))
-done
-
 # Set baseline dates and time cutoffs ########################################
 
-base_date=$(echo ${dates[*]}|awk '{print $1}')
-base_time=$($date -u -d "${base_date}" +%s )
+base_date=$(echo ${date_begin}|awk '{print $1}')
+base_time=$($date -u -d "${base_date} 0000" +%s )
 
 time_begin=$(($($date -u -d "${date_begin}" +%s ) - $($date -u -d "${base_date} 0000" +%s )))
 time_end=$(($($date -u -d "${date_end}" +%s ) - $($date -u -d "${base_date} 0000" +%s )))
@@ -102,12 +84,38 @@ echo "       Creating 2D_put file"
 echo " "
 echo " ************************************"
 echo " "
-echo "Time-series defined:"
-echo "from $(date -u -d "$date_begin" +"%d. %b %Y %H:%M") to $(date -u -d "$date_end" +"%d. %b %Y %H:%M") (${delta} days) after $base_date"
+echo "${src} : Time-series defined:"
+echo "${src} : from $(date -u -d "$date_begin" +"%d. %b %Y %H:%M") to $(date -u -d "$date_end" +"%d. %b %Y %H:%M") (${delta} days) after $base_date"
 echo " "
-# concatenate files (nco knows about arm conventions in time_offset and base_time, but not in time itself
-ncrcat -h -O "${file_tmp[@]}" ${outfile}
 
+
+
+i=0
+nday=$(echo $date_begin|awk '{print $1}') #Get the first day
+let nday=$($date -u -d "${nday} 0000" +%s) # Make it 00:00, in case it is not
+end=$($date -u -d $(echo $date_end|awk '{print $1}')) #Get the last date
+let end=$($date -u -d "${end}+18 hours" +%s) #Make the last timestep 18:00 in case it's not
+
+while [ ${nday} -lt ${end} ] ;do
+  tstring=$(date -u -d @${nday} +'%Y%m%d')
+  date -u -d @$nday +"${src} :  Adding %e %b %Y"
+
+ # Find the files required
+   file_surf[$i]=$(find ${ipt_dir}*surf*${tstring}*)
+   file_supp[$i]=$(find ${ipt_dir}*supp*${tstring}*)
+
+   file_tmp[$i]="${tstring}_tmp.cdf"
+  
+ # get the variables we need from the surf and supp files
+   ncks -D 0 -h -O -v "${var1}" "${file_surf[i]}" "${file_tmp[i]}"
+   ncks -D 0 -h -A -v "${var2}" "${file_supp[i]}" "${file_tmp[i]}"
+
+   i=$(($i+1))
+   nday=$(($nday+86400)) #Increase by one day (86400 sec)
+done
+
+# concatenate files (nco knows about arm conventions in time_offset and base_time, but not in time itself
+ncrcat -D 0 -h -O "${file_tmp[@]}" ${outfile}
 # fix the 'time' variable
 ncap -h -O -s "time = time_offset^1/86400.0" ${outfile} ${outfile}
 ncatted -h -a units,time,a,c,"days since ${base_date} 00:00:00 UTC" ${outfile}
@@ -118,31 +126,31 @@ ${wrkdir%}/make_mask_ecmwf -i "${outfile}" -o ${wrkdir%}/mask.nc -d pentagon
 
 # average over the gridpoints specified by the masking file.
 # this is just a sum over the points inside the domain... nothing fancy.
-ncks -h -A -v masking_var ${wrkdir%/}/mask.nc "${outfile}"
-ncwa -h -O -a latitude,longitude -m masking_var -T gt -M -1.0 "${outfile}" "${outfile}"
+ncks -D 0 -h -A -v masking_var ${wrkdir%/}/mask.nc "${outfile}"
+ncwa -D 0 -h -O -a latitude,longitude -m masking_var -T gt -M -1.0 "${outfile}" "${outfile}"
 
 # clean up and make like Tim's file ###########################
 
 # remove unwanted var
-ncks -h -O -x -v latitude,masking_var,base_time,longitude "${outfile}" "${outfile}"
+ncks -D 0 -h -O -x -v latitude,masking_var,base_time,longitude "${outfile}" "${outfile}"
 
 # fix up baseline
-ncap -h -A -s "bdate=${dates[0]}" "${outfile}" "${outfile}"
+tmp=$(echo ${date_begin}|awk '{print $1'})
+ncap -h -A -s "bdate=${tmp}" "${outfile}" "${outfile}"
 ncatted -h -a units,bdate,o,c,"yyyymmdd" "${outfile}"
 ncatted -h -a long_name,bdate,o,c,"baseline date" "${outfile}"
 
 
 # change from units * sec to the right ones
 
-deltat=$(ncks -v time -d time,1,1,1 $outfile)
-
+deltat=$(ncks -D 0 -v time -d time,1,1,1 $outfile)
 # At some stage I understood sed and wrote this. 
 deltat=$(echo ${deltat}]} | sed 's/.*\(time[1]\)*\([0-9]\.[0-9]*[0-9]\).*/\2/')
 
 deltat=$deltat
 deltat_sec=$(echo $deltat|awk '{printf("%.2f",$1*86400)}')
 
-echo "Temporal resolution: $deltat_sec seconds"
+echo "${src} : Temporal resolution: $deltat_sec seconds"
 #var1="time,time_offset,base_time,sktsfc,spsfc,no10usfc,no10vsfc,no2tsfc,no2dsfc,lccsfc,mccsfc,hccsfc,zsfc,twcsfc,srsfc"
 #var2="ewsssfc,nssssfc,sshfsfc,slhfsfc,ssrsfc,strsfc,tsrsfc,ttrsfc,tccsfc,ssrdsfc,strdsfc"
 
@@ -225,27 +233,27 @@ then
 
    tfl1=$(echo ${time_begin} ${deltat} |awk '{printf("%.2f",$1+$2)}')
    tfl2=$(echo ${time_end} ${deltat}|awk '{printf("%.2f",$1+$2)}')
-   ncks -h -O -d "time,$tfl1,$tfl2" ${outfile} "${outfile%.nc}_tmp.nc"
+   ncks -D 0 -h -O -d "time,$tfl1,$tfl2" ${outfile} "${outfile%.nc}_tmp.nc"
 
    tfl1=$(echo ${time_begin} | awk '{printf("%.2f",$1)}')
    tfl2=$(echo ${time_end} | awk '{printf("%.2f",$1)}')
-   ncks -h -O -d "time,$tfl1,$tfl2" ${outfile} ${outfile}
+   ncks -D 0 -h -O -d "time,$tfl1,$tfl2" ${outfile} ${outfile}
    # line the two time regions up
-   ncap -h -O -s "time = time - ${deltat}" "${outfile%.nc}_tmp.nc" "${outfile%.nc}_tmp.nc"
+   ncap -D 0 -h -O -s "time = time - ${deltat}" "${outfile%.nc}_tmp.nc" "${outfile%.nc}_tmp.nc"
 
    # average the fluxes between t and t+dt
    var3="ewsssfc,nssssfc,sshfsfc,slhfsfc,ssrsfc,strsfc,tsrsfc,ttrsfc,ssrdsfc,strdsfc,surf_net"
    ncflint -h -O -v $var3 ${outfile} "${outfile%.nc}_tmp.nc" "${outfile%.nc}_tmp.nc"
    # put the averaged fluxes in the original file
-   ncks -h -A "${outfile%.nc}_tmp.nc" ${outfile}
+  ncks -D 0 -h -A "${outfile%.nc}_tmp.nc" ${outfile}
 
 else
-   ncks -h -O -d "time,${time_begin},${time_end}" ${outfile} ${outfile}
+   ncks -D 0 -h -O -d "time,${time_begin},${time_end}" ${outfile} ${outfile}
 
 fi
-
 # The variational analysis likes the names to be like this:
-ncrename -h -O -v tsrsfc,swt -v ttrsfc,lwt ${outfile}
+ncrename -D 0 -h -O -v tsrsfc,swt -v ttrsfc,lwt ${outfile}
+
 
 
 # remove temporary files

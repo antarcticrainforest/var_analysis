@@ -29,13 +29,14 @@
 ##################################################################################
 #
 # Options
+src=$(basename $0)
 date=$(which gdate 2> /dev/null)
 if [ -z "$date" ];then
     date=$(which date)
 fi
 if [ -z "$date" ];then
-    echo "Can't find date or gdate, if you are on osx considere installing coreutils"
-    exit 1
+    echo "$src : Can't find date or gdate, if you are on osx considere installing coreutils"
+    exit 257
 fi
 
 # Set where relevant files are located
@@ -53,7 +54,6 @@ date_end=$(echo ${5}|sed s"/_/ /g")
 # Names of all the months in between our two dates
 declare -a dates=${@:6}
 ##################################################################################
-
 
 
 # Set the full paths to the input and output directories
@@ -176,9 +176,7 @@ ncap -h -O -s $script10 $outfile $outfile
 ncap -h -O -s $script11 $outfile $outfile
 
 
-
 ncap -O -h -s "surf_net=ssrsfc+strsfc" "${outfile}" "${outfile}"
-
 
 # Fix attributes
 
@@ -217,18 +215,14 @@ ncatted -h -a long_name,slhfsfc,o,c,"surface latent heat-flux" "${outfile}"
 
 ncatted -h -a units,spsfc,o,c,"hPa" "${outfile}"
 
-
 timeshift=1
 if [[ $timeshift -gt 0 ]]
 then
 
    # ok. Now need to move the flux data by three hours. This is nasty.
-
-
-
    # make two files of the desired time period. One 6 hours ahead of the other
-
    # some time variables
+
    tfl1=$(echo ${time_begin} ${deltat} |awk '{printf("%.2f",$1+$2)}')
    tfl2=$(echo ${time_end} ${deltat}|awk '{printf("%.2f",$1+$2)}')
    ncks -h -O -d "time,$tfl1,$tfl2" ${outfile} "${outfile%.nc}_tmp.nc"
@@ -236,15 +230,12 @@ then
    tfl1=$(echo ${time_begin} | awk '{printf("%.2f",$1)}')
    tfl2=$(echo ${time_end} | awk '{printf("%.2f",$1)}')
    ncks -h -O -d "time,$tfl1,$tfl2" ${outfile} ${outfile}
-
    # line the two time regions up
    ncap -h -O -s "time = time - ${deltat}" "${outfile%.nc}_tmp.nc" "${outfile%.nc}_tmp.nc"
-
 
    # average the fluxes between t and t+dt
    var3="ewsssfc,nssssfc,sshfsfc,slhfsfc,ssrsfc,strsfc,tsrsfc,ttrsfc,ssrdsfc,strdsfc,surf_net"
    ncflint -h -O -v $var3 ${outfile} "${outfile%.nc}_tmp.nc" "${outfile%.nc}_tmp.nc"
-
    # put the averaged fluxes in the original file
    ncks -h -A "${outfile%.nc}_tmp.nc" ${outfile}
 
@@ -252,7 +243,6 @@ else
    ncks -h -O -d "time,${time_begin},${time_end}" ${outfile} ${outfile}
 
 fi
-
 
 # The variational analysis likes the names to be like this:
 ncrename -h -O -v tsrsfc,swt -v ttrsfc,lwt ${outfile}

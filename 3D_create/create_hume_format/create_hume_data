@@ -18,7 +18,7 @@
 script_dir=$(dirname $(readlink -f $0))
 work_dir=${1%/}
 outdir=${2%/}
-
+src=$(basename $0)
 mkdir -p $outdir
 # input variables
 
@@ -41,7 +41,7 @@ surf_in[5]=${work_dir%/}/"surf_p.agrid"
    then
       ${script_dir%/}/reformat_vht_data $vht_in > $vht_out
    else
-      echo "Can't find file $vht_in"
+      echo "${src} : Can't find file $vht_in"
    fi
 
 # 2D data ##############
@@ -56,7 +56,7 @@ surf_in[5]=${work_dir%/}/"surf_p.agrid"
       then
          ${script_dir%/}/reformat_ht_data $ht_in > $ht_out
       else
-         echo "Can't find file $ht_in"
+         echo "${src} : Can't find file $ht_in"
       fi
    done
    

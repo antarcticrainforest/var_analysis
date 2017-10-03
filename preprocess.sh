@@ -110,15 +110,16 @@ get_3d_input(){
 EOF
     cd ${old_dir}
     ${workdir%/}/3D_create/create_hume_format/create_hume_data ${output%/}/3D_put ${output%/}/3D_put
-    ${workdir}/3D_create/create_hume_format/create_hume_data ${output%/}/3D_put ${output%/}/3D_put
-
-
+    if [ $? -ne 0 ];then
+      echo "3D_create/create_hume_format/create_hume_data had an error, aborting"
+      exit 257
+    fi
 
 }
 
 get_micro_input(){
 
-   mkdir -p "${workdir%s}/process_MWR/temp"
+   mkdir -p "${workdir%/}/process_MWR/temp"
 
 #   IFS=' ' read -a DATES <<< "$DATES"
     declare -a dates=${@:3}
@@ -140,6 +141,7 @@ get_micro_input(){
    init_time="julday(${fm},$fd,${fy},0,0,0)-0.5"
    init_time2="julday(${fm},1,${fy},0,0,0)-0.5"
    base_date="${fy}${fm}${fd}"
+   source ${workdir%/}/meta_data.conf
     cat ${workdir%/}/process_MWR/.process_${1}_a1_darwin.pro| \
        sed "s%@WRKDIR/%@${workdir%/}/%g" |\
        sed "s%path_prefix='WRKDIR'%path_prefix='${workdir%/}/'%g" |\
@@ -152,7 +154,13 @@ get_micro_input(){
        sed "s%ini_time=XXX%ini_time=${init_time}%g"|\
        sed "s%ini_time2=XXX%ini_time2=${init_time2}%g"|\
        sed "s%first=XXX%first=[${first}]%g"|\
-       sed "s%last=XXX%last=[${last}]%g"> tmp.pro
+       sed "s%last=XXX%last=[${last}]%g"|\
+       sed "s%smet_vprecip%$smet_vprecip%g"|\
+       sed "s%smet_vtemp%$smet_temp%g"|\
+       sed "s%smet_vrh%$smet_vrh%g"|\
+       sed "s%smet_vp%$smet_vp%g"|\
+       sed "s%smet_vu%$smet_vu%g"|\
+       sed "s%smet_vd%$smet_vd%g" > tmp.pro
        #sed "s%readvars=['base_time','time_offset','precip_mean','temp_mean','relh_mean','lo_wind_spd_vec_avg','lo_wind_dir_vec_avg','atmos_pressure']%readvars=['base_time','time_offset','org_precip_rate_mean','temp_mean','rh_mean','wspd_vec_mean','wdir_vec_mean','atmos_pressure']%g"|\
     chmod +x tmp.pro
     seas=$(echo ${output}|rev|cut -d / -f2 |rev)
@@ -193,7 +201,7 @@ EOF
     if [ -f "${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp3.nc" ];then
         rm ${output}mwrlos_6h_${seas}_interp3.nc
     fi
-    
+
     mv  ${output%/}/MWR-DATA/mwrlos_6h_${seas}_C3_interp3.nc ${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp.nc
     ncatted -a units,time,o,c,"$units" ${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp.nc
 
@@ -244,7 +252,7 @@ get_rain_input(){
             jobs > /dev/null
         done
         if [ "$(jobs |wc -l)" == '0' ];then
-            echo '  done'
+          echo "$(basename $0) : get_rain_input for $d done"
         fi
        # rm -fr ${raininput%/}/new/*${d}*.nc
         rm -fr ${raininput%/}/new/domain_avg_10min/*${d}*.nc
@@ -281,13 +289,13 @@ get_num_process(){
 
 ###########################################
 #              FOR DEBUGGING              #
-input="/mnt/lustre/scratch/ljun0002/ARM/0506/"
-raininput="/mnt/lustre/scratch/ljun0002/CPOL/0506/"
+input="$HOME/Data/ARM/0506/"
+raininput="$HOME/Data/CPOL/0506/"
 rainformat='nc'
-output="/mnt/lustre/scratch/ljun0002/var_ana/va_inputs/0506/"
+output="$HOME/Data/var_ana/va_inputs/0506/"
 filename="ecmwf.nc"
 workdir=$(dirname $(readlink -f $0))
-va_output="/mnt/lustre/scratch/ljun0002/var_ana/va_output/0506"
+va_output="$HOME/Data/var_ana/va_output/0506"
 #
 # Read the command line.
 #
@@ -334,9 +342,10 @@ IFS=' ' read -a DATES <<< "$DATES" #Make those dates an array
 #Call the create_2d_input_files script
 mkdir -p ${output}
 mkdir -p ${va_output}
-${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
+#${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
 if [ $? -ne 0 ];then
   echo "create_2d_input_files had an error, aborting"
+  exit 257
 fi
 #####Get the 3d_data
 #${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
@@ -345,9 +354,15 @@ if [ $? -ne 0 ];then
 fi
 
 #get_3d_input
+#exit
+if [ $? -ne 0 ];then
+  echo "get_3d_input had an error, aborting"
+  exit 257
+fi
+
 
 #####Get the microwave input data
-#get_micro_input 'smet' 'mwrlos' ${DATES[*]}
+get_micro_input 'smet' 'mwrlos' ${DATES[*]}
 ####Prepare the raindata
 #get_rain_input
 exit

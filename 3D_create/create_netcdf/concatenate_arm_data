@@ -16,11 +16,12 @@
 
 # Set the begin and end time ###########
 date=$(which gdate 2> /dev/null)
+src=$(basename $0)
 if [ -z "$date" ];then
     date=$(which date)
 fi
 if [ -z "$date" ];then
-    echo "Can't find date or gdate, if you are on osx considere installing coreutils"
+    echo "${src} : Can't find date or gdate, if you are on osx considere installing coreutils"
     exit 1
 fi
 
@@ -85,8 +86,8 @@ echo "       Creating 3D_put file"
 echo " "
 echo " ************************************"
 echo " "
-echo "Time-series defined:"
-echo "from $($date -d "$date_begin" +"%d. %b %Y %H:%M") to $($date -d "$date_end" +"%d. %b %Y %H:%M") (${delta} days) after $base_date"
+echo "${src} : Time-series defined:"
+echo "${src} : from $($date -d "$date_begin" +"%d. %b %Y %H:%M") to $($date -d "$date_end" +"%d. %b %Y %H:%M") (${delta} days) after $base_date"
 echo " "
 # Do the concatenation, and clean up a few things #############################
 ncrcat -h -O -o ${fileout_upa} ${filein_upa[*]}

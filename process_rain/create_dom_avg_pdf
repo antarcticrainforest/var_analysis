@@ -138,6 +138,7 @@ for date in ${dates[*]};do
              ${opt2_dir%/} ${ipt_dir%/}/ 6 1 "avg" ${base_date} ${date}
          if [ $? != 0 ];then
            echo "$(basename $0) : dom avg for $date failed"
+           exit 257
         fi
 
     fi

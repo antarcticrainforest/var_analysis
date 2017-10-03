@@ -53,6 +53,16 @@
   location='darwin'
   loc_code='C3'
 
+; set variable names
+
+vprecip='smet_vprecip'
+vtemp='smet_vtemp'
+vrh='smet_vrh'
+vp='smet_vp'
+vwsp='smet_vu'
+vwindir='smet_vd'
+
+
 ;----------------------------------------------------------------
 
 
@@ -117,9 +127,9 @@ nmonths=n_elements(months)-1
      ndays = ld - fd + 1
 	   
                 ; define variables to read from files
-		readvars=['base_time','time_offset','org_precip_rate_mean',$
-			'temp_mean','rh_mean',$
-			'wspd_vec_mean','wdir_vec_mean','atmos_pressure']
+		readvars=['base_time','time_offset',vprecip,$
+			vtemp,vrh,$
+			vwsp,vwdir,vp]
 
 
 
@@ -232,7 +242,7 @@ nmonths=n_elements(months)-1
 			FOR nt=0L,ntimes-1 DO BEGIN
 
 				;remove negative and small precipitation (see instrument doc)
-				IF(readvars[nv+2] EQ 'precip_mean') THEN BEGIN
+				IF(readvars[nv+2] vprecip) THEN BEGIN
 					if(var_all[nv,nt] le 0.1) then var_all[nv,nt]=0.
 				ENDIF
 
@@ -295,15 +305,15 @@ nmonths=n_elements(months)-1
 		FOR nv=0,nvar-1 DO BEGIN
 
 			;set yrange depending on variable
-			IF(readvars[nv+2] EQ 'atmos_pressure') THEN yr=[980.,1040.]
-			IF(readvars[nv+2] EQ 'temp_mean') THEN yr=[20.,40.]
-			IF(readvars[nv+2] EQ 'relh_mean') THEN yr=[40.,105.]
-			IF(readvars[nv+2] EQ 'precip_mean') THEN yr=[0.,30.]
-			IF(readvars[nv+2] EQ 'wind1_spd_vec_avg') THEN begin
+			IF(readvars[nv+2] EQ vp) THEN yr=[980.,1040.]
+			IF(readvars[nv+2] EQ vtemp) THEN yr=[20.,40.]
+			IF(readvars[nv+2] EQ vrh) THEN yr=[40.,105.]
+			IF(readvars[nv+2] EQ vprecip) THEN yr=[0.,30.]
+			IF(readvars[nv+2] EQ vwsp) THEN begin
 				yr=[-10.,10.]
 				readvars[nv+2]='wind1_u'
 			endif
-			IF(readvars[nv+2] EQ 'wind1_dir_vec_avg') THEN begin
+			IF(readvars[nv+2] EQ vwdir) THEN begin
 				 yr=[-10.,10.]
 				 readvars[nv+2]='wind1_v'
 			endif
@@ -323,7 +333,7 @@ nmonths=n_elements(months)-1
 				background=255, color=0
 
 			; cap averaged RH to 100 %
-			IF(readvars[nv+2] EQ 'relh_mean') THEN $
+			IF(readvars[nv+2] EQ vrh) THEN $
 				mean_out[nv,0:ntimesout-1]=mean_out[nv,0:ntimesout-1]<100.
 			
 

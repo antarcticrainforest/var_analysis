@@ -154,7 +154,7 @@ nmonths=n_elements(months)-1
 		;;; Names of inout and output files ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
                 ; generate filename for precipitation file to read
 
-                fileprec=hourly_path+'twp_smet_PRECIP_MEAN_1h_'+fyear+'_'+loc_code+'.asc'
+                fileprec=hourly_path+'twp_smet_ORG_PRECIP_RATE_MEAN_1h_'+fyear+'_'+loc_code+'.asc'
 
     		;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 		

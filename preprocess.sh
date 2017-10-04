@@ -156,13 +156,14 @@ get_micro_input(){
        sed "s%first=XXX%first=[${first}]%g"|\
        sed "s%last=XXX%last=[${last}]%g"|\
        sed "s%smet_vprecip%$smet_vprecip%g"|\
-       sed "s%smet_vtemp%$smet_temp%g"|\
+       sed "s%smet_vtemp%$smet_vtemp%g"|\
        sed "s%smet_vrh%$smet_vrh%g"|\
        sed "s%smet_vp%$smet_vp%g"|\
        sed "s%smet_vu%$smet_vu%g"|\
        sed "s%smet_vd%$smet_vd%g" > tmp.pro
        #sed "s%readvars=['base_time','time_offset','precip_mean','temp_mean','relh_mean','lo_wind_spd_vec_avg','lo_wind_dir_vec_avg','atmos_pressure']%readvars=['base_time','time_offset','org_precip_rate_mean','temp_mean','rh_mean','wspd_vec_mean','wdir_vec_mean','atmos_pressure']%g"|\
     chmod +x tmp.pro
+       mwr_vprecip=$(echo $smet_vprecip | tr [a-z] [A-Z])
     seas=$(echo ${output}|rev|cut -d / -f2 |rev)
     mv tmp.pro ${workdir%/}/process_MWR/process_${1}_a1_darwin.pro
     cat ${workdir%/}/process_MWR/.process_${2}_a1_darwin.pro| \
@@ -180,6 +181,10 @@ get_micro_input(){
        sed "s%ascii_path='OUTPUT'%ascii_path='${output%/}/MWR-DATA/ascii_out/'%g"|\
        sed "s%OUTPUT=XXX%OUTPUT='${output%/}/MWR-DATA/'%g"|\
        sed "s%seas=XXX%seas='${seas}'%g"|\
+       sed "s%mwr_vva%$mwr_vva%g"|\
+       sed "s%mwr_vli%$mwr_vli%g"|\
+       sed "s%mwr_vwet%$mwr_vwet%g"|\
+       sed "s%mwr_vprecip%$mwr_vprecip%g"|\
        sed "s%XXbase_timeXX%${base_date}%g"|\
        sed "s%first=XXX%first=[${first}]%g"|\
        sed "s%last=XXX%last=[${last}]%g"> tmp.pro
@@ -192,10 +197,11 @@ get_micro_input(){
     cd ${workdir}/process_MWR
     gdl <<EOF
     .r process_${1}_a1_darwin.pro
+    spawn, "mv ${output%/}/MWR-DATA/*.asc ${output%/}/MWR-DATA/ascii_out/"
     .r process_${2}_a1_darwin.pro
     exit
 EOF
-
+    
     units=$(ncdump -h ${output%/}/2D_put/${filename}|grep 'time:units'|cut -d = -f2|sed 's/;//'|sed 's/^ *//'|sed 's/\"//g'|sed 's/[ \t]*$//g')
     units="days since $fy-$fm-$fd 00:00:00 UTC"
     if [ -f "${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp3.nc" ];then
@@ -206,7 +212,6 @@ EOF
     ncatted -a units,time,o,c,"$units" ${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp.nc
 
 
-    mv ${output%/}/MWR-DATA/*.asc ${output%/}/MWR-DATA/ascii_out/
 }
 
  

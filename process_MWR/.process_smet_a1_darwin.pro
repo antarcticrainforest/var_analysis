@@ -60,7 +60,7 @@ vtemp='smet_vtemp'
 vrh='smet_vrh'
 vp='smet_vp'
 vwsp='smet_vu'
-vwindir='smet_vd'
+vwdir='smet_vd'
 
 
 ;----------------------------------------------------------------
@@ -242,7 +242,7 @@ nmonths=n_elements(months)-1
 			FOR nt=0L,ntimes-1 DO BEGIN
 
 				;remove negative and small precipitation (see instrument doc)
-				IF(readvars[nv+2] vprecip) THEN BEGIN
+				IF(readvars[nv+2] EQ vprecip) THEN BEGIN
 					if(var_all[nv,nt] le 0.1) then var_all[nv,nt]=0.
 				ENDIF
 

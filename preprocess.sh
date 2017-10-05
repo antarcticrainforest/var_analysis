@@ -217,8 +217,6 @@ EOF
  
 get_rain_input(){
 
-    echo 'start rain input'
-
     cmd=$(which gdate 2> /dev/null)
     if [ -z "$cmd" ];then
         cmd=$(which date)
@@ -238,7 +236,7 @@ get_rain_input(){
         d1=datetime.strptime('${array[0]}','%Y%m%d');\
         print d1.strftime('%Y%m01')")
     #echo $base_date
-    #let nproc=$(get_num_process)
+    let nproc=$(get_num_process)
     let nproc=1
     #Loop through all dates and distribute the parallel threads
     for d in ${dates[*]};do
@@ -278,14 +276,16 @@ get_num_process(){
     # This function is used to get the optimal number of processes that can 
     # be used at once
     
-    nproc=1 #default number of threads
+    let nproc=1 #default number of threads
     os=$(uname -s)
     if [ "$os" == "Linux" ];then
-        nproc=$(fgrep processor /proc/cpuinfo|wc -l)
+        let nproc=$(fgrep processor /proc/cpuinfo|wc -l)
     elif [ "$os" == "Darwin" ];then
-        nproc=$(system_profiler | awk '/Number Of CPUs/{print $4}{next;}'})
+        let nproc=$(system_profiler | awk '/Number Of CPUs/{print $4}{next;}'})
     fi
-
+    if [ $nproc -ge 8 ];then
+        let nproc=8
+    fi
     echo $nproc
 }
 #####Get everything we need for running the create_2d_input_files script
@@ -352,14 +352,13 @@ if [ $? -ne 0 ];then
   echo "create_2d_input_files had an error, aborting"
   exit 257
 fi
+
 #####Get the 3d_data
 #${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
 if [ $? -ne 0 ];then
   echo "concatenate_arm_data had an error, aborting"
 fi
-
 #get_3d_input
-#exit
 if [ $? -ne 0 ];then
   echo "get_3d_input had an error, aborting"
   exit 257
@@ -367,9 +366,21 @@ fi
 
 
 #####Get the microwave input data
-get_micro_input 'smet' 'mwrlos' ${DATES[*]}
+#get_micro_input 'smet' 'mwrlos' ${DATES[*]}
+if [ $? -ne 0 ];then
+  echo "get_micro_input had an error, aborting"
+  exit 257
+fi
+
+
 ####Prepare the raindata
-#get_rain_input
+get_rain_input
+if [ $? -ne 0 ];then
+  echo "get_rain_input had an error, aborting"
+  exit 257
+fi
+
+
 exit
 
 echo -e "Pre-processing done now. Do you want to run the following command:\n \n \

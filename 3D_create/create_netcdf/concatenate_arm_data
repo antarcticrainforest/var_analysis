@@ -54,12 +54,13 @@ in_dir_upa=${ipt_dir_upa}
 in_dir_surf=${ipt_dir_surf}
 
 # Get file names #############################################################
- 
+
 for mon in ${months[*]}
 do
+   mm=$(echo ${mon:0:6})
  # Find the files required
-   filein_upa[$i]=$(find ${in_dir_upa%/}/*upa*${mon}*)
-   filein_surf[$i]=$(find ${in_dir_surf%/}/*surf*${mon}*)
+   filein_upa[$i]=$(find ${in_dir_upa%/}/*upa*${mm}*)
+   filein_surf[$i]=$(find ${in_dir_surf%/}/*surf*${mm}*)
 
    i=$(($i+1))
 done

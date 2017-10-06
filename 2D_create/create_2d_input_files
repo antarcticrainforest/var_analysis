@@ -25,6 +25,12 @@
 #
 #
 #
+echoerr() {
+  echo "$@" 1>&2
+  exit 257
+}
+
+
 #
 ##################################################################################
 #
@@ -35,8 +41,7 @@ if [ -z "$date" ];then
     date=$(which date)
 fi
 if [ -z "$date" ];then
-    echo "$src : Can't find date or gdate, if you are on osx considere installing coreutils"
-    exit 257
+    echoerr "$src : Can't find date or gdate, if you are on osx considere installing coreutils"
 fi
 
 # Set where relevant files are located
@@ -51,6 +56,7 @@ wrkdir=$(dirname $(readlink -f $0))
 # Set the times we require
 date_begin=$(echo ${4}|sed s"/_/ /g")
 date_end=$(echo ${5}|sed s"/_/ /g")
+declare -a months=${@:5}
 # Names of all the months in between our two dates
 ##################################################################################
 
@@ -89,7 +95,6 @@ echo "${src} : from $(date -u -d "$date_begin" +"%d. %b %Y %H:%M") to $(date -u 
 echo " "
 
 
-
 i=0
 nday=$(echo $date_begin|awk '{print $1}') #Get the first day
 let nday=$($date -u -d "${nday} 0000" +%s) # Make it 00:00, in case it is not
@@ -98,24 +103,33 @@ let end=$($date -u -d "${end}+18 hours" +%s) #Make the last timestep 18:00 in ca
 
 while [ ${nday} -lt ${end} ] ;do
   tstring=$(date -u -d @${nday} +'%Y%m%d')
-  date -u -d @$nday +"${src} :  Adding %e %b %Y"
+  #date -u -d @$nday +"${src} :  Adding %e %b %Y"
 
  # Find the files required
-   file_surf[$i]=$(find ${ipt_dir}*surf*${tstring}*)
-   file_supp[$i]=$(find ${ipt_dir}*supp*${tstring}*)
+   file_surf[$i]=$(find ${ipt_dir}*surf*${tstring}*.cdf)
+   file_supp[$i]=$(find ${ipt_dir}*supp*${tstring}*.cdf)
 
    file_tmp[$i]="${tstring}_tmp.cdf"
   
  # get the variables we need from the surf and supp files
-   ncks -D 0 -h -O -v "${var1}" "${file_surf[i]}" "${file_tmp[i]}"
-   ncks -D 0 -h -A -v "${var2}" "${file_supp[i]}" "${file_tmp[i]}"
+   #ncks -D 0 -h -O -v "${var1}" "${file_surf[i]}" "${file_tmp[i]}"
+   #ncks -D 0 -h -A -v "${var2}" "${file_supp[i]}" "${file_tmp[i]}"
 
    i=$(($i+1))
    nday=$(($nday+86400)) #Increase by one day (86400 sec)
 done
-
+#Get the timestep of the next day
+tstring=$(date -u -d @${nday} +'%Y%m%d')
+file_surf_last=$(find ${ipt_dir}*surf*${tstring}*.cdf)
+file_supp_last=$(find ${ipt_dir}*supp*${tstring}*.cdf)
+ncks -O -d time,0 -o last_supp.cdf $file_supp_last
+ncks -O -d time,0 -o last_surf.cdf $file_surf_last
 # concatenate files (nco knows about arm conventions in time_offset and base_time, but not in time itself
-ncrcat -D 0 -h -O "${file_tmp[@]}" ${outfile}
+ncrcat -h -O -o tmp_surf.cdf ${file_surf[*]} last_surf.cdf
+ncrcat -D 0 -h -O -o tmp_supp.cdf ${file_supp[*]} last_supp.cdf
+ncks -D 0 -h -O -v "${var1}" tmp_surf.cdf $outfile
+ncks -D 0 -h -A -v "${var2}" tmp_supp.cdf $outfile
+
 # fix the 'time' variable
 ncap -h -O -s "time = time_offset^1/86400.0" ${outfile} ${outfile}
 ncatted -h -a units,time,a,c,"days since ${base_date} 00:00:00 UTC" ${outfile}
@@ -258,7 +272,7 @@ ncrename -D 0 -h -O -v tsrsfc,swt -v ttrsfc,lwt ${outfile}
 
 # remove temporary files
 rm "${outfile%.nc}_tmp.nc"
-rm *_tmp.cdf
+rm *.cdf
 
 
 

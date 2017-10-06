@@ -53,17 +53,7 @@ fileout_surf="${2%/}/surf_p.nc"
 in_dir_upa=${ipt_dir_upa}
 in_dir_surf=${ipt_dir_surf}
 
-# Get file names #############################################################
 
-for mon in ${months[*]}
-do
-   mm=$(echo ${mon:0:6})
- # Find the files required
-   filein_upa[$i]=$(find ${in_dir_upa%/}/*upa*${mm}*)
-   filein_surf[$i]=$(find ${in_dir_surf%/}/*surf*${mm}*)
-
-   i=$(($i+1))
-done
 # Set baseline dates and time cutoffs ########################################
 
 
@@ -90,6 +80,26 @@ echo " "
 echo "${src} : Time-series defined:"
 echo "${src} : from $($date -d "$date_begin" +"%d. %b %Y %H:%M") to $($date -d "$date_end" +"%d. %b %Y %H:%M") (${delta} days) after $base_date"
 echo " "
+
+i=0
+nday=$(echo $date_begin|awk '{print $1}') #Get the first day
+let nday=$($date -u -d "${nday} 0000" +%s) # Make it 00:00, in case it is not
+end=$($date -u -d $(echo $date_end|awk '{print $1}')) #Get the last date
+let end=$($date -u -d "${end}+18 hours" +%s) #Make the last timestep 18:00 in case it's not
+
+
+# Get file names #############################################################
+while [ ${nday} -lt ${end} ] ;do
+  tstring=$(date -u -d @${nday} +'%Y%m%d')
+ # Find the files required
+   filein_upa[$i]=$(find ${in_dir_upa%/}/*upa*${tstring}*.cdf)
+   filein_surf[$i]=$(find ${in_dir_surf%/}/*surf*${tstring}*.cdf)
+
+   nday=$(($nday+86400)) #Increase by one day (86400 sec)
+   i=$(($i+1))
+done
+
+
 # Do the concatenation, and clean up a few things #############################
 ncrcat -h -O -o ${fileout_upa} ${filein_upa[*]}
 ncap -h -O -s "time = time_offset^1/86400.0" ${fileout_upa} ${fileout_upa}

@@ -5,8 +5,8 @@ def lookup(f):
     """
         Get the days in a season
     """
-    s = '_'.join(f.replace('-','_').replace('.','_').split('_')[-3:-1])
-    return datetime.datetime.strptime(s,'%Y%m%d_%H%M')
+    s = '_'.join(f.replace('-','_').replace('.','_').split('_')[-3:-2])
+    return datetime.datetime.strptime(s,'%Y%m%d')
 
 def roundupdown(a,b):
     a+=datetime.timedelta(hours=24)
@@ -26,7 +26,8 @@ def get_filenames(folder,months=range(1,13)):
     """
         Get all filenames for the months in the season
     """
-    rainfiles=glob.glob(os.path.join(folder,'*_????????_????.*'))
+    print folder
+    rainfiles=glob.glob(os.path.join(folder,'*_????????_*'))
     dates=np.array([lookup(f) for f in rainfiles])
     dates.sort()
     MIN,MAX=dates.min(),dates.max()

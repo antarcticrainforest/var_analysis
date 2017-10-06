@@ -24,20 +24,25 @@ def main(infile,outfile,maskfile,best_est_only):
     f.variables['time'].axis='T'
 
     f.createVariable('rain_rate','f',('time',),fill_value=-99.99)
+    prate = np.ma.masked_invalid(i.variables['rain_rate'][:])
+    prate = np.ma.masked_outside(prate,-1,1000.)
     try:
-        f.variables['rain_rate'][:]=np.mean(i.variables['rain_rate'][:]*mask)
+        f.variables['rain_rate'][:]=np.mean(prate*mask)
     except ValueError:
         mask=mask[2:-2,2:-2]
+
         try:
-            f.variables['rain_rate'][:]=np.mean(i.variables['rain_rate'][:]*mask)
+            f.variables['rain_rate'][:]=np.mean(prate*mask)
         except IndexError:
-            f.variables['rain_rate'][:]=np.mean(i.variables['rain_rate'][:]*mask).filled(-99.99)
+            f.variables['rain_rate'][:]=np.mean(prate*mask).filled(-99.99)
         
     f.variables['rain_rate'].units='mm/hr'
     f.variables['rain_rate'].long_name='Domain avg. rain rate'
     f.variables['rain_rate'].missing_value=-99.99
 
     if best_est_only != 1:
+        prate=np.ma.masked_invalid(i.variables['rain_rate_pdf'][:])
+        prate=np.ma.masked_outside(prate,-1,1000.)
         f.createDimension('percentile',100)
         f.createVariable('percentile','f',('percentile',))
         f.createVariable('rain_rate_pdf','f',('time','percentile'),fill_value=-99.99)
@@ -48,8 +53,8 @@ def main(infile,outfile,maskfile,best_est_only):
         f.variables['rain_rate_pdf'].long_name='Domain avg. pdf rain rate'
         f.variables['rain_rate_pdf'].missing_value=-99.99
 
+        s1=prate*mask[...,np.newaxis]
 
-        s1=nc(infile).variables['rain_rate_pdf'][:]*mask[...,np.newaxis]
         s1=np.mean(s1.T.reshape(s1.T.shape[0],-1),axis=-1)
         f.variables['rain_rate_pdf'][:]=np.array([s1])
 

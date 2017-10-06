@@ -192,8 +192,15 @@ class NC(object):
             #Get the source
             r_source=self.source.variables[
                     self.metadata['rain_rate'].varname][tstep]
-            t.variables['rain_rate'][:]=np.ma.masked_invalid(r_source)
+            r_source=np.ma.masked_invalid(r_source)
+            r_source=np.ma.masked_greater(r_source,1000.)
             t.variables['time'][:]=self.metadata['time'].data[tstep]
+
+            try:
+                t.variables['rain_rate'][:]=r_source.filled(-99.99)
+            except AttributeError:
+                t.variables['rain_rate'][:]=r_source
+
         os.chmod(fname, 0o777)
 
 if __name__ == '__main__':

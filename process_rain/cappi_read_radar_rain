@@ -5,12 +5,17 @@
 #
 # Tim Hume.
 # 18 July 2006.
+echoerr() {
+  echo "$@" 1>&2
+  exit 257
+}
+
 
 
 #
 # Read the command line.
 #
-
+proc=1
 while [[ $# -gt 1 ]]
 do
 	case "${1}" in
@@ -22,6 +27,10 @@ do
 		outfile=${2:-""}
 		shift; shift
 		;;
+    ( "-P" | "-p" )
+		 proc=${2:-""}
+		shift; shift
+    ;;
 		( * )
 		echo "E: No such option: ${1}"
 		exit 2
@@ -31,8 +40,7 @@ done
 
 if [[ ! -f "${infile}" ]]
 then
-	echo "E: No such input file: ${infile}"
-	exit 1
+  echoerr  "$(basename $0) on $proc E: No such input file: ${infile}"
 fi
 
 #

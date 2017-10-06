@@ -21,8 +21,9 @@ opt_dir=${3%/}
 t_avg=${4}
 full_pdf=${5}
 domain=${6}
-base_date=${7}
-search_date=${8}
+proc=${7}
+base_date=${8}
+search_date=${9}
 
 
 
@@ -52,13 +53,13 @@ seconds_end=0
 
 # find the date stamps for the min and max times. ##################################################
 # put file names in a file
-ls ${ipt_dir%/}/*${search_date}* > file_list.tmp
+ls ${ipt_dir%/}/*${search_date}* > file_list_${proc}.tmp
 i=0
 { while read myline;do
    
    file_list[$i]=$myline
    i=$(($i+1))
-done } < file_list.tmp
+done } < file_list_${proc}.tmp
 
 
 if [  "$(command -v gdate 2> /dev/null)" ];then
@@ -104,8 +105,8 @@ day_end=$($cmd -u -d @$(($seconds_end)) +%Y%m%d )
 
 #################################################################################################################
 
-echo "$(basename $0) : making $t_avg hourly averaged data"
-echo "$(basename $0) : for times between: $day_start $day_end"
+echo "$(basename $0) on $proc : making $t_avg hourly averaged data"
+echo "$(basename $0) on $proc : for times between: $day_start $day_end"
 
 
 
@@ -131,8 +132,8 @@ while [ $((seconds)) -le $seconds_end ]; do
     day_max=$($cmd -u -d @$(($seconds_max)) +%Y%m%d )
       
     # make file
-    declare -a min=$(fgrep $day_min file_list.tmp)
-    declare -a max=$(fgrep $day_max file_list.tmp)
+    declare -a min=$(fgrep $day_min file_list_${proc}.tmp)
+    declare -a max=$(fgrep $day_max file_list_${proc}.tmp)
     file=( "${min[@]}" "${max[@]}" )
 
     timeavgfile="${ipt_dir%/}/${file_first%${date_first}*.nc}${t_centre}${timeavg_suffix}.nc"
@@ -143,11 +144,11 @@ while [ $((seconds)) -le $seconds_end ]; do
 
    if [[ -f ${timeavgfile} ]]
    then
-      echo "avg file for period $t_centre already exists"
+     echo "$(basname $0) on $proc avg file for period $t_centre already exists"
    else
       
       # get filenames of 10 minute files we want to include
-      for file in $(grep "$day_min" file_list.tmp )  $(grep "$day_max" file_list.tmp);do
+      for file in $(grep "$day_min" file_list_${proc}.tmp )  $(grep "$day_max" file_list_${proc}.tmp);do
       
 
          thedate=$(echo ${file} | sed 's/.*\([0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]\)_\([0-9][0-9][0-9][0-9]\).*/\1/')
@@ -169,11 +170,11 @@ while [ $((seconds)) -le $seconds_end ]; do
       if [ $i -eq 0 ]
       then
       
-        echo "$(basename $0) : no input files to read for averaging period: $t_centre"
+        echo "$(basename $0) on $proc : no input files to read for averaging period: $t_centre"
 
       else
           #  Do the averaging
-          echo "$(basename $0) : creating time $domain averaged file for period $t_centre" 
+          echo "$(basename $0) on $proc : creating time $domain averaged file for period $t_centre" 
           seconds_day=$($cmd -u -d "${base_date} 0000" +%s )
           day_time=$((seconds-seconds_day)) 
 	  
@@ -210,5 +211,5 @@ while [ $((seconds)) -le $seconds_end ]; do
    fi
 
 done
-rm file_list.tmp
+rm file_list_${proc}.tmp
 

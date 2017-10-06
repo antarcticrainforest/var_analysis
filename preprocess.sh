@@ -15,7 +15,10 @@
 # Ok let's go:
 # Where was the data from the ARM-FTP-Server downloaded?
 
-
+echoerr() {
+  echo "$@" 1>&2
+  exit 257
+}
 
 get_2d_input () {
 
@@ -111,8 +114,7 @@ EOF
     cd ${old_dir}
     ${workdir%/}/3D_create/create_hume_format/create_hume_data ${output%/}/3D_put ${output%/}/3D_put
     if [ $? -ne 0 ];then
-      echo "3D_create/create_hume_format/create_hume_data had an error, aborting"
-      exit 257
+      echoerr "3D_create/create_hume_format/create_hume_data had an error, aborting"
     fi
 
 }
@@ -214,7 +216,19 @@ EOF
 
 }
 
- 
+rain_loop(){
+    base_date=$1
+    proc=$2
+    dates=${@:3}
+     for d in $(echo ${dates}|sed 's/,/ /g');do
+        #Do the averaging
+        ${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} ${rainformat} ${workdir%/}/process_rain/ $proc $base_date ${d}
+        if [ $? -ne 0 ];then
+          echoerr "$proc : get_rain had an error, aborting"
+        fi
+    done
+}
+
 get_rain_input(){
 
     cmd=$(which gdate 2> /dev/null)
@@ -237,39 +251,34 @@ get_rain_input(){
         print d1.strftime('%Y%m01')")
     #echo $base_date
     let nproc=$(get_num_process)
-    let nproc=1
-    #Loop through all dates and distribute the parallel threads
-    for d in ${dates[*]};do
-        #Do the averaging
-        ${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} \
-            ${rainformat} ${workdir%/}/process_rain/ $base_date ${d} #&
-        if [ $? -ne 0 ];then
-          exit 0
-        fi
-
-        if [ "$(jobs |wc -l)" == "${nproc}" ];then
-            echo -n "NOW WAITING FOR THE ${nproc} JOBS TO FINISH ......"
-        fi
-        while [ $(jobs |wc -l ) -ge ${nproc} ]; do
-            sleep 0.1
-            jobs > /dev/null
-        done
-        if [ "$(jobs |wc -l)" == '0' ];then
-          echo "$(basename $0) : get_rain_input for $d done"
-        fi
-       # rm -fr ${raininput%/}/new/*${d}*.nc
-        rm -fr ${raininput%/}/new/domain_avg_10min/*${d}*.nc
-        rm -fr ${raininput%/}/new/pdf_10min/*${d}*.nc
-        rm -fr ${raininput%/}/new/pdf_6hr/*${d}*.nc
-    
+    #let nproc=1
+    ary_split=$(python2 ${workdir%/}/split.py $nproc ${dates[*]})
+    let proc=1
+    for a in ${ary_split[*]};do
+      #Loop through all threads and distribute the dates
+    #  rain_loop $base_date $proc $a &
+      let proc=${proc}+1
     done
     wait
+    ndate=$(date -u -d "$(echo ${DATES[0]}|sed 's/_/ /')" +%s)
+    last=$(date -u -d "$(echo ${DATES[1]}|sed 's/_/ /')" +%s)
+    while [ $ndate -le $last ];do
+      tstring=$(date -u -d @${ndate} +'%Y%m%d_%H%M')
+      file=$(find ${raininput%/}/new/domain_avg_6hr/*${tstring}*.nc 2> /dev/null)
+      if [ -z "$file" ];then
+        python2.7 ${workdir%/}/process_rain/clone.py ${raininput%}/new/domain_avg_6hr $tstring
+        if [ $? -ne 0 ];then
+          echoerr "clone.py for $tstring failed"
+        fi
+      fi
+      ndate=$(($ndate+21600)) #Go forward for 6H
+    done
     #mkdir -p ${output%}/radar_rain
     # Create the rain ensemble time series
         ${workdir%/}/process_rain/create_timeseries \
         ${raininput%/}/new/domain_avg_6hr ${output%/}/radar_rain \
         ${array[0]} 0000 ${array[${#array[@]} - 1]} 2300 ${base_date} 6
-    rm -rf ${raininput%/}/new
+    #rm -rf ${raininput%/}/new
 }
 
 get_num_process(){
@@ -342,56 +351,46 @@ done
 #####Get dates:
 #Get the start and end date of the wet season (Radar rain availability)
 #DATES=$(python2 get_dates.py $raininput)
-DATES="20060201_0000 20060228_1200 20060201" #This is for debugging only
+DATES="20060201_0000 20060228_1800 20060201" #This is for debugging only
 IFS=' ' read -a DATES <<< "$DATES" #Make those dates an array
 #Call the create_2d_input_files script
 mkdir -p ${output}
 mkdir -p ${va_output}
 #${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
 if [ $? -ne 0 ];then
-  echo "create_2d_input_files had an error, aborting"
-  exit 257
+  echoerr "create_2d_input_files had an error, aborting"
 fi
-
 #####Get the 3d_data
 #${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
 if [ $? -ne 0 ];then
-  echo "concatenate_arm_data had an error, aborting"
+  echoerr "concatenate_arm_data had an error, aborting"
 fi
 #get_3d_input
 if [ $? -ne 0 ];then
-  echo "get_3d_input had an error, aborting"
-  exit 257
+  echoerr "get_3d_input had an error, aborting"
 fi
 
 
 #####Get the microwave input data
 #get_micro_input 'smet' 'mwrlos' ${DATES[*]}
 if [ $? -ne 0 ];then
-  echo "get_micro_input had an error, aborting"
-  exit 257
+  echoerr "get_micro_input had an error, aborting"
 fi
 
 
 ####Prepare the raindata
 get_rain_input
 if [ $? -ne 0 ];then
-  echo "get_rain_input had an error, aborting"
-  exit 257
+  echoerr "get_rain_input had an error, aborting"
 fi
-
-
 exit
 
-echo -e "Pre-processing done now. Do you want to run the following command:\n \n \
-    \t ${workdir%/}/process.sh ${output} ${va_outut} [Y/n]\n"
 
-for i in {1..4};do
-  echo -n '.'
-  sleep 1
-done
-echo '.'
-if [ -z "${question}" ] || [ "${question}" == 'y' ] || [ "${question}" == 'Y' ] || [ "${question}" == 'yes' ] || [ "${question}" == 'Yes' ];then
-    ${workdir%/}/process.sh ${output} ${va_output}
+echo 'Preprocessing done, running variational analysis'
+
+${workdir%/}/process.sh ${output} ${va_output}
+if [ $? -ne 0 ];then
+  echoerr "3D VAR had an error, aborting"
 fi
+
 

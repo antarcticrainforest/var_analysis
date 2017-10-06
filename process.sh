@@ -1,5 +1,11 @@
 #!/bin/bash
 
+echoerr() {
+  echo "$@" 1>&2
+  exit 257
+}
+
+
 #Bash-script wrapper to run the variational-analysis
 
 #1st the the working-dir
@@ -9,10 +15,7 @@ wrkdir=${wrkdir%/}
 #2nd check for cmd-arguments
 
 if [ -z "$1" ] || [ -z "$2" ];then
-    #echo "Usage: $0 va_input_path va_output_path"
-    #exit 1
-    input="/home/wilfred/Work/va_inputs/0405"
-    output="/home/wilfred/Work/va_outputs/0405"
+    echoerr "Usage: $0 va_input_path va_output_path"
 else
     input=${1%/}
     output=${2%/}
@@ -144,8 +147,7 @@ do
 		shift; shift
 		;;
 		( * )
-		echo "E: Unknown option: ${1}"
-		exit 2
+		echoerr "E: Unknown option: ${1}"
 		;;
 	esac
 done
@@ -154,8 +156,7 @@ done
 #
 if [[ ${iterations} -lt 3 ]]
 then
-	echo "E: You must do at least 3 iterations of the variational analysis"
-	exit 1
+	echoerr "E: You must do at least 3 iterations of the variational analysis"
 fi
 
 #
@@ -166,8 +167,7 @@ for dir in "${ipt_dir}" "${opt_dir}" "${exe_dir}"
 do
 	if [[ ! -d "${dir}" ]]
 	then
-		echo "E: No such directory: ${dir}"
-		exit 1
+		echoerr "E: No such directory: ${dir}"
 	fi
 done
 for file in "${ecmwf_data}" "${mwr_data}" "${precip_data}" "${sfcrad_data}" "${toa_data}" "${sfcmet_data}" "${flux_data}" \
@@ -176,8 +176,7 @@ for file in "${ecmwf_data}" "${mwr_data}" "${precip_data}" "${sfcrad_data}" "${t
 do
 	if [[ ! -f "${ipt_dir%/}"/"${file}" ]]
 	then
-		echo "E: No such file: ${ipt_dir%/}/${file}"
-		exit 1
+		echoerr "E: No such file: ${ipt_dir%/}/${file}"
 	fi
 done
 #

@@ -286,6 +286,7 @@ ensemble_wrapper() {
         #Run the variational analysis wrapper function
         run_assim -O ${dir%/} --PRECIP_DATA ${rain#${ipt_dir%/}/}
         i=$(($i+1))
+        exit
     done
 }
 

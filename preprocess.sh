@@ -106,7 +106,12 @@ get_3d_input(){
     
     #Now run the gdl-script
     cd ${barns}
-    gdl <<EOF
+    if [  "$(which idl)" ];then
+      idl_cmd='idl'
+    else
+      idl_cmd='gdl'
+    fi
+    ${idl_cmd} <<EOF
     .r sub.pro
     .r interpolate_model.pro
     exit

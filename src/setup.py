@@ -25,7 +25,7 @@ def checkenv(var,alt):
     except KeyError:
         return alt
 
-netcdfmod=os.popen('locate netcdf.mod 2> /dev/null').read().strip()
+#netcdfmod=os.popen('locate netcdf.mod 2> /dev/null').read().strip()
 
 FC=checkenv('FC','gfortran')
 CC=checkenv('CC','gcc')
@@ -36,8 +36,8 @@ LDFLAGS=checkenv('LD_LIBRARY_PATH',os.path.join(Path,'lib')).replace(':',',')
 FLIBS=checkenv('FLIBS','netcdff')
 CLIBS=checkenv('CLIBS','netcdf,m')
 PREFIX=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if len(netcdfmod):
-    INCLUDE+=',%s'%os.path.dirname(netcdfmod)
+#if len(netcdfmod):
+#    INCLUDE+=',%s'%os.path.dirname(netcdfmod)
 try:
     ar=sys.argv[1:]
     help=False

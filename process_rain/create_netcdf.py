@@ -167,10 +167,10 @@ class NC(object):
                 setattr(T.variables[f],attr,metadata[f][attr])
             T.variables[f][:]=data
 
-        T.createVariable('rain_rate','f',('i','j'),fill_value=-99.99)
+        T.createVariable('rain_rate','f',('i','j'),fill_value=-9999.0)
         T.variables['rain_rate'].long_name='rain rate'
         T.variables['rain_rate'].units='mm/hr'
-        T.variables['rain_rate'].missing_value=-99.99
+        T.variables['rain_rate'].missing_value=-9999.0
 
         return T
 
@@ -197,7 +197,7 @@ class NC(object):
             t.variables['time'][:]=self.metadata['time'].data[tstep]
 
             try:
-                t.variables['rain_rate'][:]=r_source.filled(-99.99)
+                t.variables['rain_rate'][:]=r_source.filled(-9999.0)
             except AttributeError:
                 t.variables['rain_rate'][:]=r_source
 

@@ -55,7 +55,7 @@ def point_inside_polygon(x,y,poly=[(1,2),(3,3),(4,1)]):
 
 
 
-def creatpoly(poly,lons,lats,mask=-99.99):
+def creatpoly(poly,lons,lats,mask=-9999.0):
     
     polycheck=np.vectorize(point_inside_polygon,excluded=['poly'])
     x,y = np.meshgrid(lons,lats)

@@ -242,7 +242,7 @@ get_rain_input(){
         datetime.strptime('${DATES_LAST}','%Y%m%d');\
         dt=d2-d1;d=[(d1+td(days=i)).strftime('%Y%m%d') for i in xrange(dt.days+1)];\
         print ' '.join(d).strip('\n')")
-    
+
     python2 ${workdir%/}/process_rain/mask.py #${workdir%/}/process_rain/tmp.nc ${workdir%/}/process_rain/mask.nc
     #Get the number of max. threads
     IFS=' ' read -a array <<< "$dates"
@@ -256,7 +256,7 @@ get_rain_input(){
     let proc=1
     for a in ${ary_split[*]};do
       #Loop through all threads and distribute the dates
-    #  rain_loop $base_date $proc $a &
+      rain_loop $base_date $proc $a &
       let proc=${proc}+1
     done
     wait
@@ -379,7 +379,7 @@ fi
 
 
 ####Prepare the raindata
-#get_rain_input
+get_rain_input
 if [ $? -ne 0 ];then
   echoerr "get_rain_input had an error, aborting"
 fi

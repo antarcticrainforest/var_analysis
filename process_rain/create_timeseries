@@ -75,11 +75,11 @@ while [ $i -le 100 ]; do
       else
          if [ $i -eq 100 ];then
              ncks -O -v rain_rate,"time",num_radar_scans ${thefile} "${file_in[j]%.nc}_temp.nc"
-	        ncap2  -O -s "num_radar_scans=0" -s "rain_rate=-99.000d" -s "time=($seconds_in-$b_seconds)/86400.0" "${file_in[j]%.nc}_temp.nc" "${file_in[j]%.nc}_temp.nc"
+	        ncap2  -O -s "num_radar_scans=0" -s "rain_rate=-9999.000d" -s "time=($seconds_in-$b_seconds)/86400.0" "${file_in[j]%.nc}_temp.nc" "${file_in[j]%.nc}_temp.nc"
             #python -c "from netCDF4 import Dataset as nc;import numpy as np;f=nc('${file_in[j]%.nc}_temp.nc','a');f.variables['rain_rate_pdf'][:]=np.array([-99.0]);f.close()"
         else
 	        ncks -O -v rain_rate_pdf,"time",num_radar_scans -d percentile,$i,$i ${thefile} "${file_in[j]%.nc}_temp.nc"
-            ncap2  -O -s "num_radar_scans=0" -s "rain_rate_pdf=array(-99.000d,1,percentile)" -s "time=(($seconds_in-$b_seconds)^1)/86400.0" "${file_in[j]%.nc}_temp.nc" "${file_in[j]%.nc}_temp.nc"
+            ncap2  -O -s "num_radar_scans=0" -s "rain_rate_pdf=array(-9999.000d,1,percentile)" -s "time=(($seconds_in-$b_seconds)^1)/86400.0" "${file_in[j]%.nc}_temp.nc" "${file_in[j]%.nc}_temp.nc"
             #python -c "from netCDF4 import Dataset as nc;import numpy as np;f=nc('${file_in[j]%.nc}_temp.nc','a');f.variables['rain_rate_pdf'][:]=np.array([-99.0]);f.close()"
          fi
       fi
@@ -115,7 +115,7 @@ while [ $i -le 100 ]; do
    ncatted -a units,bdate,o,c,"yyyymmdd" ${outfile}
    ncatted -a long_name,pret,o,c,"Domain averaged three hourly precipitation rate" ${outfile}
    ncatted -a input_files,num_radar_scans,d,, ${outfile}
-   ncatted -a missing_value,pret,m,d,-99.00 ${outfile}
+   ncatted -a missing_value,pret,m,d,-9999.0 ${outfile}
 
    ncatted -a nco_openmp_thread_number,global,d,, ${outfile}
    ncatted -a history,global,o,c,"Domain averaged and temporarly averaged to three hours by create_ensemble" -h ${outfile}

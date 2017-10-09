@@ -379,7 +379,7 @@ fi
 
 
 ####Prepare the raindata
-get_rain_input
+#get_rain_input
 if [ $? -ne 0 ];then
   echoerr "get_rain_input had an error, aborting"
 fi

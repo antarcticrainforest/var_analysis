@@ -25,7 +25,7 @@ def checkenv(var,alt):
     except KeyError:
         return alt
 
-netcdfmod=os.popen('locate netcdf.mod').read().strip()
+netcdfmod=os.popen('locate netcdf.mod 2> /dev/null').read().strip()
 
 FC=checkenv('FC','gfortran')
 CC=checkenv('CC','gcc')
@@ -36,7 +36,8 @@ LDFLAGS=checkenv('LD_LIBRARY_PATH',os.path.join(Path,'lib')).replace(':',',')
 FLIBS=checkenv('FLIBS','netcdff')
 CLIBS=checkenv('CLIBS','netcdf,m')
 PREFIX=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-INCLUDE+=',%s'%os.path.dirname(netcdfmod)
+if len(netcdfmod):
+    INCLUDE+=',%s'%os.path.dirname(netcdfmod)
 try:
     ar=sys.argv[1:]
     help=False
@@ -124,7 +125,6 @@ checkbin=(\
         ('fortran compiler',FC,1),
         ('nc-config','nc-config',1),
         ('ncap','ncap',1),
-        ('ncat','ncat',1),
         ('ncatted','ncatted',1),
         ('ncbo','ncbo',1),
         ('ncdiff','ncdiff',1),
@@ -191,7 +191,7 @@ if len(missing_module) > 0 or  len(missing_package) > 0:
 
 
 version_conflict=[]
-for command,min_v in (('sed',3.5),('bash',3.5),('date',6.0),('awk',3.5)):
+for command,min_v in (('sed',3.5),('bash',3.5),('date',6.0),('awk',3.1)):
     try:
         cmd=altnames[command]
     except KeyError:

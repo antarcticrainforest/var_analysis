@@ -26,7 +26,6 @@ def get_filenames(folder,months=range(1,13)):
     """
         Get all filenames for the months in the season
     """
-    print folder
     rainfiles=glob.glob(os.path.join(folder,'*_????????_*'))
     dates=np.array([lookup(f) for f in rainfiles])
     dates.sort()

@@ -283,7 +283,7 @@ get_rain_input(){
         ${workdir%/}/process_rain/create_timeseries \
         ${raininput%/}/new/domain_avg_6hr ${output%/}/radar_rain \
         ${array[0]} 0000 ${array[${#array[@]} - 1]} 2300 ${base_date} 6
-    #rm -rf ${raininput%/}/new
+    rm -rf ${raininput%/}/new
 }
 
 get_num_process(){
@@ -308,20 +308,19 @@ get_num_process(){
 
 ###########################################
 #              FOR DEBUGGING              #
-input="$HOME/Data/ARM/0506/"
-raininput="$HOME/Data/CPOL/0506/"
+input="0"
+raininput="0"
 rainformat='nc'
-output="$HOME/Data/var_ana/va_inputs/0506/"
+output="0"
 filename="ecmwf.nc"
 workdir=$(dirname $(readlink -f $0))
-va_output="$HOME/Data/var_ana/va_output/0506"
+va_output="0"
 #
 # Read the command line.
 #
 while [[ $# -ge 1 ]]
 do
 	typeset -l option="${1}"
-  echo $option
 	case "${option}" in
 		( "-a" | "--arminput" )
 		input="${2:-${input}}"
@@ -340,33 +339,62 @@ do
 		shift; shift
 		;;
 		( * )
-		echo "E: Unknown option: ${1}"
-    echo "Usage:   ${0} [OPTIONS]"|sed "s#./##g"
-    echo "Options:"
-    echo "-a , --arminput  : Input dir of the atmospheric data"
-    echo "-r , --raininput : Input dir of the radar data"
-    echo "-o , --output    : Output dir of the varational analysis"
-    echo "-v , --va_input  : Input dir of the variational analysis"
-		exit 2
+		echo >&2 "E: Unknown option: ${1}"
+    echo >&2 "Usage:   ${0} [OPTIONS]"|sed "s#./##g"
+    echo >&2 "Options:"
+    echo >&2 "-a , --arminput  : Input dir of the atmospheric data"
+    echo >&2 "-r , --raininput : Input dir of the radar data"
+    echo >&2 "-o , --output    : Output dir of the varational analysis"
+    echo >&2 "-v , --va_input  : Input dir of the variational analysis"
+		exit 257
 		;;
 	esac
 done
+declare -a d=( $input $raininput $va_output $output )
+declare -a z=( '--arminput' '--raininput' '--output' '--va_input' )
+let abort=0
+for o in  {0..3}; do
+  if ([ -z "${d[$o]}" ] || [ ${d[$o]} == '0' ]);then
+    echo >&2 "Aborting ... ${z[$o]} option not given"
+    abort=1
+  fi
+done
+if [ "$abort" -eq 1 ];then
+  exit 257
+fi
+#Check if the directories are existing
+for d in $input $raininput ;do 
+  if [ ! -d "$d" ];then
+    echo >&2 "Aborting ... $d does not exsist!"
+    abort=1
+  fi
+done
+if [ "$abort" -eq 1 ];then
+  exit 257
+fi
+
+
+
+
 
 ##########################################
 #####Get dates:
 #Get the start and end date of the wet season (Radar rain availability)
-#DATES=$(python2 get_dates.py $raininput)
-DATES="20060201_0000 20060228_1800 20060201" #This is for debugging only
+DATES=$(python2 get_dates.py $raininput)
+#DATES="20060201_0000 20060228_1800 20060201" #This is for debugging only
+echo ${DATES[*]}
 IFS=' ' read -a DATES <<< "$DATES" #Make those dates an array
+echo $input $raininput $va_output $output
+exit
 #Call the create_2d_input_files script
 mkdir -p ${output}
 mkdir -p ${va_output}
-#${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
+${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
 if [ $? -ne 0 ];then
   echoerr "create_2d_input_files had an error, aborting"
 fi
 #####Get the 3d_data
-#${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
+${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
 if [ $? -ne 0 ];then
   echoerr "concatenate_arm_data had an error, aborting"
 fi
@@ -377,14 +405,14 @@ fi
 
 
 #####Get the microwave input data
-#get_micro_input 'smet' 'mwrlos' ${DATES[*]}
+get_micro_input 'smet' 'mwrlos' ${DATES[*]}
 if [ $? -ne 0 ];then
   echoerr "get_micro_input had an error, aborting"
 fi
 
 
 ####Prepare the raindata
-#get_rain_input
+get_rain_input
 if [ $? -ne 0 ];then
   echoerr "get_rain_input had an error, aborting"
 fi

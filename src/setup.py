@@ -288,7 +288,7 @@ output=${dir%/}/var_ana/var_output/${seas%/}
 workdir=$(dirname $(readlink -f $0))
 jobdir=${workdir%/}/Jobs/
 mkdir -p ~/.va_jobs
-rm -rf ~/.va_jobs/pbs_submit-${seas}.sh 2> /dev/null
+rm -rf ~/.va_jobs/THE_PBS_submit-${seas}.sh 2> /dev/null
 cat << EOF >> ~/.va_jobs/pbs_submit-${seas}.sh
 #!/bin/bash
 # set project
@@ -298,7 +298,7 @@ ${workdir%/}/preprocess.sh -a $arminput -r $raininput -v $va_input -o $output
 
 EOF
 
-chmod +x ~/.va_jobs/pbs_submit-${seas}.sh
+chmod +x ~/.va_jobs/THE_PBS_submit-${seas}.sh
 echo submitting ~/.va_jobs/THE_PBS_submit-${seas}.sh via qsub
 echo qsub ~/.va_jobs/THE_PBS_submit-${seas}.sh
 '''

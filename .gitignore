@@ -31,3 +31,4 @@ photorec.ses
 *.err
 *.proj
 submit_*.sh
+Jobs/*

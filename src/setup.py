@@ -1,4 +1,4 @@
-import os,sys,glob,datetime,platform,time,re
+import os,sys,glob,datetime,platform,time,re,stat
 from subprocess import Popen,PIPE
 Os=platform.system()
 
@@ -35,6 +35,9 @@ INCLUDE=checkenv('INCLUDE',os.path.join(Path,'include')).replace(':',',')
 LDFLAGS=checkenv('LD_LIBRARY_PATH',os.path.join(Path,'lib')).replace(':',',')
 FLIBS=checkenv('FLIBS','netcdff')
 CLIBS=checkenv('CLIBS','netcdf,m')
+BATCH=checkenv('BATCH',0)
+PROJECT=checkenv('PROJECT',None)
+MAIL=checkenv('EMAIL','')
 PREFIX=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 #if len(netcdfmod):
 #    INCLUDE+=',%s'%os.path.dirname(netcdfmod)
@@ -61,6 +64,17 @@ try:
             CLIBS=a.split('=')[-1]
         if a.startswith('FLIBS'):
             FLIBS=a.split('=')[-1]
+        if a.startswith('BATCH'):
+            batch=a.split('=')[-1].lower()
+            try :
+              BATCH={'p':'pbs','s':'slurm','ll':'ll'}[batch[0]]
+            except KeyError:
+              sys.stderr.write('Batch option should be one of the following: pbs, slurm\n')
+              sys.exit(257)
+        if a.startswith('PROJECT'):
+          PROJECT=a.split('=')[-1]
+        if a.startswith('EMAIL'):
+          MAIL=a.split('=')[-1]
 
 except IndexError:
     print(help)
@@ -103,7 +117,15 @@ Some influential environment variables:
                     [default netcdff]
      CLIBS          c libraries to pass to the linker, e.g. -l<library>
                     [default netcdf,m]
-    
+     BATCH          batch system to submit jobs to a computing cluster e.g. PBS
+                    [default None]
+     PROJECT        project that is used to charge cpu time when BATCH is set
+                    e.g. w42
+                    [default None]
+     EMAIL          email address of the user
+                    [default None]
+
+
     Use these variables to override the choices made by %s or to help
     it to find libraries and programs with nonstandard names/locations.
 
@@ -167,6 +189,125 @@ for w,file,stats in checkbin:
         elif stats == 0:
                 sys.stdout.write('warning, not found\n')
 missing_module=[]
+if BATCH:
+  BATCH=BATCH.lower()
+  proj_file=os.path.join(os.pardir,'.proj')
+  if not PROJECT:
+    a=raw_input('Warning option for creating batch jobs is set but no PROJECT if given, is that correct? [Y|n]: ')
+    if a.lower()[0] in ( 'n', '0' , 'f' ):
+      sys.exit(257)
+    os.system('touch %s'%proj_file)
+  else:
+    f=open(proj_file,'w')
+    f.write(PROJECT)
+    f.close()
+  if len(MAIL) == 0:
+    MAIL = raw_input('No user email is given, enter now: ')
+  if BATCH == 'pbs':
+    batch_header=u"""#PBS -P ${pro}
+# set stdout/stderr location
+#PBS -o ${jobdir%/}/seas${seas}.out
+#PBS -e ${jobdir%/}/seas${seas}.err
+#PBS -l wd
+# email options (abort,beg,end)
+#PBS -m aes
+#PBS -M XXX
+#PBS -cwd
+# set name of job
+#PBS -N seas$seas
+#PBS -q normal
+#PBS -l walltime=00:02:00
+#PBS -l mem=4GB
+#PBS -l nodes=1:ppn=8
+"""
+  elif BATCH == 'slurm':
+    batch_header =u"""#SBATCH --job-name=seas$seas
+#SBATCH --time=02:00:00
+#SBATCH --mem=4000
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=XXX
+#SBATCH --output=${jobdir%/}/seas${seas}.out
+#SBATCH --error=${jobdir%/}/seas${seas}.err
+#SBATCH --cpus-per-task=1
+#SBATCH --nodes=1
+#SBATCH --ntasks=8
+"""
+  batch_header=batch_header.replace('XXX',MAIL.lower())
+  batch_job='''#!/bin/bash
+
+echoerr() {
+  echo "$@" 1>&2
+  exit 257
+}
+
+
+pro=$(cat $(dirname($0))/.proj)
+seas='0'
+id='0'
+while [[ $# -ge 1 ]]
+do
+	typeset -l option="${1}"
+	case "${option}" in
+		( "-d" | "--dir" )
+		dir="${2:-${dir}}"
+		shift; shift
+		;;
+		( "-s" | "--seas" )
+		seas="${2:-${seas}}"
+		shift; shift
+		;;
+    ( "-p" | "--proj" )
+		seas="${2:-${seas}}"
+		shift; shift
+		;;
+
+		( * )
+		echo "E: Unknown option: ${1}"
+    echo "Usage:   ${0} [OPTIONS]"|sed "s#./##g"
+    echo "Options:"
+    echo "-d , --dir       : Parent directory"
+    echo "-p , --projcet   : The project id that is used for charing cpu time"
+    echo "-s , --seas      : The name of the season [e.g. 9900]"
+		exit 2
+		;;
+	esac
+done
+declare -a d=( $dir $seas )
+declare -a z=( '--dir' '--job_id' )
+for o in  {0..1}; do
+  if ([ -z "${d[$o]}" ] || [ ${d[$o]} == '0' ]);then
+    echoerr "Aborting ... ${z[$o]} option not given"
+  fi
+done
+# Construnct the directories
+arminput=${dir%/}/ARM/${seas%/}
+raininput=${dir%/}/CPOL/${seas%/}
+va_input=${dir%/}/var_ana/va_inputs/${seas%/}
+output=${dir%/}/var_ana/var_output/${seas%/}
+
+workdir=$(dirname $(readlink -f $0))
+jobdir=${workdir%/}/Jobs/
+mkdir -p ~/.va_jobs
+rm -rf ~/.va_jobs/pbs_submit-${seas}.sh 2> /dev/null
+cat << EOF >> ~/.va_jobs/pbs_submit-${seas}.sh
+#!/bin/bash
+# set project
+THE_SCRIPT
+# Now construct the job cmd
+${workdir%/}/preprocess.sh -a $arminput -r $raininput -v $va_input -o $output
+
+EOF
+
+chmod +x ~/.va_jobs/pbs_submit-${seas}.sh
+echo submitting ~/.va_jobs/THE_PBS_submit-${seas}.sh via qsub
+echo qsub ~/.va_jobs/THE_PBS_submit-${seas}.sh
+'''
+  batch_job = batch_job.replace('THE_SCRIPT',batch_header).replace('THE_PBS',BATCH)
+  bash_script = os.path.join(os.pardir,'submit_%s.sh'%BATCH)
+  f=open(bash_script,'w')
+  f.write(batch_job)
+  f.close()
+  os.chmod(bash_script, os.stat(bash_script).st_mode | stat.S_IEXEC)
 
 for module in ['netCDF4','datetime','numpy','glob']:
     sys.stdout.flush()

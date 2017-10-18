@@ -52,7 +52,7 @@
   first=XXX
   last=XXX
 ; set path of working directory
-  workdir=path_prefix+'/process_MWR/temp/'
+  workdir=OUTPUT+'/process_MWR/temp/'
 
 ; set initial times  ***must match reference time in smet file***
   ini_time=XXX

@@ -126,8 +126,7 @@ EOF
 
 get_micro_input(){
 
-   mkdir -p "${workdir%/}/process_MWR/temp"
-
+   mkdir -p "${output%/}/MWR-DATA/process_MWR/temp"
 #   IFS=' ' read -a DATES <<< "$DATES"
     declare -a dates=${@:3}
     python2 ${workdir%/}/process_MWR/date.py $dates
@@ -212,12 +211,13 @@ EOF
     units=$(ncdump -h ${output%/}/2D_put/${filename}|grep 'time:units'|cut -d = -f2|sed 's/;//'|sed 's/^ *//'|sed 's/\"//g'|sed 's/[ \t]*$//g')
     units="days since $fy-$fm-$fd 00:00:00 UTC"
     if [ -f "${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp3.nc" ];then
-        rm ${output}mwrlos_6h_${seas}_interp3.nc
+        rm ${output%/}/mwrlos_6h_${seas}_interp3.nc
     fi
 
     mv  ${output%/}/MWR-DATA/mwrlos_6h_${seas}_C3_interp3.nc ${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp.nc
     ncatted -a units,time,o,c,"$units" ${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp.nc
 
+   rm -rf "${output%/}/MWR-DATA/process_MWR"
 
 }
 

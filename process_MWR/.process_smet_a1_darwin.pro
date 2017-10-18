@@ -26,8 +26,6 @@
 ; some basic paths
   path_prefix='WRKDIR'
 
-; set path of working directory
-  workdir=path_prefix+'/process_MWR/temp/'
 
 ; set path of input files
   data_path='INPUT'
@@ -39,6 +37,8 @@
   out_dir='OUTPUT'
   plot_dir=out_dir+'Plot/'
 
+; set path of working directory
+  workdir=out_dir+'/process_MWR/temp/'
 ; set base times
 ;  ini_time=julday(10,1,2004,0,0,0)-0.5
   ini_time=XXX

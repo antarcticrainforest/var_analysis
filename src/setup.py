@@ -190,6 +190,7 @@ for w,file,stats in checkbin:
                 sys.stdout.write('warning, not found\n')
 missing_module=[]
 if BATCH:
+  method=dict(pbs='qsub',slurm='sbatch')[BATCH]
   BATCH=BATCH.lower()
   proj_file=os.path.join(os.pardir,'.proj')
   if not PROJECT:
@@ -299,13 +300,13 @@ ${workdir%/}/preprocess.sh -a $arminput -r $raininput -v $va_input -o $output
 EOF
 
 chmod +x ~/.va_jobs/THE_PBS_submit-${seas}.sh
-echo submitting ~/.va_jobs/THE_PBS_submit-${seas}.sh via qsub
-echo qsub ~/.va_jobs/THE_PBS_submit-${seas}.sh
+echo submitting ~/.va_jobs/THE_PBS_submit-${seas}.sh via YYYY
+YYYY ~/.va_jobs/THE_PBS_submit-${seas}.sh
 '''
   batch_job = batch_job.replace('THE_SCRIPT',batch_header).replace('THE_PBS',BATCH)
   bash_script = os.path.join(os.pardir,'submit_%s.sh'%BATCH)
   f=open(bash_script,'w')
-  f.write(batch_job)
+  f.write(batch_job.replace('YYYY',method))
   f.close()
   os.chmod(bash_script, os.stat(bash_script).st_mode | stat.S_IEXEC)
 

@@ -122,7 +122,7 @@ it to find libraries and programs with nonstandard names/locations.
 
 To create the Makefile simply type::
 
-  python setup.py build
+  python setup.py
 
 Comiple the source code with::
 
@@ -145,6 +145,21 @@ The script takes the following command line arguments:
 * -r , --raininput : Input dir of the radar data
 * -o , --output    : Output dir of the varational analysis
 * -v , --va_input  : Input dir of the variational analysis
+
+Submission to a Computing Cluster
+---------------------------------
+To speed computation up and and run multiple seasons paralell an option to submit all 
+(pre-)processing to a Linux computing has been implemented. 
+To create a submission script that submits the (pre-)processing scripts to a cluster simply run::
+ 
+ python setup.py --BATCH=system
+ 
+Where ``system`` can either be pbs or slurm. You will be asked for a email address and a project ID for resource
+allocation (optional). This will create a ``submit`` script in the main va_analysis directory. You can change the 
+resource allocation if necessary. The output of the (pre-)processing will be redirected into ``Jobs`` in the va_analysis main directory.
+
+See ``submit_system.sh --help`` for options and how to use the script. 
+
 
 Contributing
 ============

@@ -1,7 +1,11 @@
-import os,sys,glob,datetime,platform,time,re,stat
+import os,sys,glob,datetime,platform,time,re,stat,socket
 from subprocess import Popen,PIPE
 Os=platform.system()
-
+host=socket.gethostname().lower()
+if host.startswith('raijin'):
+  host='module use ~access/modules'
+else:
+  host=''
 global sleep
 sleep = 0.2
 if Os.lower() == 'darwin':
@@ -289,7 +293,8 @@ jobdir=${workdir%/}/Jobs/
 mkdir -p ~/.va_jobs
 rm -rf ~/.va_jobs/THE_PBS_submit-${seas}.sh 2> /dev/null
 
-for m in $(module list 2>&1 |grep -iv currently|awk '{print $NF}'|grep -v found);do
+for m in $(module list 2>&1 |grep -iv currently|awk '{print $NF}'|grep -v found|uniq);do
+  mod=$(echo $m|rev | cut -d"/" -f2-  | rev)
   modules=$(echo -n "${modules}module load $m\\n")
 done
 modules=$(echo -e $modules)
@@ -297,6 +302,7 @@ cat << EOF >> ~/.va_jobs/pbs_submit-${seas}.sh
 #!/bin/bash
 # set project
 THE_SCRIPT
+#dd
 $modules
 
 cd ${workdir}
@@ -311,7 +317,7 @@ YYYY ~/.va_jobs/THE_PBS_submit-${seas}.sh
   batch_job = batch_job.replace('THE_SCRIPT',batch_header).replace('THE_PBS',BATCH)
   bash_script = os.path.join(os.pardir,'submit_%s.sh'%BATCH)
   f=open(bash_script,'w')
-  f.write(batch_job.replace('YYYY',method))
+  f.write(batch_job.replace('YYYY',method).replace('#dd',host))
   f.close()
   os.chmod(bash_script, os.stat(bash_script).st_mode | stat.S_IEXEC)
 

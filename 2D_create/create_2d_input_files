@@ -122,13 +122,13 @@ done
 tstring=$(date -u -d @${nday} +'%Y%m%d')
 file_surf_last=$(find ${ipt_dir}*surf*${tstring}*.cdf)
 file_supp_last=$(find ${ipt_dir}*supp*${tstring}*.cdf)
-ncks -O -d time,0 -o last_supp.cdf $file_supp_last
-ncks -O -d time,0 -o last_surf.cdf $file_surf_last
+ncks -O -d time,0 -o ${opt_dir%/}/last_supp.cdf $file_supp_last
+ncks -O -d time,0 -o ${opt_dor%/}/last_surf.cdf $file_surf_last
 # concatenate files (nco knows about arm conventions in time_offset and base_time, but not in time itself
-ncrcat -h -O -o tmp_surf.cdf ${file_surf[*]} last_surf.cdf
-ncrcat -D 0 -h -O -o tmp_supp.cdf ${file_supp[*]} last_supp.cdf
-ncks -D 0 -h -O -v "${var1}" tmp_surf.cdf $outfile
-ncks -D 0 -h -A -v "${var2}" tmp_supp.cdf $outfile
+ncrcat -h -O -o ${opt_dir%/}/tmp_surf.cdf ${file_surf[*]} ${opt_dir%/}/last_surf.cdf
+ncrcat -D 0 -h -O -o ${opt_dir%/}tmp_supp.cdf ${file_supp[*]} ${opt_dir%/}/last_supp.cdf
+ncks -D 0 -h -O -v "${var1}" ${opt_dir%/}/tmp_surf.cdf $outfile
+ncks -D 0 -h -A -v "${var2}" ${opt_dir%/}/tmp_supp.cdf $outfile
 
 # fix the 'time' variable
 ncap -h -O -s "time = time_offset^1/86400.0" ${outfile} ${outfile}
@@ -272,7 +272,7 @@ ncrename -D 0 -h -O -v tsrsfc,swt -v ttrsfc,lwt ${outfile}
 
 # remove temporary files
 rm "${outfile%.nc}_tmp.nc"
-rm *.cdf
+rm ${opt_dir%/}/*.cdf
 
 
 

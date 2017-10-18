@@ -384,8 +384,6 @@ DATES=$(python2 ${workdir%/}/get_dates.py $raininput)
 #DATES="20060201_0000 20060228_1800 20060201" #This is for debugging only
 echo ${DATES[*]}
 IFS=' ' read -a DATES <<< "$DATES" #Make those dates an array
-echo $input $raininput $va_output $output
-exit
 #Call the create_2d_input_files script
 mkdir -p ${output}
 mkdir -p ${va_output}

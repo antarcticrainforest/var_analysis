@@ -376,11 +376,11 @@ fi
 
 
 
-
+cd ${workdir}
 ##########################################
 #####Get dates:
 #Get the start and end date of the wet season (Radar rain availability)
-DATES=$(python2 get_dates.py $raininput)
+DATES=$(python2 ${workdir%/}/get_dates.py $raininput)
 #DATES="20060201_0000 20060228_1800 20060201" #This is for debugging only
 echo ${DATES[*]}
 IFS=' ' read -a DATES <<< "$DATES" #Make those dates an array

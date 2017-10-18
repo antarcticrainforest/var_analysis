@@ -211,7 +211,7 @@ if BATCH:
 #PBS -e ${jobdir%/}/seas${seas}.err
 #PBS -l wd
 # email options (abort,beg,end)
-#PBS -m aes
+#PBS -m ae
 #PBS -M XXX
 #PBS -cwd
 # set name of job

@@ -288,11 +288,18 @@ workdir=$(dirname $(readlink -f $0))
 jobdir=${workdir%/}/Jobs/
 mkdir -p ~/.va_jobs
 rm -rf ~/.va_jobs/THE_PBS_submit-${seas}.sh 2> /dev/null
+
+for m in $(module list 2>&1 |grep -iv currently|awk '{print $NF}'|grep -v found);do
+  modules=$(echo -n "${modules}module load $m\\n")
+done
+modules=$(echo -e $modules)
 cat << EOF >> ~/.va_jobs/pbs_submit-${seas}.sh
 #!/bin/bash
 # set project
 THE_SCRIPT
-# Now construct the job cmd
+$modules
+
+cd ${workdir}
 ${workdir%/}/preprocess.sh -a $arminput -r $raininput -v $va_input -o $output
 
 EOF

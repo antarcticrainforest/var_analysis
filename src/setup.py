@@ -241,7 +241,7 @@ echoerr() {
 }
 
 
-pro=$(cat $(dirname($0))/.proj)
+pro=$(cat $(dirname $0)/.proj)
 seas='0'
 id='0'
 while [[ $# -ge 1 ]]

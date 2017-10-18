@@ -213,13 +213,11 @@ if BATCH:
 # email options (abort,beg,end)
 #PBS -m ae
 #PBS -M XXX
-#PBS -cwd
 # set name of job
 #PBS -N seas$seas
 #PBS -q normal
-#PBS -l walltime=00:02:00
+#PBS -l walltime=02:00:00
 #PBS -l mem=4GB
-#PBS -l nodes=1:ppn=8
 """
   elif BATCH == 'slurm':
     batch_header =u"""#SBATCH --job-name=seas$seas

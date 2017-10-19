@@ -286,7 +286,7 @@ done
 arminput=${dir%/}/ARM/${seas%/}
 raininput=${dir%/}/CPOL/${seas%/}
 va_input=${dir%/}/var_ana/va_inputs/${seas%/}
-output=${dir%/}/var_ana/var_output/${seas%/}
+output=${dir%/}/var_ana/va_output/${seas%/}
 
 workdir=$(dirname $(readlink -f $0))
 jobdir=${workdir%/}/Jobs/

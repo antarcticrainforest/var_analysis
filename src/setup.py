@@ -219,13 +219,14 @@ if BATCH:
 #PBS -M XXX
 # set name of job
 #PBS -N seas$seas
-#PBS -q normal
-#PBS -l walltime=02:00:00
-#PBS -l mem=4GB
+#PBS -lsoftware=idl
+#PBS -q express
+#PBS -l walltime=06:00:00
+#PBS -l mem=14GB
 """
   elif BATCH == 'slurm':
     batch_header =u"""#SBATCH --job-name=seas$seas
-#SBATCH --time=02:00:00
+#SBATCH --time=04:00:00
 #SBATCH --mem=4000
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=XXX
@@ -306,7 +307,7 @@ THE_SCRIPT
 $modules
 
 cd ${workdir}
-${workdir%/}/preprocess.sh -a $arminput -r $raininput -v $va_input -o $output
+${workdir%/}/preprocess.sh -a $arminput -r $raininput -v $va_input -o $output 2> ${jobdir%/}/seas${seas}_2.err 1> ${jobdir%/}/seas${seas}_2.out
 
 EOF
 

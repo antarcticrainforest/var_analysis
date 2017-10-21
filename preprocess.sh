@@ -222,7 +222,7 @@ EOF
     mv  ${output%/}/MWR-DATA/mwrlos_6h_${seas}_C3_interp3.nc ${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp.nc
     ncatted -a units,time,o,c,"$units" ${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp.nc
 
-   rm -rf "${output%/}/MWR-DATA/process_MWR"
+   #rm -rf "${output%/}/MWR-DATA/process_MWR"
 
 }
 
@@ -260,13 +260,15 @@ get_rain_input(){
         d1=datetime.strptime('${array[0]}','%Y%m%d');\
         print d1.strftime('%Y%m01')")
     #echo $base_date
-    let nproc=$(get_num_process)
-    #let nproc=1
+    #let nproc=$(get_num_process)
+    let nproc=1
     ary_split=$(python2 ${workdir%/}/split.py $nproc ${dates[*]})
     let proc=1
-    for a in ${ary_split[*]};do
+    #for a in ${ary_split[*]};do
+    for d in ${dates[*]};do
       #Loop through all threads and distribute the dates
-      rain_loop $base_date $proc $a &
+      #rain_loop $base_date $proc $a #&
+      ${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} ${rainformat} ${workdir%/}/process_rain/ $proc $base_date ${d}
       let proc=${proc}+1
     done
     wait
@@ -391,19 +393,19 @@ IFS=' ' read -a DATES <<< "$DATES" #Make those dates an array
 #Call the create_2d_input_files script
 mkdir -p ${output}
 mkdir -p ${va_output}
-${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
-if [ $? -ne 0 ];then
-  echoerr "create_2d_input_files had an error, aborting"
-fi
-#####Get the 3d_data
-${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
-if [ $? -ne 0 ];then
-  echoerr "concatenate_arm_data had an error, aborting"
-fi
-get_3d_input
-if [ $? -ne 0 ];then
-  echoerr "get_3d_input had an error, aborting"
-fi
+#${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
+#if [ $? -ne 0 ];then
+#  echoerr "create_2d_input_files had an error, aborting"
+#fi
+###Get the 3d_data
+#${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
+#if [ $? -ne 0 ];then
+#  echoerr "concatenate_arm_data had an error, aborting"
+#fi
+#get_3d_input
+#if [ $? -ne 0 ];then
+#  echoerr "get_3d_input had an error, aborting"
+#fi
 
 
 #####Get the microwave input data
@@ -414,17 +416,16 @@ fi
 
 
 ####Prepare the raindata
-get_rain_input
+#get_rain_input
 if [ $? -ne 0 ];then
   echoerr "get_rain_input had an error, aborting"
 fi
 
-
+exit
 echo 'Preprocessing done, running variational analysis'
 
 ${workdir%/}/process.sh ${output} ${va_output}
 if [ $? -ne 0 ];then
   echoerr "3D VAR had an error, aborting"
 fi
-
 

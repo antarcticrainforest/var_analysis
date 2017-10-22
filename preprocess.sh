@@ -70,6 +70,9 @@ get_3d_input(){
     fi
     ${idl_cmd} <<EOF
     .r sub.pro
+    exit
+EOF
+    ${idl_cmd} <<EOF
     .r interpolate_model.pro
     exit
 EOF

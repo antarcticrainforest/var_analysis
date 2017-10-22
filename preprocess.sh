@@ -155,17 +155,22 @@ get_micro_input(){
     mkdir -p ${output%/}/MWR-DATA/Plot
     mkdir -p ${output%/}/MWR-DATA/ascii_out
     chmod +x tmp.pro
-    mv tmp.pro ${workdir}/process_MWR/process_${2}_a1_darwin.pro
+    mv tmp.pro ${workdir%/}/process_MWR/process_${2}_a1_darwin.pro
     old_dir=$PWD
-    cd ${workdir}/process_MWR
+    cd ${workdir%/}/process_MWR
     if [  "$(which idl)" ];then
       idl_cmd='idl'
     else
       idl_cmd='gdl'
     fi
     ${idl_cmd} <<EOF
+	   print, "working on process_${1}_a1_darwin.pro"
     .r process_${1}_a1_darwin.pro
     spawn, "mv ${output%/}/MWR-DATA/*.asc ${output%/}/MWR-DATA/ascii_out/"
+    exit
+EOF
+    ${idl_cmd} <<EOF
+    print, "working on process_${2}_a1_darwin.pro"
     .r process_${2}_a1_darwin.pro
     exit
 EOF
@@ -353,16 +358,16 @@ check_arm_input
 #Call the create_2d_input_files script
 mkdir -p ${output}
 mkdir -p ${va_output}
-${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
+#${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
 if [ $? -ne 0 ];then
   echoerr "create_2d_input_files had an error, aborting"
 fi
 ###Get the 3d_data
-${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
+#${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
 if [ $? -ne 0 ];then
   echoerr "concatenate_arm_data had an error, aborting"
 fi
-get_3d_input
+#get_3d_input
 if [ $? -ne 0 ];then
   echoerr "get_3d_input had an error, aborting"
 fi

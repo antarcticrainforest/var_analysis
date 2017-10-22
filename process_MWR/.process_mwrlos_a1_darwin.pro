@@ -78,12 +78,12 @@ misval=-9999.
 !X.STYLE=1
 !Y.STYLE=1
 LOADCT, 0
-liq='mwr_vva'
-vap='mwr_vli'
-wet_window='mwr_vwet'
+vliq='mwr_vli'
+vvap='mwr_vva'
+vwet_window='mwr_vwet'
 vprecip='mwr_vprecip'
 ; define variables to read from files
-readvars=['base_time','time_offset',wet_window,vap,liq]
+readvars=['base_time','time_offset',vwet_window,vvap,vliq]
 
 
 ; define arrays with data for 1 month + last data of previous month
@@ -266,8 +266,8 @@ nmonths=n_elements(months)-1
 			time_upp=time_out[nto]+1800
 
 			; set liquid water and precipitable water vapour minimum to zero
-			IF(readvars[nv+3] EQ liq) THEN var_all(nv,0:ntimes-1)=var_all(nv,0:ntimes-1)>0.
-    	    	    	IF(readvars[nv+3] EQ vap) THEN var_all(nv,0:ntimes-1)=var_all(nv,0:ntimes-1)>0.
+			IF(readvars[nv+3] EQ vliq) THEN var_all(nv,0:ntimes-1)=var_all(nv,0:ntimes-1)>0.
+    	    	    	IF(readvars[nv+3] EQ vvap) THEN var_all(nv,0:ntimes-1)=var_all(nv,0:ntimes-1)>0.
 			
 			;loop over all times
 			FOR nt=0L,ntimes-1 DO BEGIN
@@ -456,8 +456,8 @@ nmonths=n_elements(months)-1
 			; plot original data before averaging
 
 			;set yrange depending on variable
-			IF(readvars[nv+3] EQ vap) THEN yr=[0.,10.]
-			IF(readvars[nv+3] EQ liq) THEN yr=[0.,0.5]
+			IF(readvars[nv+3] EQ vvap) THEN yr=[0.,10.]
+			IF(readvars[nv+3] EQ vliq) THEN yr=[0.,0.5]
 
 			plot,time_all(0:ntimes-1),var_all(nv,0:ntimes-1),MIN_VALUE=-0.1,$
 				title=readvars[nv+3]+' '+fyear+' '+location, yrange=yr,$

@@ -70,9 +70,6 @@ get_3d_input(){
     fi
     ${idl_cmd} <<EOF
     .r sub.pro
-    exit
-EOF
-    ${idl_cmd} <<EOF
     .r interpolate_model.pro
     exit
 EOF
@@ -81,7 +78,6 @@ EOF
     if [ $? -ne 0 ];then
       echoerr "3D_create/create_hume_format/create_hume_data had an error, aborting"
     fi
-
 }
 
 get_micro_input(){
@@ -94,13 +90,13 @@ get_micro_input(){
     mapfile -t months_str < ${workdir%/}/process_MWR/.months
     mapfile -t first < ${workdir%/}/process_MWR/.first
     mapfile -t last < ${workdir%/}/process_MWR/.last
-    
+
     echo ${months_str[*]}|sed "s/'//g" > ${workdir%/}/process_MWR/.months
     echo ${years_str[*]}|sed "s/'//g" > ${workdir%/}/process_MWR/.years
 
     mapfile -t  years_int <  ${workdir%/}/process_MWR/.years
     mapfile -t  months_int <  ${workdir%/}/process_MWR/.months
-    
+
     fy=$(echo ${years_int}|cut -d , -f1)
     fm=$(echo ${months_int}|cut -d , -f1 )
     fd=$(echo ${first}|cut -d , -f1)
@@ -130,7 +126,7 @@ get_micro_input(){
        #sed "s%readvars=['base_time','time_offset','precip_mean','temp_mean','relh_mean','lo_wind_spd_vec_avg','lo_wind_dir_vec_avg','atmos_pressure']%readvars=['base_time','time_offset','org_precip_rate_mean','temp_mean','rh_mean','wspd_vec_mean','wdir_vec_mean','atmos_pressure']%g"|\
     chmod +x tmp.pro
        mwr_vprecip=$(echo $smet_vprecip | tr [a-z] [A-Z])
-    seas=$(echo ${output}|rev|cut -d / -f2 |rev)
+    seas=$(echo ${output}|rev|cut -d / -f1 |rev)
     mv tmp.pro ${workdir%/}/process_MWR/process_${1}_a1_darwin.pro
     cat ${workdir%/}/process_MWR/.process_${2}_a1_darwin.pro| \
        sed "s%@WRKDIR/%@${workdir%/}/%g" |\
@@ -233,7 +229,7 @@ get_rain_input(){
     for d in ${dates[*]};do
       #Loop through all threads and distribute the dates
       #rain_loop $base_date $proc $a #&
-      ${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} ${rainformat} ${workdir%/}/process_rain/ $proc $base_date ${d}
+      #${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} ${rainformat} ${workdir%/}/process_rain/ $proc $base_date ${d}
       let proc=${proc}+1
     done
     wait
@@ -356,7 +352,7 @@ DATES=$(python2 ${workdir%/}/get_dates.py $raininput)
 #DATES="20060201_0000 20060228_1800 20060201" #This is for debugging only
 IFS=' ' read -a DATES <<< "$DATES" #Make those dates an array
 #Check for missing days in the ARM dataset
-check_arm_input
+#check_arm_input
 
 #Call the create_2d_input_files script
 mkdir -p ${output}
@@ -377,7 +373,7 @@ fi
 
 
 #####Get the microwave input data
-get_micro_input 'smet' 'mwrlos' ${DATES[*]}
+#get_micro_input 'smet' 'mwrlos' ${DATES[*]}
 if [ $? -ne 0 ];then
   echoerr "get_micro_input had an error, aborting"
 fi
@@ -389,7 +385,7 @@ if [ $? -ne 0 ];then
   echoerr "get_rain_input had an error, aborting"
 fi
 
-exit
+#exit
 echo 'Preprocessing done, running variational analysis'
 
 ${workdir%/}/process.sh ${output} ${va_output}

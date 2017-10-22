@@ -20,70 +20,27 @@ echoerr() {
   exit 257
 }
 
-get_2d_input () {
+check_arm_input () {
+    ndate=$(date -u -d "$(echo ${DATES[0]}|sed 's/_/ /')" +%s)
+    last=$(date -u -d "$(echo ${DATES[1]}|sed 's/_/ /')" +%s)
 
-    while true;do
-        echo -n -e "${err}What is the ecmwf input folder:   "
-        read input
-        if [ -z "$input" ];then
-            err="Error while reading ecmwf input  .. "
-        elif [ ! -d "${input}" ];then
-            err="Error path not existing  .. "
-        else
-            break
+    while [ $ndate -le $last ];do
+      tstring=$(date -u -d @${ndate} +'%Y%m%d')
+      for h in ecmwfupa ecmwfsupp ecmwfsurf met mwrlos;do
+        file=$(find ${input%/}/*${h}*${tstring}*.cdf 2> /dev/null)
+        if [ -z "$file" ];then
+        #  python2.7 ${workdir%/}/process_rain/clone.py ${raininput%}/new/domain_avg_6hr $tstring
+          #Get the files that are present
+          IFS=' ' read -a meta <<< "$(find ${input%/}/*${h}*.cdf 2>/dev/null)" #Make meta an array
+          echo "$(basename $0) : Creating missing data for $tstring"
+          python2.7 ${workdir%/}/clone.py ${input} ${meta[0]} ${tstring}
+          if [ $? -ne 0 ];then
+            echoerr "clone.py for $tstring failed"
+          fi
         fi
+      done
+      ndate=$(($ndate+86400)) #Go forward for 6H
     done
-
-    while true;do
-        echo -n -e "${err}What is the rain input folder:   "
-        read raininput
-        if [ -z "$raininput" ];then
-            err="Error while reading rain input  .. "
-        elif [ ! -d "${input}" ];then
-            err="Error path not existing  .. "
-        else
-            break
-        fi
-    done
-
-
-    while [ -z "$output" ];do
-        echo -n "${err}What is the output folder:   "
-        read output
-        err="Error while reading input  .. "
-    done
-
-    err=
-    while [ -z "$filename" ];do
-        echo -n -e "${err}What is the filename of the output:   "
-        read filename
-        err="Error while reading input  .. "
-    done
-            
-    if [ "${output[${#output[@]} - 1]}" != "/" ];then
-        output="$output/"
-    fi
- 
-    if [ "${input[${#input[@]} - 1]}" != "/" ];then
-        input="$input/"
-    fi
- 
-    echo -e -n "The following configuration will be passed: \n \
-        \t input  dirname  : $input \n \
-        \t output dirname  : $output \n \
-        \t output filename : $filename \n \
-        \n
-        \t is this configuration correct? [Y]"
-    read correct
-
-    if [ "${correct[1]}" == "n" ] || [ "${correct[1]}" == "N" ];then
-        get_2d_input
-    fi
-
-    if [ ! -d ${output} ];then
-        mkdir -p ${output}
-    fi
-
 
 
 }
@@ -309,8 +266,8 @@ get_num_process(){
     fi
     echo $nproc
 }
+
 #####Get everything we need for running the create_2d_input_files script
-#get_2d_input 
 
 
 ###########################################
@@ -390,6 +347,9 @@ cd ${workdir}
 DATES=$(python2 ${workdir%/}/get_dates.py $raininput)
 #DATES="20060201_0000 20060228_1800 20060201" #This is for debugging only
 IFS=' ' read -a DATES <<< "$DATES" #Make those dates an array
+#Check for missing days in the ARM dataset
+check_arm_input
+
 #Call the create_2d_input_files script
 mkdir -p ${output}
 mkdir -p ${va_output}

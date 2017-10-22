@@ -17,7 +17,7 @@ def main(folder,meta,date):
   newf = meta.replace(r,date.strftime('%Y%m%d'))
   os.system('cp %s %s '%(meta,newf))
   dimvar=('base_time','time','qc_time','qc_logger_time','time_offset')
-  with nc('test.nc','a') as f:
+  with nc(newf,'a') as f:
     for v in f.variables:
       if v not in dimvar and not v.startswith('lat') and not v.startswith('lon'):
         try:

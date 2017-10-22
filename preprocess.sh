@@ -353,19 +353,19 @@ check_arm_input
 #Call the create_2d_input_files script
 mkdir -p ${output}
 mkdir -p ${va_output}
-#${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
-#if [ $? -ne 0 ];then
-#  echoerr "create_2d_input_files had an error, aborting"
-#fi
+${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
+if [ $? -ne 0 ];then
+  echoerr "create_2d_input_files had an error, aborting"
+fi
 ###Get the 3d_data
-#${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
-#if [ $? -ne 0 ];then
-#  echoerr "concatenate_arm_data had an error, aborting"
-#fi
-#get_3d_input
-#if [ $? -ne 0 ];then
-#  echoerr "get_3d_input had an error, aborting"
-#fi
+${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
+if [ $? -ne 0 ];then
+  echoerr "concatenate_arm_data had an error, aborting"
+fi
+get_3d_input
+if [ $? -ne 0 ];then
+  echoerr "get_3d_input had an error, aborting"
+fi
 
 
 #####Get the microwave input data

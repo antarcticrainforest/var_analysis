@@ -42,7 +42,7 @@
   OUTPUT=XXX
 ; define netcdf out file
   seas=XXX
-  fileoutncdf=OUTPUT+'mwrlos_6h_'+seas+'_'+loc_code+'_interp3.nc'
+  fileoutncdf=OUTPUT+'mwrlos_6h_interp.nc'
 
 
 ; set years and months required

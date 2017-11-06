@@ -63,7 +63,6 @@ base_time=$($date -u -d "${base_date}" +%s )
 
 t_begin=$(($($date -u -d "${date_begin}" +%s ) - $($date -u -d "${base_date}" +%s )))
 t_end=$(($($date -u -d "${date_end}" +%s ) - $($date -u -d "${base_date}" +%s )))
-
 t_begin=$(echo $t_begin|awk '{printf("%.2f",$1/86400.0)}')
 t_end=$(echo $t_end|awk '{printf("%.2f",$1/86400.0)}')
 
@@ -80,7 +79,6 @@ echo " "
 echo "${src} : Time-series defined:"
 echo "${src} : from $($date -d "$date_begin" +"%d. %b %Y %H:%M") to $($date -d "$date_end" +"%d. %b %Y %H:%M") (${delta} days) after $base_date"
 echo " "
-
 i=0
 nday=$(echo $date_begin|awk '{print $1}') #Get the first day
 let nday=$($date -u -d "${nday} 0000" +%s) # Make it 00:00, in case it is not
@@ -105,9 +103,9 @@ ncrcat -h -O -o ${fileout_upa} ${filein_upa[*]}
 ncap -h -O -s "time = time_offset^1/86400.0" ${fileout_upa} ${fileout_upa}
 ncatted -h -a units,time,a,c,"days since ${base_date}" ${fileout_upa}
 ncatted -h -a units,time,a,c,"days since ${base_date} 00:00:00 UTC" ${fileout_upa}
-ncks -h -O -d time,${t_begin},${t_end} ${fileout_upa} ${fileout_upa}
+#ncks -h -O -d time,${t_begin},${t_end} ${fileout_upa} ${fileout_upa}
 
 ncrcat -h -O -o ${fileout_surf} ${filein_surf[*]}
 ncap -h -O -s "time = time_offset^1/86400.0" ${fileout_surf} ${fileout_surf}
 ncatted -h -a units,time,a,c,"days since ${base_date} 00:00:00 UTC" ${fileout_surf}
-ncks -h -O -d time,${t_begin},${t_end} ${fileout_surf} ${fileout_surf}
+#ncks -h -O -d time,${t_begin},${t_end} ${fileout_surf} ${fileout_surf}

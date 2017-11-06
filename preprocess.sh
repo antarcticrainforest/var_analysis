@@ -101,7 +101,6 @@ get_micro_input(){
        #sed "s%readvars=['base_time','time_offset','precip_mean','temp_mean','relh_mean','lo_wind_spd_vec_avg','lo_wind_dir_vec_avg','atmos_pressure']%readvars=['base_time','time_offset','org_precip_rate_mean','temp_mean','rh_mean','wspd_vec_mean','wdir_vec_mean','atmos_pressure']%g"|\
     chmod +x tmp_${seas}.pro
        mwr_vprecip=$(echo $smet_vprecip | tr [a-z] [A-Z])
-    seas=$(echo ${output}|rev|cut -d / -f1 |rev)
     mv tmp_${seas}.pro ${workdir%/}/process_MWR/process_${1}_a1_darwin_${seas}.pro
     cat ${workdir%/}/process_MWR/.process_${2}_a1_darwin.pro| \
        sed "s%@WRKDIR/%@${workdir%/}/%g" |\
@@ -149,12 +148,9 @@ EOF
     exit
 EOF
     
-    rm ${workdir%/}/process_MWR/process_*_a1_darwin_${seas}.pro
+#    rm ${workdir%/}/process_MWR/process_*_a1_darwin_${seas}.pro
     units=$(ncdump -h ${output%/}/2D_put/${filename}|grep 'time:units'|cut -d = -f2|sed 's/;//'|sed 's/^ *//'|sed 's/\"//g'|sed 's/[ \t]*$//g')
     units="days since $fy-$fm-$fd 00:00:00 UTC"
-    if [ -f "${output%/}/MWR-DATA/mwrlos_6h_interp.nc" ];then
-        rm ${output%/}/mwrlos_6h_interp.nc
-    fi
 
     ncatted -a units,time,o,c,"$units" ${output%/}/MWR-DATA/mwrlos_6h_interp.nc
 
@@ -358,7 +354,6 @@ for d in ${split_dates};do
   if [ $? -ne 0 ];then
     echoerr "get_micro_input had an error, aborting"
   fi
-
 
   ####Prepare the raindata
   get_rain_input

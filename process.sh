@@ -40,7 +40,7 @@ sfcrad_data="2D_put/ecmwf.nc"		# Surface radiative fluxes for the domain. (MODEL
 toa_data="2D_put/ecmwf.nc"			# TOA fluxes and cloud data derived from satellite products. (actually MODEl)
 sfcmet_data="2D_put/ecmwf.nc"		# Surface meteorology. NOT USED
 flux_data="2D_put/ecmwf.nc"			# Sensible and latent heat fluxes. (NOT USED)
-mwr_data="MWR-DATA/mwrlos_6h_${seas}_interp.nc"
+mwr_data="MWR-DATA/mwrlos_6h_interp.nc"
 precip_data=$(find ${input%/}/radar_rain/*NOGAUGE*.nc)
 precip_data=${precip_data#${input%/}/}
 analysis_data="3D_put/analysis.agrid.reformat"
@@ -286,7 +286,6 @@ ensemble_wrapper() {
         #Run the variational analysis wrapper function
         run_assim -O ${dir%/} --PRECIP_DATA ${rain#${ipt_dir%/}/}
         i=$(($i+1))
-        exit
     done
 }
 

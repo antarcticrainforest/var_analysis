@@ -28,11 +28,11 @@ get_3d_input(){
     cat ${barnes} | sed "s%inputr1='XXXX'%inputr1='${output%/}/3D_put/upa_p.nc'%g" \
         | sed "s%inputr2='XXXX'%inputr2='${output%/}/3D_put/surf_p.nc'%g"\
         | sed "s%output3d='XXXX'%output3d='${output%/}/3D_put/analysis.agrid'%g"\
-        | sed "s%dir_out='XXXX'%dir_out='${output%/}/3D_put/'%g" > tmp.pro
+        | sed "s%dir_out='XXXX'%dir_out='${output%/}/3D_put/'%g" > tmp_${seas}.pro
     
     chmod +x tmp.pro
     barns="${workdir%/}/3D_create/Barnes_interp"
-    mv tmp.pro "${barns%/}/interpolate_model.pro"
+    mv tmp_${seas}.pro "${barns%/}/interpolate_model_${seas}.pro"
     old_dir=$PWD
     
     #Now run the gdl-script
@@ -44,9 +44,10 @@ get_3d_input(){
     fi
     ${idl_cmd} <<EOF
     .r sub.pro
-    .r interpolate_model.pro
+    .r interpolate_model_${seas}.pro
     exit
 EOF
+    rm ${barns%/}/interpolate_model_${seas}.pro
     cd ${old_dir}
     ${workdir%/}/3D_create/create_hume_format/create_hume_data ${output%/}/3D_put ${output%/}/3D_put
     if [ $? -ne 0 ];then
@@ -59,17 +60,17 @@ get_micro_input(){
    mkdir -p "${output%/}/MWR-DATA/process_MWR/temp"
 #   IFS=' ' read -a DATES <<< "$DATES"
     declare -a dates=${@:3}
-    python2 ${workdir%/}/process_MWR/date.py $dates
-    mapfile -t  years_str <  ${workdir%/}/process_MWR/.years
-    mapfile -t months_str < ${workdir%/}/process_MWR/.months
-    mapfile -t first < ${workdir%/}/process_MWR/.first
-    mapfile -t last < ${workdir%/}/process_MWR/.last
+    python2 ${workdir%/}/process_MWR/date.py $seas $dates
+    mapfile -t  years_str <  ${workdir%/}/process_MWR/.years_${seas}
+    mapfile -t months_str < ${workdir%/}/process_MWR/.months_${seas}
+    mapfile -t first < ${workdir%/}/process_MWR/.first_${seas}
+    mapfile -t last < ${workdir%/}/process_MWR/.last_${seas}
 
-    echo ${months_str[*]}|sed "s/'//g" > ${workdir%/}/process_MWR/.months
-    echo ${years_str[*]}|sed "s/'//g" > ${workdir%/}/process_MWR/.years
+    echo ${months_str[*]}|sed "s/'//g" > ${workdir%/}/process_MWR/.months_${seas}
+    echo ${years_str[*]}|sed "s/'//g" > ${workdir%/}/process_MWR/.years_${seas}
 
-    mapfile -t  years_int <  ${workdir%/}/process_MWR/.years
-    mapfile -t  months_int <  ${workdir%/}/process_MWR/.months
+    mapfile -t  years_int <  ${workdir%/}/process_MWR/.years_${seas}
+    mapfile -t  months_int <  ${workdir%/}/process_MWR/.months_${seas}
 
     fy=$(echo ${years_int}|cut -d , -f1)
     fm=$(echo ${months_int}|cut -d , -f1 )
@@ -96,12 +97,12 @@ get_micro_input(){
        sed "s%smet_vrh%$smet_vrh%g"|\
        sed "s%smet_vp%$smet_vp%g"|\
        sed "s%smet_vu%$smet_vu%g"|\
-       sed "s%smet_vd%$smet_vd%g" > tmp.pro
+       sed "s%smet_vd%$smet_vd%g" > tmp_${seas}.pro
        #sed "s%readvars=['base_time','time_offset','precip_mean','temp_mean','relh_mean','lo_wind_spd_vec_avg','lo_wind_dir_vec_avg','atmos_pressure']%readvars=['base_time','time_offset','org_precip_rate_mean','temp_mean','rh_mean','wspd_vec_mean','wdir_vec_mean','atmos_pressure']%g"|\
-    chmod +x tmp.pro
+    chmod +x tmp_${seas}.pro
        mwr_vprecip=$(echo $smet_vprecip | tr [a-z] [A-Z])
     seas=$(echo ${output}|rev|cut -d / -f1 |rev)
-    mv tmp.pro ${workdir%/}/process_MWR/process_${1}_a1_darwin.pro
+    mv tmp_${seas}.pro ${workdir%/}/process_MWR/process_${1}_a1_darwin_${seas}.pro
     cat ${workdir%/}/process_MWR/.process_${2}_a1_darwin.pro| \
        sed "s%@WRKDIR/%@${workdir%/}/%g" |\
        sed "s%path_prefix='WRKDIR'%path_prefix='${workdir%/}/'%g" |\
@@ -123,12 +124,12 @@ get_micro_input(){
        sed "s%mwr_vprecip%$mwr_vprecip%g"|\
        sed "s%XXbase_timeXX%${base_date}%g"|\
        sed "s%first=XXX%first=[${first}]%g"|\
-       sed "s%last=XXX%last=[${last}]%g"> tmp.pro
+       sed "s%last=XXX%last=[${last}]%g"> tmp_${seas}.pro
 
     mkdir -p ${output%/}/MWR-DATA/Plot
     mkdir -p ${output%/}/MWR-DATA/ascii_out
     chmod +x tmp.pro
-    mv tmp.pro ${workdir%/}/process_MWR/process_${2}_a1_darwin.pro
+    mv tmp_${seas}.pro ${workdir%/}/process_MWR/process_${2}_a1_darwin_${seas}.pro
     old_dir=$PWD
     cd ${workdir%/}/process_MWR
     if [  "$(which idl)" ];then
@@ -137,17 +138,18 @@ get_micro_input(){
       idl_cmd='gdl'
     fi
     ${idl_cmd} <<EOF
-	   print, "working on process_${1}_a1_darwin.pro"
-    .r process_${1}_a1_darwin.pro
+	   print, "working on process_${1}_a1_darwin_${seas}.pro"
+    .r process_${1}_a1_darwin_${seas}.pro
     spawn, "mv ${output%/}/MWR-DATA/*.asc ${output%/}/MWR-DATA/ascii_out/"
     exit
 EOF
     ${idl_cmd} <<EOF
-    print, "working on process_${2}_a1_darwin.pro"
-    .r process_${2}_a1_darwin.pro
+    print, "working on process_${2}_a1_darwin_${seas}.pro"
+    .r process_${2}_a1_darwin_${seas}.pro
     exit
 EOF
     
+    rm ${workdir%/}/process_MWR/process_*_a1_darwin_${seas}.pro
     units=$(ncdump -h ${output%/}/2D_put/${filename}|grep 'time:units'|cut -d = -f2|sed 's/;//'|sed 's/^ *//'|sed 's/\"//g'|sed 's/[ \t]*$//g')
     units="days since $fy-$fm-$fd 00:00:00 UTC"
     if [ -f "${output%/}/MWR-DATA/mwrlos_6h_interp.nc" ];then
@@ -187,7 +189,10 @@ get_rain_input(){
         dt=d2-d1;d=[(d1+td(days=i)).strftime('%Y%m%d') for i in xrange(dt.days+1)];\
         print ' '.join(d).strip('\n')")
 
-    python2 ${workdir%/}/process_rain/mask.py #${workdir%/}/process_rain/tmp.nc ${workdir%/}/process_rain/mask.nc
+    python2 ${workdir%/}/process_rain/mask.py ${seas} #${workdir%/}/process_rain/tmp.nc ${workdir%/}/process_rain/mask.nc
+    if [ $? -ne 0 ];then
+          echoerr "$proc : mask.py in get_rain_input had an error, aborting"
+    fi
     #Get the number of max. threads
     IFS=' ' read -a array <<< "$dates"
     base_date=$(python2 -c "from datetime import datetime;\
@@ -202,7 +207,7 @@ get_rain_input(){
     for d in ${dates[*]};do
       #Loop through all threads and distribute the dates
       #rain_loop $base_date $proc $a #&
-      ${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} ${rainformat} ${workdir%/}/process_rain/ $proc $base_date ${d}
+      ${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} ${rainformat} ${workdir%/}/process_rain/ $seas $base_date ${d}
       let proc=${proc}+1
     done
     wait
@@ -211,6 +216,7 @@ get_rain_input(){
         ${raininput%/}/new/domain_avg_6hr ${output%/}/radar_rain \
         ${array[0]} 0000 ${array[${#array[@]} - 1]} 2300 ${base_date} 6
     rm -rf ${raininput%/}/new
+    rm -f ${workdir%/}process_rain/mask_${seas}.nc
 }
 
 get_num_process(){
@@ -308,6 +314,7 @@ cd ${workdir}
 #####Get dates:
 #Get the start and end date of the wet season (Radar rain availability)
 split_dates=$(python2 ${workdir%/}/get_dates.py $raininput $input)
+seas=$(echo ${output}|rev|cut -d / -f1 |rev)
 for d in ${split_dates};do
   DATES=$(echo $d | sed 's/,/ /g')
   IFS=' ' read -a DATES <<< "$DATES"

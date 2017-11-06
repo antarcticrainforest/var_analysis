@@ -69,12 +69,17 @@ def creatpoly(poly,lons,lats,mask=-9999.0):
 if __name__ == "__main__":
 
     import sys,os
+    try:
+      seas = sys.argv[1]
+    except IndexError:
+      sys.stderr.write('Usage: %s season [YYYY] '%(sys.argv[0]))
+      sys.exit(257)
     lons,lats = 0,0
     res=[0.02299,0.02246]
     mask=-99.0
     polyx = [131.7651,131.7609,131.1355,129.8,130.41669]
     polyy = [-11.3081,-12.5858,-13.2287,-12.4,-11.40891]
-    out = os.path.join(os.path.dirname(__file__),'mask.nc')
+    out = os.path.join(os.path.dirname(__file__),'mask_%s.nc' %seas)
     try:
         if '-h' in sys.argv[1]:
             sys.exit("Usage: %s --lon=lons1,..,lonsN --lat=lats1,..,latsN --polyx=polyx1,..,polyxN, --polyy=polyy1,..,polyyN" %sys.argv[0])

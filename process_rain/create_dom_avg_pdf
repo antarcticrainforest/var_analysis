@@ -46,7 +46,7 @@ domavg_suffix="domavg_pdf"	# suffix to domain averaged files
 old_dir=${1%/}
 format=${2%/}
 workdir=${3%/}
-let proc=${4}
+proc=${4}
 base_date=${5}
 dates=${@:6}
 ipt_dir=${old_dir%/}/new
@@ -120,7 +120,7 @@ for date in ${dates[*]};do
               if [ ! -f ${avgfile} ];then
                 echo "$(basename $0) on $proc : Domain averaging $(basename ${avgfile})"
                 # do the domain average
-                python2.7 ${workdir%/}/make_domain_avg.py ${pdffile} ${avgfile} ${workdir%/}/mask.nc 0
+                python2.7 ${workdir%/}/make_domain_avg.py ${pdffile} ${avgfile} ${workdir%/}/mask_${proc}.nc 0
                     #python ${workdir%/}/correct_rain.py ${avgfile} 'time'
                   if [ $? -ne 0 ];then
                     echoerr "$(basename $0) on $proc : domain averaging failed"

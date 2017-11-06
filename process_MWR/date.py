@@ -1,6 +1,6 @@
 import datetime,os,sys,calendar
 
-def main(start,end):
+def main(seas,start,end):
     years= []
     months =[]
     first=[]
@@ -22,12 +22,12 @@ def main(start,end):
     last[-1]='%02i'%end.day
 
     for f,d in zip(('.years','.months','.first','.last'),(years,months,first,last)):
-        with open(os.path.join(Dir,f),'w') as t:
+        with open(os.path.join(Dir,'%s_%s'%(f,seas)),'w') as t:
             t.write(','.join(d)+'\n')
 
 
 if __name__ == '__main__':
     try:
-        main(*sys.argv[1:3])
+        main(*sys.argv[1:4])
     except IndexError:
         sys.exit('Usage %s start_date end_date'%sys.argv[0])

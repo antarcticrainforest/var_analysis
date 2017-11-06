@@ -221,7 +221,7 @@ if BATCH:
 #PBS -N seas$seas
 #PBS -lsoftware=idl
 #PBS -q express
-#PBS -l walltime=06:00:00
+#PBS -l walltime=08:00:00
 #PBS -l mem=14GB
 """
   elif BATCH == 'slurm':
@@ -307,7 +307,7 @@ THE_SCRIPT
 $modules
 
 cd ${workdir}
-${workdir%/}/preprocess.sh -a $arminput -r $raininput -v $va_input -o $output 2> ${jobdir%/}/seas${seas}_2.err 1> ${jobdir%/}/seas${seas}_2.out
+${workdir%/}/preprocess.sh -a $arminput -r $raininput -v $va_input -o $output
 
 EOF
 

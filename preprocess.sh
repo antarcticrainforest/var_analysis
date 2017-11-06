@@ -20,32 +20,6 @@ echoerr() {
   exit 257
 }
 
-check_arm_input () {
-    ndate=$(date -u -d "$(echo ${DATES[0]}|sed 's/_/ /')" +%s)
-    last=$(date -u -d "$(echo ${DATES[1]}|sed 's/_/ /')" +%s)
-
-    while [ $ndate -le $last ];do
-      tstring=$(date -u -d @${ndate} +'%Y%m%d')
-      for h in ecmwfupa ecmwfsupp ecmwfsurf met mwrlos;do
-        file=$(find ${input%/}/*${h}*${tstring}*.cdf 2> /dev/null)
-        if [ -z "$file" ];then
-        #  python2.7 ${workdir%/}/process_rain/clone.py ${raininput%}/new/domain_avg_6hr $tstring
-          #Get the files that are present
-          IFS=' ' read -a meta <<< "$(find ${input%/}/*${h}*.cdf 2>/dev/null)" #Make meta an array
-          echo "$(basename $0) : Creating missing data for $tstring"
-          python2.7 ${workdir%/}/clone.py ${input} ${meta[0]} ${tstring}
-          if [ $? -ne 0 ];then
-            echoerr "clone.py for $tstring failed"
-          fi
-        fi
-      done
-      ndate=$(($ndate+86400)) #Go forward for 6H
-    done
-
-
-}
-
-
 get_3d_input(){
     #Where is the interpolation idl/gdl-script stored
     barnes="${workdir}/3D_create/Barnes_interp/.interpolate_model.pro"
@@ -176,14 +150,13 @@ EOF
     
     units=$(ncdump -h ${output%/}/2D_put/${filename}|grep 'time:units'|cut -d = -f2|sed 's/;//'|sed 's/^ *//'|sed 's/\"//g'|sed 's/[ \t]*$//g')
     units="days since $fy-$fm-$fd 00:00:00 UTC"
-    if [ -f "${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp3.nc" ];then
-        rm ${output%/}/mwrlos_6h_${seas}_interp3.nc
+    if [ -f "${output%/}/MWR-DATA/mwrlos_6h_interp.nc" ];then
+        rm ${output%/}/mwrlos_6h_interp.nc
     fi
 
-    mv  ${output%/}/MWR-DATA/mwrlos_6h_${seas}_C3_interp3.nc ${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp.nc
-    ncatted -a units,time,o,c,"$units" ${output%/}/MWR-DATA/mwrlos_6h_${seas}_interp.nc
+    ncatted -a units,time,o,c,"$units" ${output%/}/MWR-DATA/mwrlos_6h_interp.nc
 
-   #rm -rf "${output%/}/MWR-DATA/process_MWR"
+   rm -rf "${output%/}/MWR-DATA/process_MWR"
 
 }
 
@@ -229,24 +202,10 @@ get_rain_input(){
     for d in ${dates[*]};do
       #Loop through all threads and distribute the dates
       #rain_loop $base_date $proc $a #&
-      #${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} ${rainformat} ${workdir%/}/process_rain/ $proc $base_date ${d}
+      ${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} ${rainformat} ${workdir%/}/process_rain/ $proc $base_date ${d}
       let proc=${proc}+1
     done
     wait
-    ndate=$(date -u -d "$(echo ${DATES[0]}|sed 's/_/ /')" +%s)
-    last=$(date -u -d "$(echo ${DATES[1]}|sed 's/_/ /')" +%s)
-    while [ $ndate -le $last ];do
-      tstring=$(date -u -d @${ndate} +'%Y%m%d_%H%M')
-      file=$(find ${raininput%/}/new/domain_avg_6hr/*${tstring}*.nc 2> /dev/null)
-      if [ -z "$file" ];then
-        python2.7 ${workdir%/}/process_rain/clone.py ${raininput%}/new/domain_avg_6hr $tstring
-        if [ $? -ne 0 ];then
-          echoerr "clone.py for $tstring failed"
-        fi
-      fi
-      ndate=$(($ndate+21600)) #Go forward for 6H
-    done
-    #mkdir -p ${output%}/radar_rain
     # Create the rain ensemble time series
         ${workdir%/}/process_rain/create_timeseries \
         ${raininput%/}/new/domain_avg_6hr ${output%/}/radar_rain \
@@ -348,48 +307,62 @@ cd ${workdir}
 ##########################################
 #####Get dates:
 #Get the start and end date of the wet season (Radar rain availability)
-DATES=$(python2 ${workdir%/}/get_dates.py $raininput)
-#DATES="20060201_0000 20060228_1800 20060201" #This is for debugging only
-IFS=' ' read -a DATES <<< "$DATES" #Make those dates an array
-#Check for missing days in the ARM dataset
-#check_arm_input
+split_dates=$(python2 ${workdir%/}/get_dates.py $raininput $input)
+for d in ${split_dates};do
+  DATES=$(echo $d | sed 's/,/ /g')
+  IFS=' ' read -a DATES <<< "$DATES"
+  first=$(echo ${DATES[0]}|cut -d '_' -f1)
+  last=$(echo ${DATES[1]}|cut -d '_' -f1)
+  old_output=${output}
+  old_va_output=${va_output}
+  partial="$first-$last"
+  
+  echo "##############################################################"
+  echo "##############################################################"
+  echo "#######                                                #######"
+  echo "#######          WORKING ON $partial          #######"
+  echo "#######                                                #######"
+  echo "##############################################################"
+  echo "##############################################################"
 
-#Call the create_2d_input_files script
-mkdir -p ${output}
-mkdir -p ${va_output}
-#${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
-if [ $? -ne 0 ];then
-  echoerr "create_2d_input_files had an error, aborting"
-fi
-###Get the 3d_data
-#${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
-if [ $? -ne 0 ];then
-  echoerr "concatenate_arm_data had an error, aborting"
-fi
-#get_3d_input
-if [ $? -ne 0 ];then
-  echoerr "get_3d_input had an error, aborting"
-fi
+  output=${old_output%/}/$partial
+  va_output=${old_va_output%/}/$partial
+
+  #Call the create_2d_input_files script
+  mkdir -p ${output}
+  mkdir -p ${va_output}
+
+  ${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
+  if [ $? -ne 0 ];then
+    echoerr "create_2d_input_files had an error, aborting"
+  fi
+  ###Get the 3d_data
+  ${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
+  if [ $? -ne 0 ];then
+    echoerr "concatenate_arm_data had an error, aborting"
+  fi
+  get_3d_input
+  if [ $? -ne 0 ];then
+    echoerr "get_3d_input had an error, aborting"
+  fi
+
+  #####Get the microwave input data
+  get_micro_input 'smet' 'mwrlos' ${DATES[*]}
+  if [ $? -ne 0 ];then
+    echoerr "get_micro_input had an error, aborting"
+  fi
 
 
-#####Get the microwave input data
-#get_micro_input 'smet' 'mwrlos' ${DATES[*]}
-if [ $? -ne 0 ];then
-  echoerr "get_micro_input had an error, aborting"
-fi
+  ####Prepare the raindata
+  get_rain_input
+  if [ $? -ne 0 ];then
+    echoerr "get_rain_input had an error, aborting"
+  fi
 
+  echo 'Preprocessing done, running variational analysis'
 
-####Prepare the raindata
-#get_rain_input
-if [ $? -ne 0 ];then
-  echoerr "get_rain_input had an error, aborting"
-fi
-
-#exit
-echo 'Preprocessing done, running variational analysis'
-
-${workdir%/}/process.sh ${output} ${va_output}
-if [ $? -ne 0 ];then
-  echoerr "3D VAR had an error, aborting"
-fi
-
+  ${workdir%/}/process.sh ${output} ${va_output}
+  if [ $? -ne 0 ];then
+    echoerr "3D VAR had an error, aborting"
+  fi
+done

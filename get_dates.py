@@ -1,60 +1,88 @@
-import datetime,os,glob,sys
-import numpy as np
+import datetime,os,glob,sys, numpy as np
+from datetime import timedelta
 
-def lookup(f):
+def lookup(f,head):
     """
         Get the days in a season
     """
-    s = '_'.join(f.replace('-','_').replace('.','_').split('_')[-3:-2])
+    if head.lower() == 'cpol':
+      s = '_'.join(f.replace('-','_').replace('.','_').split('_')[-3:-2])
+    else:
+      s = '_'.join(f.replace('-','_').replace('.','_').split('_')[-3:-2])
     return datetime.datetime.strptime(s,'%Y%m%d')
 
-def roundupdown(a,b):
-    a+=datetime.timedelta(hours=24)
-    b-=datetime.timedelta(hours=24)
-    a=datetime.datetime(a.year,a.month,a.day,0,0)
-    b=datetime.datetime(b.year,b.month,b.day,18,0)
 
-    return a.strftime('%Y%m%d_%H%M'),b.strftime('%Y%m%d_%H%M')
-    h1=(6-a.hour%6)*(int(bool(a.hour%6)))
-    h2=(b.hour%6)*(int(bool(b.hour%6)))
-    a+=datetime.timedelta(seconds=h1*60**2)
-    b-=datetime.timedelta(seconds=h2*60**2)
-    return a.strftime('%Y%m%d_%H%M'),b.strftime('%Y%m%d_%H%M')
 
-    
-def get_filenames(folder,months=range(1,13)):
+def get_filenames(folder,head):
+
     """
         Get all filenames for the months in the season
     """
-    rainfiles=glob.glob(os.path.join(folder,'*_????????_*'))
-    dates=np.array([lookup(f) for f in rainfiles])
+    if head.lower() == 'cpol':
+      files=glob.glob(os.path.join(folder,'*_????????_*'))
+    else:
+      files=glob.glob(os.path.join(folder,'*%s*'%head.lower()))
+    dates=np.array([lookup(f,head) for f in files])
     dates.sort()
-    MIN,MAX=dates.min(),dates.max()
+    return dates
     return MIN,MAX,np.unique(np.array([d.strftime('%Y%m'+'01') for d in dates]))
-def main(folder):
-    """
-    Get the start and the end of days that have CPOL data within a rain season
 
-    Input:
-        folder (str-object): The input directory of the rain data
-    Returns:
-        days (str-object): String with all days withing the season
-    """
+def get_months(dates):
+  for start,end in dates:
+    mon = []
+    tmp = start
+    dt = timedelta(days=1)
+    while tmp <= end:
+      if tmp.strftime('%Y%m01') not in mon:
+        mon.append(tmp.strftime('%Y%m01'))
+      tmp += dt
+    sys.stdout.write('%s,%s,%s\n'\
+        %(start.strftime('%Y%m%d_0000'),end.strftime('%Y%m%d_1800'),','.join(mon)))
 
-    Min,Max,dates = get_filenames(folder)
-    Min,Max = roundupdown(Min,Max)
-    return Min+' '+Max+' '+' '.join(list(dates))
+def split(dates):
+  first,last = dates[0],dates[-1]
+  dt = dates[1] - dates[0]
+  out = []
+  tmp = first
+  missing,missing_all = [],[]
+  nn = -1
+  while tmp <= last:
+    if not tmp in dates:
+      out.append((first,(tmp-dt)))
+      while tmp not in dates and tmp <= last:
+        tmp += dt
+      first = tmp
+    tmp += dt
+  return get_months(out)
 
-    
 
+def main(cpoldir,armdir):
+  dates={}
+  for key,value in dict(cpol=cpoldir,met=armdir,mwrl=armdir).iteritems():
+    dates[key]=get_filenames(value,key)
+  out =[]
+  maxl = 0
+  for key,value in dates.iteritems():
+    if len(value) > maxl:
+      maxl=len(value)
+      t=key
+  
+  for v in dates[t]:
+    if v in dates['cpol'] and v in dates['met'] and v in dates['mwrl']:
+      out.append(v)
+  return(split(np.array(out)))
 
 if __name__ == '__main__':
     import sys
 
     try:
-        folder=sys.argv[1]
-    except IndexError:
-        sys.exit('Usage: \t python %s INPUTDIR '%(sys.argv[0]))
+      raininput,arminput=sys.argv[1:3]
+    except IndexError, ValueError:
+        sys.exit('Usage: \t python %s CPOL-INPUTDIR ARM-INPUTDIR'%(sys.argv[0]))
+    
+
+    main(raininput,arminput)
 
 
-    sys.stdout.write('%s\n'%main(folder))
+
+

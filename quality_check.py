@@ -113,6 +113,7 @@ class Check(MWR,CPOL,ECMWF):
     def check(self):
         nn = 0
         for fn in self.filenames:
+          try:
             with nc(fn) as f:
                 self.time=self.check_time(f,fn)
                 for var in f.variables:
@@ -123,6 +124,9 @@ class Check(MWR,CPOL,ECMWF):
                     except AttributeError:
                         pass
                     nn+=1
+          except RuntimeError, OSError:
+            print '%s not existing' %fn
+            sys.exit()
 if __name__ == '__main__':
 
     try:

@@ -315,13 +315,13 @@ cd ${workdir}
 #Get the start and end date of the wet season (Radar rain availability)
 split_dates=$(python2 ${workdir%/}/get_dates.py $raininput $input)
 seas=$(echo ${output}|rev|cut -d / -f1 |rev)
+old_output=${output}
+old_va_output=${va_output}
 for d in ${split_dates};do
   DATES=$(echo $d | sed 's/,/ /g')
   IFS=' ' read -a DATES <<< "$DATES"
   first=$(echo ${DATES[0]}|cut -d '_' -f1)
   last=$(echo ${DATES[1]}|cut -d '_' -f1)
-  old_output=${output}
-  old_va_output=${va_output}
   partial="$first-$last"
   
   echo "##############################################################"

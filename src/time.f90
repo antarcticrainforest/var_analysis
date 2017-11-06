@@ -50,22 +50,21 @@ DO II=1,NT
     ! First calculate the date
     !
     TMO = STMONTH
-
     DO WHILE (TDN .GE. (MDAYS(TMO)+1))
         IF (LEAPYEAR(TYY)) THEN
             MDAYS(2) = 29
         ELSE
             MDAYS(2) = 28
         END IF
- 
-        DO WHILE ((TDN .GE. (MDAYS(TMO)+1)) .AND. TMO .LE. 12)
+        DO WHILE ((TDN .GE. (MDAYS(TMO)+1)))
             TDN = TDN - MDAYS(TMO)
-            TMO = TMO +1
+            TMO = TMO + 1
+            if (tmo > 12) exit
         END DO
-        IF (TMO .EQ. 13) THEN
+        if (TMO > 12) then
             TYY = TYY + 1
             TMO = 1
-        ENDIF
+       endif
     END DO
     TDD = INT(TDN, KIND=IK4)
     !

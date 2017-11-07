@@ -30,7 +30,7 @@ get_3d_input(){
         | sed "s%output3d='XXXX'%output3d='${output%/}/3D_put/analysis.agrid'%g"\
         | sed "s%dir_out='XXXX'%dir_out='${output%/}/3D_put/'%g" > tmp_${seas}.pro
     
-    chmod +x tmp.pro
+    chmod +x tmp_${seas}.pro
     barns="${workdir%/}/3D_create/Barnes_interp"
     mv tmp_${seas}.pro "${barns%/}/interpolate_model_${seas}.pro"
     old_dir=$PWD
@@ -127,7 +127,7 @@ get_micro_input(){
 
     mkdir -p ${output%/}/MWR-DATA/Plot
     mkdir -p ${output%/}/MWR-DATA/ascii_out
-    chmod +x tmp.pro
+    chmod +x tmp_${seas}.pro
     mv tmp_${seas}.pro ${workdir%/}/process_MWR/process_${2}_a1_darwin_${seas}.pro
     old_dir=$PWD
     cd ${workdir%/}/process_MWR
@@ -142,17 +142,30 @@ get_micro_input(){
     spawn, "mv ${output%/}/MWR-DATA/*.asc ${output%/}/MWR-DATA/ascii_out/"
     exit
 EOF
+  if [ $? -ne 0 ];then
+    echoerr "get_micro_input had an error, aborting"
+  fi
+
+
     ${idl_cmd} <<EOF
     print, "working on process_${2}_a1_darwin_${seas}.pro"
     .r process_${2}_a1_darwin_${seas}.pro
     exit
 EOF
-    
+  if [ $? -ne 0 ];then
+    echoerr "get_micro_input had an error, aborting"
+  fi
+
+
 #    rm ${workdir%/}/process_MWR/process_*_a1_darwin_${seas}.pro
     units=$(ncdump -h ${output%/}/2D_put/${filename}|grep 'time:units'|cut -d = -f2|sed 's/;//'|sed 's/^ *//'|sed 's/\"//g'|sed 's/[ \t]*$//g')
     units="days since $fy-$fm-$fd 00:00:00 UTC"
 
     ncatted -a units,time,o,c,"$units" ${output%/}/MWR-DATA/mwrlos_6h_interp.nc
+  if [ $? -ne 0 ];then
+    echoerr "get_micro_input had an error, aborting"
+  fi
+
 
    rm -rf "${output%/}/MWR-DATA/process_MWR"
 
@@ -313,6 +326,9 @@ split_dates=$(python2 ${workdir%/}/get_dates.py $raininput $input)
 seas=$(echo ${output}|rev|cut -d / -f1 |rev)
 old_output=${output}
 old_va_output=${va_output}
+#split_dates="20060224_0000,20060303_1800,20060201,20060301"
+#echo ${split_dates}
+
 for d in ${split_dates};do
   DATES=$(echo $d | sed 's/,/ /g')
   IFS=' ' read -a DATES <<< "$DATES"
@@ -335,28 +351,28 @@ for d in ${split_dates};do
   mkdir -p ${output}
   mkdir -p ${va_output}
 
-  ${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
+ # ${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${DATES[*]}
   if [ $? -ne 0 ];then
     echoerr "create_2d_input_files had an error, aborting"
   fi
   ###Get the 3d_data
-  ${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
+ # ${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
   if [ $? -ne 0 ];then
     echoerr "concatenate_arm_data had an error, aborting"
   fi
-  get_3d_input
+#  get_3d_input
   if [ $? -ne 0 ];then
     echoerr "get_3d_input had an error, aborting"
   fi
 
   #####Get the microwave input data
-  get_micro_input 'smet' 'mwrlos' ${DATES[*]}
+#  get_micro_input 'smet' 'mwrlos' ${DATES[*]}
   if [ $? -ne 0 ];then
     echoerr "get_micro_input had an error, aborting"
   fi
 
   ####Prepare the raindata
-  get_rain_input
+ # get_rain_input
   if [ $? -ne 0 ];then
     echoerr "get_rain_input had an error, aborting"
   fi
@@ -367,4 +383,10 @@ for d in ${split_dates};do
   if [ $? -ne 0 ];then
     echoerr "3D VAR had an error, aborting"
   fi
+exit
 done
+mkdir -p ${old_va_output%/}/merge
+python2 postporcess.py ${old_va_output%/} ${split_dates[*]}
+if [ $? -ne 0 ];then
+    echoerr "Post-processing had an error, aborting"
+fi

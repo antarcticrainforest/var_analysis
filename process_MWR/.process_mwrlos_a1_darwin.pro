@@ -629,11 +629,14 @@ IF (exp_interp GT 0) THEN BEGIN
 
 	      endif ELSE BEGIN
 	         if (end_ind EQ time_ind-1) THEN BEGIN
-		 
-		 
-		    indicies = where(n_ipt_full[start_ind-1-avgtau:start_ind-1] GT 0, num_nonzero)
-		    indicies = indicies + start_ind-1-avgtau
-		    
+		              if (start_ind-1-avgtau le 0) then begin
+		                indicies = where(n_ipt_full[0:start_ind-1] GT 0, num_nonzero)
+		                indicies = indicies
+                 endif else begin
+		                indicies = where(n_ipt_full[start_ind-1-avgtau:start_ind-1] GT 0, num_nonzero)
+    		            indicies = indicies + start_ind-1-avgtau
+                endelse
+
 	            avg_vap1 = total(vap_full[indicies])/num_nonzero
 	            avg_liq1 = total(liq_full[indicies])/num_nonzero
 		 

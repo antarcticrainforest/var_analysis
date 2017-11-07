@@ -22,7 +22,7 @@ class MWR(object):
         Provide the micro wave radiometer data
     '''
     def __init__(self,folder):
-        self.filenames=(os.path.join(folder,'MWR-DATA','mwrlos_6h_0506_interp.nc'),)
+        self.filenames=(os.path.join(folder,'MWR-DATA','mwrlos_6h_interp.nc'),)
 class CPOL(object):
     '''
         Provide the radar rain rate estimates

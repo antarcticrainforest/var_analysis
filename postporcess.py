@@ -13,7 +13,6 @@ from datetime import datetime, timedelta
 
 
 
-
 def get_periods(start,end):
 
   out =[]
@@ -27,58 +26,28 @@ def get_periods(start,end):
 
   return out
 
-def correct_time(f):
+
+def concanate(source,ncf,exclude,start):
+  ''' Function to add existing data to the target netcdffile '''
   try:
-    oldtime=num2date(f.variables['time'][:],f.variables['time'].units)
-    newtime=date2num(oldtime,'seconds since 1970-01-01 00:00:00')
-  except IndexError:
-    newtime=None
-  try:
-    oldoffset=num2date(f.variables['time_offset'][:],f.variables['time_offset'].units)
-    newoffset=date2num(oldoffset,'seconds since 1970-01-01 00:00:00')
-  except IndexError:
-    newoffset=None
-
-  return newtime,newoffset
-
-
-def concanate(source,ncf,exclude):
-  
-  with nc(source) as f:
-    time,offset=correct_time(f)
-    idx=len(ncf.variables['time'][:])+1
-    ncf.variables['time'][idx:]=time
-    if type(offset) != type(None):
-      ncf.variables['time_offset'][idx:]=offset
-    for v in ncf.variables.keys():
-      if v not in exclude:
-        ncf.variables[v][idx:]=f.variables[v][:]
-
+    with nc(source) as f:
+      idx=len(ncf.variables['time'][:])
+      for v in ncf.variables.keys():
+        if v not in exclude:
+          ncf.variables[v][idx:]=f.variables[v][:]
+          
+  except RuntimeError, OSError:
+    pass
 def fill(f,tstep,end,exclude):
+  ''' Function to fill period with no data with missing values in the target 
+      netcdf file '''
   dt = timedelta(hours=6)
   dates = []
-  y,mon,day,Hour,Min = []
   while tstep <= end:
     dates.append(tstep)
-    y.append(tstep.year)
-    mon.append(tstep.month)
-    day.append(tstep.day)
-    Min.append(tstep.minute)
-    Hour.append(tstep.hour)
     tstep += dt
-  idx=len(f.variables['time'][:])+1
-  times=date2num(dates,f.variables['time'].units)
-  f.variables['time'][idx:]=times
-  if 'time_offset' in f.variables.keys():
-    offset=date2num(dates,f.variables['time_offset'].units)
-    f.variables['time_offset'][idx:]=offset
-  if 'year' in f.variables.keys():
-    f.variables['year'][idx:]=np.array(y)
-    f.variables['month'][idx:]=np.array(mon)
-    f.variables['day'][idx:]=np.array(day)
-    f.variables['hour'][idx:]=np.array(Hour)
-    f.variables['minute'][idx:]=np.array(Min)
-
+  idx=len(f.variables['time'][:])
+  f.variables['time'][idx:]=date2num(dates,'seconds since 1970-01-01 00:00:00')
   for v in f.variables.keys():
     if v not in exclude:
       try:
@@ -88,64 +57,103 @@ def fill(f,tstep,end,exclude):
         f.variables[v].missing_value= -9999.0
 
 
+def fix_time(f,start,end,exclude):
+  ''' Function that fixes up the time variables and missing values '''
+  dt=timedelta(hours=6)
+  nn=0
+  T = ('time','time_offset','year','month','day','hour','minute')
+  while start < end:
+    for v in T:
+      if v in f.variables.keys():
+        ts=date2num(start,'seconds since 1970-01-01 00:00:00')
+        if v in ('year','month','day','hour','minute'):
+            f.variables[v][nn]=[getattr(start,v)]
+        else:
+            f.variables[v][nn]=[ts]
+    start += dt
+    nn+= 1
 
-
-
+  for var in f.variables.keys():
+     if var not in exclude and var not in T:
+       ii = np.where(f.variables[var][:] > 1e30)
+       if len(ii[0] > 0):
+         try:
+            f.variables[var][ii] = f.variables[var].missing_value
+         except AttributeError:
+            f.variables[var][ii] = -9999.
+            f.variables[var].missing_value=-9999.
 
 def copy(folder,dates):
+  ''' Copy the output of the first data preiod and make them the target netcdffile
+      where stuff gets added '''
   tstring='%s-%s'%(dates[0].strftime('%Y%m%d'),dates[1].strftime('%Y%m%d'))
   sfolder=os.path.join(folder,tstring)
   tfolder=os.path.join(folder,'merge')
   os.system('cp -r %s/* %s'%(sfolder,tfolder))
 
+
 def merge(folder,dates):
+  #Which variables should not be merged because they don't change or will be fixed later?
   exclude=('base_time','time','time_offset','lat','lon','phis','lev','string','stations','levels','variables','stru','strs','vbudget_column','vbudget_layer','weight')
+  
   for p in xrange(100):
     if p == 0:
       t = 'best_est'
     else:
       t = 'p%02i'%p
-
+    
     tfolder = os.path.join(folder,'merge',t,'*.nc')
-    for tfile in glob.glob(tfolder,tfolder):
+    #Remove the forcing.txt because it's in the netcdf-files
+    os.system('rm -f %s'%(os.path.join(folder,'merge',t,'*.txt')))
+    #Find all netcdf-files that have been copied into merge (from the first period)
+    for tfile in glob.glob(tfolder):
       ncfile = os.path.basename(tfile)
-      sys.stdout.write('Merging %si\n'%ncfile)
+      sys.stdout.write('Merging %s in %s \n'%(ncfile,t))
+      #Make the time dimension a record dimension, so that stuff can be added
+      os.system('ncks -O --mk_rec_dmn time %s %s'%(tfile,os.path.join(folder,'merge',t,'tmp.nc')))
+      os.system('mv %s %s'%(os.path.join(folder,'merge',t,'tmp.nc'),tfile))
+      #Open the file
       with nc(tfile,'a') as h5:
-        time,offset=correct_time(h5)
-        h5.variables['time'][:]=time
+        #Fix the time units
         h5.variables['time'].units='seconds since 1970-01-01 00:00:00'
-        if type(offset) != type(None):
-          h5.variables['time_offset'][:]=offset
+        if 'time_offset' in h5.variables.keys():
           h5.variables['time_offset'].units='seconds since 1970-01-01 00:00:00'
-
+        #Cycle through all periods
         for start,end,present in dates:
           if present:
+            #For this period we have data, read it an add it to the target file
             tstring='%s-%s'%(start.strftime('%Y%m%d'),end.strftime('%Y%m%d'))
-            sfile = os.path.join(folder,tstring,ncfile)
-            concanate(sfile,h5,exclude)
+            sfile = os.path.join(folder,tstring,t,ncfile)
+            concanate(sfile,h5,exclude,start)
           else:
+            #This period does not have data, add missing data to the target file
             fill(h5,start,end,exclude)
-    break
+        #Fix up the time, metadata
+        fix_time(h5,dates[0][0],dates[-1][1],exclude)
+#    break
 def main(folder,dates):
   starts=[]
   ends=[]
   for d in dates:
+      #Get the dates the were given as inputs
       s,e=d.split(',')[0:2]
       starts.append(datetime.strptime(s,'%Y%m%d_%H%M'))
       ends.append(datetime.strptime(e,'%Y%m%d_%H%M'))
+  #Find out for which periods we have data and for which not
   periods = get_periods(starts,ends)
-  #copy(folder,periods[0])
+  #Copy the files for the first period
+  copy(folder,periods[0])
+  #And merge it with the rest
   merge(folder,periods[1:])
 
 
 
 if __name__== '__main__':
-
+  """ This module merges the data into one single output file """
   try:
     folder=sys.argv[1]
     dates=sys.argv[2:]
   except IndexError:
     sys.stderr.write('Usage: %s va_output dates'%sys.argv[0])
     sys.exit(257)
-
   main(folder,dates)

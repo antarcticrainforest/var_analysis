@@ -57,10 +57,37 @@ EOF
 
 get_micro_input(){
 
-   mkdir -p "${output%/}/MWR-DATA/process_MWR/temp"
+    mkdir -p "${output%/}/MWR-DATA/process_MWR/temp"
+    
 #   IFS=' ' read -a DATES <<< "$DATES"
     declare -a dates=${@:3}
-    python2 ${workdir%/}/process_MWR/date.py $seas $dates
+   IFS=' ' read -a dates <<< "$dates"
+    echo ${dates[1]}
+    nday=$(echo ${dates[0]}|sed 's/_/ /g') #Get the first day
+    let nday=$(date -u -d "${nday}" +%s) # Make it 00:00, in case it is not
+    end=$(echo ${dates[1]}|sed 's/_/ /g') #Get the last date
+    let end=$(date -u -d "${end}" +%s) # Make it 00:00, in case it is not
+    declare -a meta_met=$(find ${input%/}/*met*.cdf)
+    IFS=' ' read -a meta_met <<< "$meta_met"
+    declare -a meta_mwrlos=$(find ${input%/}/*mwrlos*.cdf)
+    IFS=' ' read -a meta_mwrlos <<< "$meta_mwrlos"
+    while [ ${nday} -lt ${end} ] ;do
+      tstring=$(date -u -d @${nday} +'%Y%m%d')
+      ft_met=$(find ${input%/}/*met*$tstring*.cdf 2> /dev/null)
+      ft_mwrlos=$(find ${input%/}/*mwrlos*$tstring*.cdf 2> /dev/null)
+      if [ -z $ft_met ];then
+        echo "get_micro: Creating file for met at $tstring"
+        python2 ${workdir%/}/clone.py ${input%/} ${meta_met[0]} $tstring
+      fi
+      if [ -z $ft_mwrlos ];then
+        echo "get_micro: Creating file for mwrlos at $tstring"
+        python2 ${workdir%/}/clone.py ${input%/} ${meta_mwrlos[0]} $tstring
+      fi
+
+      nday=$(($nday+86400)) #Increase by one day (86400 sec)
+    done
+
+    python2 ${workdir%/}/process_MWR/date.py $seas ${dates[*]}
     mapfile -t  years_str <  ${workdir%/}/process_MWR/.years_${seas}
     mapfile -t months_str < ${workdir%/}/process_MWR/.months_${seas}
     mapfile -t first < ${workdir%/}/process_MWR/.first_${seas}
@@ -323,7 +350,7 @@ cd ${workdir}
 #####Get dates:
 #Get the start and end date of the wet season (Radar rain availability)
 split_dates=$(python2 ${workdir%/}/get_dates.py $raininput $input)
-if [ -z $split_dates ];then
+if [ $? -ne 0 ];then
   echoerr 'No overlapping periods found for microw. radiom. and cpol data'
 fi
 seas=$(echo ${output}|rev|cut -d / -f1 |rev)
@@ -372,7 +399,6 @@ for d in ${split_dates};do
   if [ $? -ne 0 ];then
     echoerr "get_micro_input had an error, aborting"
   fi
-
   ####Prepare the raindata
   get_rain_input
   if [ $? -ne 0 ];then
@@ -387,7 +413,7 @@ for d in ${split_dates};do
   fi
 done
 mkdir -p ${old_va_output%/}/merge
-python2 postporcess.py ${old_va_output%/} ${split_dates[*]}
+python2 ${workdir%}/postprocess.py ${old_va_output%/} ${split_dates[*]}
 if [ $? -ne 0 ];then
     echoerr "Post-processing had an error, aborting"
 fi

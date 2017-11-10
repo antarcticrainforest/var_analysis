@@ -323,6 +323,9 @@ cd ${workdir}
 #####Get dates:
 #Get the start and end date of the wet season (Radar rain availability)
 split_dates=$(python2 ${workdir%/}/get_dates.py $raininput $input)
+if [ -z $split_dates ];then
+  echoerr 'No overlapping periods found for microw. radiom. and cpol data'
+fi
 seas=$(echo ${output}|rev|cut -d / -f1 |rev)
 old_output=${output}
 old_va_output=${va_output}

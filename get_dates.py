@@ -70,6 +70,8 @@ def main(cpoldir,armdir):
   for v in dates[t]:
     if v in dates['cpol'] and v in dates['met'] and v in dates['mwrl']:
       out.append(v)
+  if len(out) == 0:
+    sys.exit()
   return(split(np.array(out)))
 
 if __name__ == '__main__':

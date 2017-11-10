@@ -425,6 +425,7 @@ DD(18,:)    = MG_RADS(2:NT-1)
 DD(19,:)    = MG_LWT(2:NT-1)
 DD(20,:)    = MG_SWT(2:NT-1)
 !DD(21,:)    = MG_INS(2:NT-1) ! don't have any insolation values.
+!DD(21,:)    = MG_SWT(2:NT-1) - MG_LWT(2:NT-1)
 DD(22,:)    = MG_LCC(2:NT-1)
 DD(23,:)    = MG_MCC(2:NT-1)
 DD(24,:)    = MG_HCC(2:NT-1)

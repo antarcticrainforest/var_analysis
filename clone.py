@@ -40,14 +40,14 @@ def main(folder,meta,date):
         pass
 
 
-  #os.remove(newf)
+#  os.remove(newf)
 
 if __name__ == '__main__':
 
   try:
     folder,meta,date = sys.argv[1:4]
   except ValueError:
-    sys.stderr.write('Usage: %s inputdir presentfile data')
+    sys.stderr.write('Usage: %s inputdir presentfile date\n'%sys.argv[0])
     sys.exit(257)
 
   main(folder,meta,datetime.strptime(date,'%Y%m%d'))

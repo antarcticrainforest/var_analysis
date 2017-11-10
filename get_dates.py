@@ -56,34 +56,29 @@ def split(dates):
   return get_months(out)
 
 
-def main(cpoldir,armdir):
+def main(cpoldir):
   dates={}
-  for key,value in dict(cpol=cpoldir,met=armdir,mwrl=armdir).iteritems():
+  for key,value in dict(cpol=cpoldir).iteritems():
     dates[key]=get_filenames(value,key)
   out =[]
   maxl = 0
-  for key,value in dates.iteritems():
-    if len(value) > maxl:
-      maxl=len(value)
-      t=key
-  
-  for v in dates[t]:
-    if v in dates['cpol'] and v in dates['met'] and v in dates['mwrl']:
+  for v in dates['cpol']:
+    if v in dates['cpol']:
       out.append(v)
   if len(out) == 0:
-    sys.exit()
+    sys.exit(257)
   return(split(np.array(out)))
 
 if __name__ == '__main__':
     import sys
 
     try:
-      raininput,arminput=sys.argv[1:3]
+      raininput=sys.argv[1]
     except IndexError, ValueError:
-        sys.exit('Usage: \t python %s CPOL-INPUTDIR ARM-INPUTDIR'%(sys.argv[0]))
+        sys.exit('Usage: \t python %s CPOL-INPUTDIR'%(sys.argv[0]))
     
 
-    main(raininput,arminput)
+    main(raininput)
 
 
 

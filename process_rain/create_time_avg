@@ -26,7 +26,6 @@ base_date=${8}
 search_date=${9}
 
 
-
 base_string=$(python2.7 -c "from datetime import datetime;print datetime.strptime('${base_date}','%Y%m%d').strftime('%Y-%m-%d')")
 if [ "${domain}" == "full" ];then
     opt_dir=${opt_dir%/}/pdf_${t_avg}hr/
@@ -202,7 +201,7 @@ while [ $((seconds)) -le $seconds_end ]; do
 
           ncatted -a nco_openmp_thread_number,global,d,, ${timeavgfile}
           ncatted -a history,global,o,c,"Domain averaged and temporarly averaged to three hours by radar_error_all" -h ${timeavgfile}
-     
+          python2 ${path_prefix%/}/correct_ts.py ${timeavgfile}
       fi
       unset file_in
       unset t_in

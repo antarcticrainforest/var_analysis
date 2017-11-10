@@ -14,9 +14,9 @@ then
      if [[ $# -ne 8 ]]
      then
           echo "wrong number of arguments"
-	  exit
+	  exit 257
      else
-	  ipt_dir=${1%/}/
+	  ipt_dir=${1%/}
  	  opt_dir=${2%/}
 	  date_start=${3}
 	  time_start=${4}
@@ -28,7 +28,7 @@ then
 fi
 
 base_string=$(python2.7 -c "from datetime import datetime;print datetime.strptime('${base_date}','%Y%m%d').strftime('%Y-%m-%d')")
-
+wrkdir=$(readlink -f $(basename $0))
 mkdir -p ${opt_dir}
 ##########################################################################
 if [  "$(command -v gdate 2> /dev/null)" ];then
@@ -43,7 +43,7 @@ b_seconds=$(${cmd} -u -d "${base_date} 0000" +%s )
 
 rm -f $ipt_dir/*_temp.nc
 
-thefile=$(find ${ipt_dir}*${date_start}_${time_start}*.nc)
+thefile=$(find ${ipt_dir%/}/*${date_start}_${time_start}*.nc)
 filesuffix=$(echo ${thefile} | sed "s/.*\(${time_start}\)\(.*\)/\2/")
 
 seconds_start=$(${cmd} -u -d "${date_start} ${time_start}" +%s )

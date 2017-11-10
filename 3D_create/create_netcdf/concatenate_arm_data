@@ -82,9 +82,8 @@ echo " "
 i=0
 nday=$(echo $date_begin|awk '{print $1}') #Get the first day
 let nday=$($date -u -d "${nday} 0000" +%s) # Make it 00:00, in case it is not
-end=$($date -u -d $(echo $date_end|awk '{print $1}')) #Get the last date
-let end=$($date -u -d "${end}+18 hours" +%s) #Make the last timestep 18:00 in case it's not
-
+end=$(echo $date_end|awk '{print $1}') #Get the last date
+let end=$($date -u -d "${end} 1800" +%s) # Make it 18:00, in case it is not
 
 # Get file names #############################################################
 while [ ${nday} -lt ${end} ] ;do

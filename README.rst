@@ -62,12 +62,12 @@ On Mac OS X 10.6 and later (via port reposetory system)::
    
 Data and format
 ---------------
-You might need to `create<https://www.archive.arm.gov/armuserreg/#/new>`_ an 
+You might need to `create <https://www.archive.arm.gov/armuserreg/#/new>`_ an 
 account at the Atmospheric Radiation Measurement (ARM) Climate Research Programm.
 Once you have an account you will need to download the following data:
 
 Suppose you want to run the analysis for Feb 2014:
-Go to the `arm data catalogue<http://www.archive.arm.gov/discovery/#v/results/s/>`_ and
+Go to the `arm data catalogue <http://www.archive.arm.gov/discovery/#v/results/s/>`_ and
 search for :
  
 * Surface data from ecmwf model (e.g. twpecmwfsurfX1 for data over Darwin)

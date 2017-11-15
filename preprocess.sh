@@ -413,7 +413,7 @@ for d in ${split_dates};do
   fi
 done
 mkdir -p ${old_va_output%/}/merge
-python2 ${workdir%}/postprocess.py ${old_va_output%/} ${split_dates[*]}
+python2 ${workdir%}/postprocess.py ${old_va_output%/} ${split_dates}
 if [ $? -ne 0 ];then
     echoerr "Post-processing had an error, aborting"
 fi

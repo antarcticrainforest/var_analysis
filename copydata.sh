@@ -4,7 +4,7 @@ echoerr() {
   echo "$@" 1>&2
   exit 257
 }
-
+hemisphere='south'
 while [[ $# -ge 1 ]]
 do
 	typeset -l option="${1}"
@@ -21,6 +21,10 @@ do
 		start="${2:-${start}}"
 		shift; shift
 		;;
+    ( "-h" | "--hemisphere" )
+    hemisphere="${2:-${hemisphere}}"
+		shift; shift
+		;;
 		( "-e" | "--end" )
 		end="${2:-${end}}"
 		shift; shift
@@ -33,6 +37,9 @@ do
     echo "-i , --output    : The parent folder containing the season folder"
     echo "-s , --start     : First data month that is in input (format YYYYMM)"
     echo "-e , --end       : Last data month that is in input (format YYYMM)"
+    echo "-h, --hemisphere : Northern/Southern Hemisphere, which months are
+                   considered to be wet season, depending on the 
+                   hemisphere [north/south]"
 		exit 2
 		;;
 	esac
@@ -52,8 +59,12 @@ fi
 if [ -z "$end" ];then
   echoerr "Error --end not given"
 fi
-
-declare -a wtseas=( [5]=0 [6]=0 [7]=0 [8]=0 [9]=0 [10]=1 [11]=1 [12]=1 [1]=1 [2]=1 [3]=1 [4]=1 )
+hemisphere=$(echo $hemisphere|cut -c 1-1 | tr /A-Z/ /a-z/)
+if [ "$hemisphere" == "s" ];then
+  declare -a wtseas=( [5]=0 [6]=0 [7]=0 [8]=0 [9]=0 [10]=1 [11]=1 [12]=1 [1]=1 [2]=1 [3]=1 [4]=1 )
+else
+  declare -a wtseas=( [5]=1 [6]=1 [7]=1 [8]=1 [9]=1 [10]=0 [11]=0 [12]=0 [1]=0 [2]=0 [3]=0 [4]=0 )
+fi
 tstep=$(date -u -d ${start}01 +%s)
 last=$(date -u -d ${end}01 +%s)
 
@@ -77,7 +88,7 @@ while [ $tstep  -le $last ];do
     tstring=${yyyy}${mm}
     folder=${output%}/${seas}
     mkdir -p $folder
-    cp ${input%/}/*${tstring}*.* ${folder%/}/
+    cp ${input%/}/*${tstring}*.* ${folder%/}/ 2> /dev/null
   fi
   let mon=$mm2+1
   if [ $mon -eq 13 ];then

@@ -89,8 +89,8 @@ let end=$($date -u -d "${end} 1800" +%s) # Make it 18:00, in case it is not
 while [ ${nday} -lt ${end} ] ;do
   tstring=$(date -u -d @${nday} +'%Y%m%d')
  # Find the files required
-   filein_upa[$i]=$(find ${in_dir_upa%/}/*upa*${tstring}*.cdf)
-   filein_surf[$i]=$(find ${in_dir_surf%/}/*surf*${tstring}*.cdf)
+   filein_upa[$i]=$(find ${in_dir_upa%/}/*upa*${tstring}*.cdf 2> /dev/null)
+   filein_surf[$i]=$(find ${in_dir_surf%/}/*surf*${tstring}*.cdf 2> /dev/null)
 
    nday=$(($nday+86400)) #Increase by one day (86400 sec)
    i=$(($i+1))
@@ -102,9 +102,9 @@ ncrcat -h -O -o ${fileout_upa} ${filein_upa[*]}
 ncap -h -O -s "time = time_offset^1/86400.0" ${fileout_upa} ${fileout_upa}
 ncatted -h -a units,time,a,c,"days since ${base_date}" ${fileout_upa}
 ncatted -h -a units,time,a,c,"days since ${base_date} 00:00:00 UTC" ${fileout_upa}
-#ncks -h -O -d time,${t_begin},${t_end} ${fileout_upa} ${fileout_upa}
+ncks -h -O -d time,${t_begin},${t_end} ${fileout_upa} ${fileout_upa}
 
 ncrcat -h -O -o ${fileout_surf} ${filein_surf[*]}
 ncap -h -O -s "time = time_offset^1/86400.0" ${fileout_surf} ${fileout_surf}
 ncatted -h -a units,time,a,c,"days since ${base_date} 00:00:00 UTC" ${fileout_surf}
-#ncks -h -O -d time,${t_begin},${t_end} ${fileout_surf} ${fileout_surf}
+ncks -h -O -d time,${t_begin},${t_end} ${fileout_surf} ${fileout_surf}

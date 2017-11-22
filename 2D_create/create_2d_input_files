@@ -100,33 +100,11 @@ nday=$(echo $date_begin|awk '{print $1}') #Get the first day
 let nday=$($date -u -d "${nday} 0000" +%s) # Make it 00:00, in case it is not
 end=$(echo $date_end|awk '{print $1}') #Get the last date
 let end=$($date -u -d "${end} 1800" +%s) # Make it 00:00, in case it is not
-
-while [ ${nday} -lt ${end} ] ;do
-  tstring=$(date -u -d @${nday} +'%Y%m%d')
-  #date -u -d @$nday +"${src} :  Adding %e %b %Y"
-
- # Find the files required
-   file_surf[$i]=$(find ${ipt_dir}*surf*${tstring}*.cdf)
-   file_supp[$i]=$(find ${ipt_dir}*supp*${tstring}*.cdf)
-
-   file_tmp[$i]="${tstring}_tmp.cdf"
-  
- # get the variables we need from the surf and supp files
-   #ncks -D 0 -h -O -v "${var1}" "${file_surf[i]}" "${file_tmp[i]}"
-   #ncks -D 0 -h -A -v "${var2}" "${file_supp[i]}" "${file_tmp[i]}"
-
-   i=$(($i+1))
-   nday=$(($nday+86400)) #Increase by one day (86400 sec)
-done
-#Get the timestep of the next day
-tstring=$(date -u -d @${nday} +'%Y%m%d')
-file_surf_last=$(find ${ipt_dir}*surf*${tstring}*.cdf)
-file_supp_last=$(find ${ipt_dir}*supp*${tstring}*.cdf)
-ncks -O -d time,0 -o ${opt_dir%/}/last_supp.cdf $file_supp_last
-ncks -O -d time,0 -o ${opt_dir%/}/last_surf.cdf $file_surf_last
 # concatenate files (nco knows about arm conventions in time_offset and base_time, but not in time itself
-ncrcat -h -O -o ${opt_dir%/}/tmp_surf.cdf ${file_surf[*]} ${opt_dir%/}/last_surf.cdf
-ncrcat -D 0 -h -O -o ${opt_dir%/}/tmp_supp.cdf ${file_supp[*]} ${opt_dir%/}/last_supp.cdf
+declare -a file_surf=$(find ${ipt_dir}*surf*????????*.cdf 2> /dev/null)
+declare -a file_supp=$(find ${ipt_dir}*supp*????????*.cdf 2> /dev/null)
+ncrcat -h -O -o ${opt_dir%/}/tmp_surf.cdf ${file_surf[*]}
+ncrcat -D 0 -h -O -o ${opt_dir%/}/tmp_supp.cdf ${file_supp[*]}
 ncks -D 0 -h -O -v "${var1}" ${opt_dir%/}/tmp_surf.cdf $outfile
 ncks -D 0 -h -A -v "${var2}" ${opt_dir%/}/tmp_supp.cdf $outfile
 
@@ -237,34 +215,28 @@ ncatted -h -a long_name,slhfsfc,o,c,"surface latent heat-flux" "${outfile}"
 
 ncatted -h -a units,spsfc,o,c,"hPa" "${outfile}"
 
-timeshift=1
-if [[ $timeshift -gt 0 ]]
-then
+# ok. Now need to move the flux data by three hours. This is nasty.
+# make two files of the desired time period. One 6 hours ahead of the other
+# some time variables
 
-   # ok. Now need to move the flux data by three hours. This is nasty.
-   # make two files of the desired time period. One 6 hours ahead of the other
-   # some time variables
+tfl1=$(echo ${time_begin} ${deltat} |awk '{printf("%.2f",$1+$2)}')
+tfl2=$(echo ${time_end} ${deltat}|awk '{printf("%.2f",$1+$2)}')
+ncks -D 0 -h -O -d "time,$tfl1,$tfl2" ${outfile} "${outfile%.nc}_tmp.nc"
 
-   tfl1=$(echo ${time_begin} ${deltat} |awk '{printf("%.2f",$1+$2)}')
-   tfl2=$(echo ${time_end} ${deltat}|awk '{printf("%.2f",$1+$2)}')
-   ncks -D 0 -h -O -d "time,$tfl1,$tfl2" ${outfile} "${outfile%.nc}_tmp.nc"
+tfl1=$(echo ${time_begin} | awk '{printf("%.2f",$1)}')
+tfl2=$(echo ${time_end} | awk '{printf("%.2f",$1)}')
+ncks -D 0 -h -O -d "time,$tfl1,$tfl2" ${outfile} ${outfile}
+# line the two time regions up
+ncap -D 0 -h -O -s "time = time - ${deltat}" "${outfile%.nc}_tmp.nc" "${outfile%.nc}_tmp.nc"
 
-   tfl1=$(echo ${time_begin} | awk '{printf("%.2f",$1)}')
-   tfl2=$(echo ${time_end} | awk '{printf("%.2f",$1)}')
-   ncks -D 0 -h -O -d "time,$tfl1,$tfl2" ${outfile} ${outfile}
-   # line the two time regions up
-   ncap -D 0 -h -O -s "time = time - ${deltat}" "${outfile%.nc}_tmp.nc" "${outfile%.nc}_tmp.nc"
+# average the fluxes between t and t+dt
+var3="ewsssfc,nssssfc,sshfsfc,slhfsfc,ssrsfc,strsfc,tsrsfc,ttrsfc,ssrdsfc,strdsfc,surf_net"
+ncflint -h -O -v $var3 ${outfile} "${outfile%.nc}_tmp.nc" "${outfile%.nc}_tmp.nc"
+# put the averaged fluxes in the original file
+ncks -D 0 -h -A "${outfile%.nc}_tmp.nc" ${outfile}
 
-   # average the fluxes between t and t+dt
-   var3="ewsssfc,nssssfc,sshfsfc,slhfsfc,ssrsfc,strsfc,tsrsfc,ttrsfc,ssrdsfc,strdsfc,surf_net"
-   ncflint -h -O -v $var3 ${outfile} "${outfile%.nc}_tmp.nc" "${outfile%.nc}_tmp.nc"
-   # put the averaged fluxes in the original file
-  ncks -D 0 -h -A "${outfile%.nc}_tmp.nc" ${outfile}
 
-else
-   ncks -D 0 -h -O -d "time,${time_begin},${time_end}" ${outfile} ${outfile}
-
-fi
+ncks -h -O -d time,${time_begin},${time_end} ${outfile} ${outfile}
 # The variational analysis likes the names to be like this:
 ncrename -D 0 -h -O -v tsrsfc,swt -v ttrsfc,lwt ${outfile}
 

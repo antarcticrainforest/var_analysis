@@ -103,6 +103,42 @@ let end=$($date -u -d "${end} 1800" +%s) # Make it 00:00, in case it is not
 # concatenate files (nco knows about arm conventions in time_offset and base_time, but not in time itself
 declare -a file_surf=$(find ${ipt_dir}*surf*????????*.cdf 2> /dev/null)
 declare -a file_supp=$(find ${ipt_dir}*supp*????????*.cdf 2> /dev/null)
+#Check for monthly or daily files
+nn=$(echo $date_begin | awk '{print $1}')
+nn=$(echo ${nn:0:6})
+let ii=0
+for dd in {2..31};do
+  dn=$(echo $dd|awk '{printf("%02d",$1)}')
+  ff[$ii]=$(find ${ipt_dir%/}/*ecmwf*.${nn}${dn}.*.cdf 2> /dev/null)
+done
+if [ -z "${f[*]}" ];then
+  monthly=true
+else
+  monthly=false
+fi
+# Get file names #############################################################
+if $monthly ;then
+  while [ ${nday} -lt ${end} ];do
+    tstring=$(date -u -d @${nday} +'%Y%m01')
+    file_supp[$i]=$(find ${ipt_dir%/}/*supp*${tstring}*.cdf 2> /dev/null)
+    file_surf[$i]=$(find ${ipt_dir%/}/*surf*${tstring}*.cdf 2> /dev/null)
+    YYYY=$(echo ${tstring:0:4})
+    MM=$(echo ${tstring:4:2})
+    let delta=$(cal $MM $YYYY| awk 'NF {DAYS = $NF}; END {print DAYS}'|awk '{print $1*86400}')
+    nday=$((${nday}+${delta})) #Increase by one day (86400 sec)
+  done
+else
+  while [ ${nday} -lt ${end} ] ;do
+    tstring=$(date -u -d @${nday} +'%Y%m%d')
+   # Find the files required
+     file_supp[$i]=$(find ${ipt_dir%/}/*supp*${tstring}*.cdf 2> /dev/null)
+     file_surf[$i]=$(find ${ipt_dir%/}/*surf*${tstring}*.cdf 2> /dev/null)
+
+     nday=$(($nday+86400)) #Increase by one day (86400 sec)
+     i=$(($i+1))
+   done
+fi
+
 ncrcat -h -O -o ${opt_dir%/}/tmp_surf.cdf ${file_surf[*]}
 ncrcat -D 0 -h -O -o ${opt_dir%/}/tmp_supp.cdf ${file_supp[*]}
 ncks -D 0 -h -O -v "${var1}" ${opt_dir%/}/tmp_surf.cdf $outfile

@@ -389,6 +389,7 @@ for d in ${split_dates};do
   if [ $? -ne 0 ];then
     echoerr "concatenate_arm_data had an error, aborting"
   fi
+  
   get_3d_input
   if [ $? -ne 0 ];then
     echoerr "get_3d_input had an error, aborting"

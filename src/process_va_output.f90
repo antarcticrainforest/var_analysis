@@ -122,7 +122,6 @@ CALL IPT_3D_NETCDF(INPUTFILE=INPUTFILE, DU=D_FINAL, VU=V, LEV=P, T=T, STN=ST)
 NP  = SIZE(P)
 !NST = SIZE(ST)
 NT  = SIZE(T)
-
 !
 ! Read the budget terms.
 !
@@ -416,7 +415,7 @@ DD(9,:)     = -MG_SH(2:NT-1)
 DD(10,:)    = MG_P(2:NT-1)
 DD(11,:)    = DF_P(2,6,2:NT-1)                       ! Pressure from the central facility.
 DD(12,:)    = MG_TAIR(2:NT-1) - T0                   ! Convert from K to C.
-!DD(13,:)    = MG_TSKIN(2:NT-1) - T0                  ! Convert from K to C.
+DD(13,:)    = MG_TSKIN(2:NT-1) - T0                  ! Convert from K to C.
 DD(14,:)    = MG_RH(2:NT-1)
 DD(15,:)    = MG_WSPD(2:NT-1)
 DD(16,:)    = MG_U(2:NT-1)

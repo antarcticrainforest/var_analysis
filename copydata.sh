@@ -87,8 +87,9 @@ while [ $tstep  -le $last ];do
 
     tstring=${yyyy}${mm}
     folder=${output%}/${seas}
+    
     mkdir -p $folder
-    cp ${input%/}/*${tstring}*.* ${folder%/}/ 2> /dev/null
+    cp ${input%/}/${yyyy}/*${tstring}*.* ${folder%/}/ 2> /dev/null
   fi
   let mon=$mm2+1
   if [ $mon -eq 13 ];then

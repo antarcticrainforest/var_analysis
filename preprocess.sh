@@ -86,7 +86,6 @@ get_micro_input(){
 
       nday=$(($nday+86400)) #Increase by one day (86400 sec)
     done
-
     python2 ${workdir%/}/process_MWR/date.py $seas ${dates[*]}
     mapfile -t  years_str <  ${workdir%/}/process_MWR/.years_${seas}
     mapfile -t months_str < ${workdir%/}/process_MWR/.months_${seas}
@@ -187,14 +186,16 @@ EOF
     rm ${workdir%/}/process_MWR/process_*_a1_darwin_${seas}.pro
     units=$(ncdump -h ${output%/}/2D_put/${filename}|grep 'time:units'|cut -d = -f2|sed 's/;//'|sed 's/^ *//'|sed 's/\"//g'|sed 's/[ \t]*$//g')
     units="days since $fy-$fm-$fd 00:00:00 UTC"
-
-    ncatted -a units,time,o,c,"$units" ${output%/}/MWR-DATA/mwrlos_6h_interp.nc
+    outf=${output%/}/MWR-DATA/mwrlos_6h_interp.nc
+    ncatted -a units,time,o,c,"$units" $outf
   if [ $? -ne 0 ];then
     echoerr "get_micro_input had an error, aborting"
   fi
 
+  echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_pwv'][:]=np.ma.masked_invalid(f.variables['be_pwv'][:]);f.close()"
+  echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_lwp'][:]=np.ma.masked_invalid(f.variables['be_lwp'][:]);f.close()"
 
-   rm -rf "${output%/}/MWR-DATA/process_MWR"
+  rm -rf "${output%/}/MWR-DATA/process_MWR"
 
 }
 
@@ -389,12 +390,10 @@ for d in ${split_dates};do
   if [ $? -ne 0 ];then
     echoerr "concatenate_arm_data had an error, aborting"
   fi
-  
   get_3d_input
   if [ $? -ne 0 ];then
     echoerr "get_3d_input had an error, aborting"
   fi
-
   #####Get the microwave input data
   get_micro_input 'smet' 'mwrlos' ${DATES[*]}
   if [ $? -ne 0 ];then

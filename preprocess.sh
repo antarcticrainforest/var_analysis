@@ -358,7 +358,7 @@ seas=$(echo ${output}|rev|cut -d / -f1 |rev)
 old_output=${output}
 old_va_output=${va_output}
 #split_dates="20060224_0000,20060303_1800,20060201,20060301"
-
+let n_split=0
 for d in ${split_dates};do
   DATES=$(echo $d | sed 's/,/ /g')
   IFS=' ' read -a DATES <<< "$DATES"
@@ -411,10 +411,15 @@ for d in ${split_dates};do
   if [ $? -ne 0 ];then
     echoerr "3D VAR had an error, aborting"
   fi
+  let n_split=$n_split+1
 done
-mkdir -p ${old_va_output%/}/merge
-python2 ${workdir%}/postprocess.py ${old_va_output%/} ${split_dates}
-if [ $? -ne 0 ];then
-    echoerr "Post-processing had an error, aborting"
+if [ $n_split -eq 1 ];then
+    mv ${va_output} ${old_va_output%/}/merge
+else
+  mkdir -p ${old_va_output%/}/merge
+  python2 ${workdir%}/postprocess.py ${old_va_output%/} ${split_dates}
+  if [ $? -ne 0 ];then
+      echoerr "Post-processing had an error, aborting"
+  fi
 fi
 echo "Var analysis for season ${seas} done"

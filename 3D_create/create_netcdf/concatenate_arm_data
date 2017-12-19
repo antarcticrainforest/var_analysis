@@ -105,9 +105,9 @@ if $monthly ;then
     filein_surf[$i]=$(find ${in_dir_surf%/}/*surf*${tstring}*.cdf 2> /dev/null)
     YYYY=$(echo ${tstring:0:4})
     MM=$(echo ${tstring:4:2})
+    i=$(($i+1))
     let delta=$(cal $MM $YYYY| awk 'NF {DAYS = $NF}; END {print DAYS}'|awk '{print $1*86400}')
-    nday=$((${nday}+${delta})) #Increase by one day (86400 sec)
-    tstring=$(date -u -d @${nday} +'%Y%m01')
+    let nday=$((${nday}+${delta})) #Increase by one day (86400 sec)
   done
 else
   while [ ${nday} -lt ${end} ] ;do

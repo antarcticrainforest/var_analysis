@@ -95,7 +95,7 @@ echo "${src} : from $(date -u -d "$date_begin" +"%d. %b %Y %H:%M") to $(date -u 
 echo " "
 
 
-i=0
+let i=0
 nday=$(echo $date_begin|awk '{print $1}') #Get the first day
 let nday=$($date -u -d "${nday} 0000" +%s) # Make it 00:00, in case it is not
 end=$(echo $date_end|awk '{print $1}') #Get the last date
@@ -122,10 +122,11 @@ if $monthly ;then
     tstring=$(date -u -d @${nday} +'%Y%m01')
     file_supp[$i]=$(find ${ipt_dir%/}/*supp*${tstring}*.cdf 2> /dev/null)
     file_surf[$i]=$(find ${ipt_dir%/}/*surf*${tstring}*.cdf 2> /dev/null)
-    YYYY=$(echo ${tstring:0:4})
-    MM=$(echo ${tstring:4:2})
+    let YYYY=$(echo ${tstring:0:4})
+    let MM=$(echo ${tstring:4:2})
+    i=$(($i+1))
     let delta=$(cal $MM $YYYY| awk 'NF {DAYS = $NF}; END {print DAYS}'|awk '{print $1*86400}')
-    nday=$((${nday}+${delta})) #Increase by one day (86400 sec)
+    let nday=$((${nday}+${delta})) #Increase by one day (86400 sec)
   done
 else
   while [ ${nday} -lt ${end} ] ;do
@@ -198,7 +199,6 @@ script10="strdsfc=strdsfc/$deltat_sec"
 
 script11="spsfc=spsfc/100"
 
-
 #ncap -h -O -s $script1 $outfile $outfile
 #ncap -h -O -s $script2 $outfile $outfile
 ncap -h -O -s $script3 $outfile $outfile
@@ -213,7 +213,6 @@ ncap -h -O -s $script11 $outfile $outfile
 
 
 ncap -O -h -s "surf_net=ssrsfc+strsfc" "${outfile}" "${outfile}"
-
 # Fix attributes
 
 ncatted -h -a units,ssrsfc,o,c,"W/m2" "${outfile}"
@@ -259,15 +258,18 @@ tfl1=$(echo ${time_begin} ${deltat} |awk '{printf("%.2f",$1+$2)}')
 tfl2=$(echo ${time_end} ${deltat}|awk '{printf("%.2f",$1+$2)}')
 ncks -D 0 -h -O -d "time,$tfl1,$tfl2" ${outfile} "${outfile%.nc}_tmp.nc"
 
+
 tfl1=$(echo ${time_begin} | awk '{printf("%.2f",$1)}')
 tfl2=$(echo ${time_end} | awk '{printf("%.2f",$1)}')
 ncks -D 0 -h -O -d "time,$tfl1,$tfl2" ${outfile} ${outfile}
+
 # line the two time regions up
 ncap -D 0 -h -O -s "time = time - ${deltat}" "${outfile%.nc}_tmp.nc" "${outfile%.nc}_tmp.nc"
 
 # average the fluxes between t and t+dt
 var3="ewsssfc,nssssfc,sshfsfc,slhfsfc,ssrsfc,strsfc,tsrsfc,ttrsfc,ssrdsfc,strdsfc,surf_net"
 ncflint -h -O -v $var3 ${outfile} "${outfile%.nc}_tmp.nc" "${outfile%.nc}_tmp.nc"
+#exit
 # put the averaged fluxes in the original file
 ncks -D 0 -h -A "${outfile%.nc}_tmp.nc" ${outfile}
 
@@ -282,6 +284,6 @@ ncrename -D 0 -h -O -v tsrsfc,swt -v ttrsfc,lwt ${outfile}
 rm -f "${outfile%.nc}_tmp.nc"
 rm -f ${opt_dir%/}/*.cdf
 rm -f ${opt_dir%/}/*.tmp
-rm -f ${opt_dir%}/mask.nc
+rm -f ${opt_dir%/}/mask.nc
 
 

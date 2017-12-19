@@ -75,11 +75,11 @@ get_micro_input(){
       tstring=$(date -u -d @${nday} +'%Y%m%d')
       ft_met=$(find ${input%/}/*met*$tstring*.cdf 2> /dev/null)
       ft_mwrlos=$(find ${input%/}/*mwrlos*$tstring*.cdf 2> /dev/null)
-      if [ -z $ft_met ];then
+      if [ -z "$ft_met" ];then
         echo "get_micro: Creating file for met at $tstring"
         python2 ${workdir%/}/clone.py ${input%/} ${meta_met[0]} $tstring
       fi
-      if [ -z $ft_mwrlos ];then
+      if [ -z "$ft_mwrlos" ];then
         echo "get_micro: Creating file for mwrlos at $tstring"
         python2 ${workdir%/}/clone.py ${input%/} ${meta_mwrlos[0]} $tstring
       fi
@@ -357,7 +357,8 @@ fi
 seas=$(echo ${output}|rev|cut -d / -f1 |rev)
 old_output=${output}
 old_va_output=${va_output}
-#split_dates="20060224_0000,20060303_1800,20060201,20060301"
+#split_dates="20130201_0000,20130413_1800,20130201,20130301,20130401"
+
 let n_split=0
 for d in ${split_dates};do
   DATES=$(echo $d | sed 's/,/ /g')
@@ -385,6 +386,7 @@ for d in ${split_dates};do
   if [ $? -ne 0 ];then
     echoerr "create_2d_input_files had an error, aborting"
   fi
+
   ###Get the 3d_data
   ${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
   if [ $? -ne 0 ];then

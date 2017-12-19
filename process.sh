@@ -203,6 +203,9 @@ ${ipt_dir%/}/${toa_data}
 0
 ${opt_dir%/}/output2d.nc
 END
+if [ $? -ne 0 ];then
+  echoerr "2d_put had an error, aborting"
+fi
 #
 # Run 3D_PUT
 #
@@ -221,6 +224,9 @@ ${ipt_dir%/}/${grid_z_data}
 ${opt_dir%/}/filtered_3d_data.nc
 ${opt_dir%/}/output3d.nc
 END
+if [ $? -ne 0 ];then
+  echoerr "3d_put had an error, aborting"
+fi
 #
 # Run BUDGET_PUT
 #
@@ -229,6 +235,9 @@ ${opt_dir%/}/output2d.nc
 ${opt_dir%/}/output3d.nc
 ${opt_dir%/}/outputbudget.nc
 END
+if [ $? -ne 0 ];then
+  echoerr "budget_put had an error, aborting"
+fi
 #
 # Run the variational analysis. 
 #
@@ -265,6 +274,9 @@ ${ipt_dir%/}/${grid_p_data}
 ${opt_dir%/}/${forcing_file}
 ${opt_dir%/}/${forcing_file%.nc}.txt
 END
+if [ $? -ne 0 ];then
+  echoerr "process_va_output had an error, aborting"
+fi
 }
 
 ###############################################################################
@@ -282,12 +294,19 @@ ensemble_wrapper() {
         if [ ! -d $dir ];then
             mkdir -p $dir
         fi
-        
+
         #Run the variational analysis wrapper function
         run_assim -O ${dir%/} --PRECIP_DATA ${rain#${ipt_dir%/}/}
+        if [ $? -ne 0 ];then
+          echoerr "run_assim function had an error, aborting"
+        fi
         i=$(($i+1))
     done
 }
 
 #####3rd run the ensemble_wrapper function
 ensemble_wrapper
+if [ $? -ne 0 ];then
+  echoerr "ensemble_wrapper function had an error, aborting"
+fi
+

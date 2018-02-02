@@ -1,5 +1,6 @@
 import datetime,os,glob,sys, numpy as np
-from datetime import timedelta
+from datetime import  timedelta
+from itertools import tee, repeat, chain, groupby
 
 def lookup(f,head):
     """
@@ -39,21 +40,15 @@ def get_months(dates):
     sys.stdout.write('%s,%s,%s\n'\
         %(start.strftime('%Y%m%d_0000'),end.strftime('%Y%m%d_1800'),','.join(mon)))
 
-def split(dates):
-  first,last = dates[0],dates[-1]
-  dt = dates[1] - dates[0]
-  out = []
-  tmp = first
-  missing,missing_all = [],[]
-  nn = -1
-  while tmp <= last:
-    if not tmp in dates:
-      out.append((first,(tmp-dt)))
-      while tmp not in dates and tmp <= last:
-        tmp += dt
-      first = tmp
-    tmp += dt
-  return get_months(out)
+def datetimes_to_ranges(iterable):
+  iterable = sorted(set(iterable))
+  keyfunc = lambda t: t[1] - timedelta(days=t[0])
+  for key, group in groupby(enumerate(iterable), keyfunc):
+    group = list(group)
+    if len(group) == 1:
+      yield group[0][1],group[0][1]
+    else:
+      yield group[0][1], group[-1][1]
 
 
 def main(cpoldir):
@@ -67,7 +62,7 @@ def main(cpoldir):
       out.append(v)
   if len(out) == 0:
     sys.exit(257)
-  return(split(np.array(out)))
+  return(get_months(datetimes_to_ranges(out)))
 
 if __name__ == '__main__':
     import sys

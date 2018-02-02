@@ -99,6 +99,8 @@ else
 fi
 # Get file names #############################################################
 if $monthly ;then
+  tstring=$($date -u -d @${nday} +'%Y%m01')
+  let nday=$($date -u -d "${tstring} 0000" +%s) # Make it 00:00, in case it is not
   while [ ${nday} -lt ${end} ];do
     tstring=$(date -u -d @${nday} +'%Y%m01')
     filein_upa[$i]=$(find ${in_dir_upa%/}/*upa*${tstring}*.cdf 2> /dev/null)

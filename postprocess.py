@@ -62,7 +62,7 @@ def fix_time(f,start,end,exclude):
   dt=timedelta(hours=6)
   nn=0
   T = ('time','time_offset','year','month','day','hour','minute')
-  while start < end:
+  while start <= end:
     for v in T:
       if v in f.variables.keys():
         ts=date2num(start,'seconds since 1970-01-01 00:00:00')

@@ -442,7 +442,7 @@ for d in ${split_dates};do
 
   echo 'Preprocessing done, running variational analysis'
 
-#  ${workdir%/}/process.sh ${output} ${va_output}
+  ${workdir%/}/process.sh ${output} ${va_output}
   if [ $? -ne 0 ];then
     echoerr "3D VAR had an error, aborting"
   fi

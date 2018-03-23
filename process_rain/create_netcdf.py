@@ -192,7 +192,7 @@ class NC(object):
             #Get the source
             r_source=np.ma.masked_less(self.source.variables[
                     self.metadata['rain_rate'].varname][tstep],0.1).filled(0)
-            maskf = os.path.join(os.path.dirname(sys.arg[0]),'cpol_mask_ring.nc')
+            maskf = os.path.join(os.path.dirname(sys.argv[0]),'cpol_mask_ring.nc')
             mask = nc(maskf).variables['mask_ring'][:]
             r_source=np.ma.masked_invalid(r_source * mask)
             r_source=np.ma.masked_greater(r_source,1000.)

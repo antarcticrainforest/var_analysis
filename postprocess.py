@@ -59,9 +59,13 @@ def fill(f,tstep,end,exclude):
 
 def fix_time(f,start,end,exclude):
   ''' Function that fixes up the time variables and missing values '''
+  import pandas as pd
   dt=timedelta(hours=6)
   nn=0
   T = ('time','time_offset','year','month','day','hour','minute')
+  dates = pd.date_range(start.strftime('%Y-%m-%d %H:%M')
+    ,end.strftime('%Y-%m-%d %H:%M'),freq='6H')
+  
   while start <= end:
     for v in T:
       if v in f.variables.keys():
@@ -71,8 +75,9 @@ def fix_time(f,start,end,exclude):
         else:
             f.variables[v][nn]=[ts]
     start += dt
+    
     nn+= 1
-
+  
   for var in f.variables.keys():
      if var not in exclude and var not in T:
        ii = np.where(f.variables[var][:] > 1e30)
@@ -82,7 +87,8 @@ def fix_time(f,start,end,exclude):
          except AttributeError:
             f.variables[var][ii] = -9999.
             f.variables[var].missing_value=-9999.
-
+  f.variables['time'][:]=date2num(dates.to_pydatetime()
+    ,'seconds since 1970-01-01 00:00')
 def copy(folder,dates):
   ''' Copy the output of the first data preiod and make them the target netcdffile
       where stuff gets added '''
@@ -96,7 +102,7 @@ def merge(folder,dates):
   #Which variables should not be merged because they don't change or will be fixed later?
   exclude=('base_time','time','time_offset','lat','lon','phis','lev','string','stations','levels','variables','stru','strs','vbudget_column','vbudget_layer','weight')
   
-  for p in xrange(100):
+  for p in xrange(1):
     if p == 0:
       t = 'best_est'
     else:
@@ -119,7 +125,7 @@ def merge(folder,dates):
         if 'time_offset' in h5.variables.keys():
           h5.variables['time_offset'].units='seconds since 1970-01-01 00:00:00'
         #Cycle through all periods
-        for start,end,present in dates:
+        for start,end,present in dates[1:]:
           if present:
             #For this period we have data, read it an add it to the target file
             tstring='%s-%s'%(start.strftime('%Y%m%d'),end.strftime('%Y%m%d'))
@@ -144,7 +150,7 @@ def main(folder,dates):
   #Copy the files for the first period
   copy(folder,periods[0])
   #And merge it with the rest
-  merge(folder,periods[1:])
+  merge(folder,periods[:])
 
 
 

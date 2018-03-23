@@ -91,7 +91,6 @@ while [ $i -le 100 ]; do
    then
       num=00
    fi
-   echo "creating percentile: ${num}"
    if [ $i -eq 100 ]
    then
        outfile="${opt_dir%/}/pret_0${t_avg}h_NOGAUGE_${date_start:4:4}${date_end:4:4}.nc"
@@ -104,6 +103,7 @@ while [ $i -le 100 ]; do
       ncrename -v rain_rate_pdf,pret -d "record,time" ${outfile} 1> /dev/null
       ncwa -O -a percentile ${outfile} ${outfile} 
    fi
+   echo "creating percentile: ${num} ${outfile}"
  
  
    # rm temporary files

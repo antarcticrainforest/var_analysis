@@ -7,6 +7,7 @@ process_mwrlos_a1_darwin*.pro
 *fort.77
 *mask*.nc
 *mask*.nc
+!cpol_mask_ring.nc
 process_smet_a1_darwin*.pro
 interpolate_model*.pro
 3D_create/Barnes_interp/interpolate_model*.pro

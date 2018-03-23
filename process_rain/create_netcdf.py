@@ -190,9 +190,11 @@ class NC(object):
         with nc(fname,'w') as t:
             self.create_metadata(t,self.metadata,tstep)
             #Get the source
-            r_source=self.source.variables[
-                    self.metadata['rain_rate'].varname][tstep]
-            r_source=np.ma.masked_invalid(r_source)
+            r_source=np.ma.masked_less(self.source.variables[
+                    self.metadata['rain_rate'].varname][tstep],0.1).filled(0)
+            maskf = os.path.join(os.path.dirname(sys.arg[0]),'cpol_mask_ring.nc')
+            mask = nc(maskf).variables['mask_ring'][:]
+            r_source=np.ma.masked_invalid(r_source * mask)
             r_source=np.ma.masked_greater(r_source,1000.)
             t.variables['time'][:]=self.metadata['time'].data[tstep]
 

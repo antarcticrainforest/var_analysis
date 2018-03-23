@@ -126,7 +126,14 @@ if __name__ == "__main__":
 
     
     f.variables['rain_rate'].missing_value=mask
-    f.variables['rain_rate'][:]=creatpoly(poly,lons,lats,mask=mask)
+    rr=creatpoly(poly,lons,lats,mask=mask)
+    maskfile = os.path.join(os.path.dirname(sys.argv[0]),'cpol_mask_ring.nc')
+    ma = np.ma.masked_invalid(nc(maskfile).variables['mask_ring'][:])
+    try:
+      f.variables['rain_rate'][:] = ma * rr
+    except (IndexError, ValueError):
+      f.variables['rain_rate'][:] = rr
+      f.variables['rain_rate'][2:-2,2:-2] *= ma
     f.close()
 
 

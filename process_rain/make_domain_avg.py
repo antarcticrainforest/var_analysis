@@ -24,13 +24,17 @@ def main(infile,outfile,maskfile,best_est_only):
     f.variables['time'].axis='T'
 
     f.createVariable('rain_rate','f',('time',),fill_value=-9999.0)
-    prate = np.ma.masked_invalid(i.variables['rain_rate'][:])
+    try :
+      prate = i.variables['rain_rate'][:].filled(0)
+    except AttributeError:
+      prate = i.variables['rain_rate'][:]
+
+    prate = np.ma.masked_invalid(prate)
     prate = np.ma.masked_outside(prate,-1,1000.)
     try:
         f.variables['rain_rate'][:]=np.mean(prate*mask)
     except ValueError:
         mask=mask[2:-2,2:-2]
-
         try:
             f.variables['rain_rate'][:]=np.mean(prate*mask)
         except IndexError:

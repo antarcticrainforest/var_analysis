@@ -1,4 +1,4 @@
-import datetime,os,glob,sys, numpy as np
+import datetime,os,glob,sys
 from datetime import  timedelta
 from itertools import tee, repeat, chain, groupby
 
@@ -23,10 +23,10 @@ def get_filenames(folder,head):
       files=glob.glob(os.path.join(folder,'*_????????_*'))
     else:
       files=glob.glob(os.path.join(folder,'*%s*'%head.lower()))
-    dates=np.array([lookup(f,head) for f in files])
+    dates=[lookup(f,head) for f in files]
     dates.sort()
     return dates
-    return MIN,MAX,np.unique(np.array([d.strftime('%Y%m'+'01') for d in dates]))
+    #return MIN,MAX,np.unique(np.array([d.strftime('%Y%m'+'01') for d in dates]))
 
 def get_months(dates):
   for start,end in dates:

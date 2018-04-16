@@ -39,9 +39,13 @@ do
 		shift; shift
 		;;
 		( "-O" | "-o" )
-		outfile="${2:-mask.nc}"
+		maskfile="${2:-mask}"
 		shift; shift
 		;;
+		( "-S" | "-s" )
+		seas="${2:-0102}"
+		shift; shift
+    ;;
 		( "-D" | "-d" )
 		domain="${2:-pentagon}"
 		shift; shift
@@ -52,7 +56,7 @@ do
 		;;
 	esac
 done
-
+outfile=${maskfile}_${seas}.nc
 wrkdir=$(dirname $(readlink -f $0))
 
 #
@@ -68,6 +72,10 @@ if [[ "${domain}" == "pentagon" ]]
 then
     declare -a domain_x=("131.7651"	"131.7609"	"131.1355"	"129.8"	"130.41669")
     declare -a domain_y=("-11.3081"	"-12.5858"	"-13.2287"	"-12.4"	"-11.40891")
+elif [[ "${domain}" == "square" ]]
+  then
+    declare -a domain_x=("129.5"  "131.5"	"131.5"	"129.5")
+    declare -a domain_y=("-13.5"  "-13.5" "-12.0" "-12.0")
 elif [[ "${domain}" == "KWdomain" ]]
 then
     declare -a domain_x=("167.7" "168.7" "169.1" "168.7" "167.7" "166.8" "166.4" "166.8")
@@ -110,16 +118,16 @@ ncwa -O -C -a time "${outfile}" "${outfile}" -h
 
 ncap -O -s "lat=latitude+sktsfc-sktsfc" -s "lon=longitude+sktsfc-sktsfc" "${outfile}" "${outfile}" -h
 
-$wrkdir/nctext_LJ -v lon "${outfile}" | awk '{print $NF}' > lonlat.tmp
+$wrkdir/nctext_LJ -v lon "${outfile}" | awk '{print $NF}' > lonlat_${seas}.tmp
  
 ncatted -O -a long_name,sktsfc,m,c,"Inside domain flag" \
 -a units,sktsfc,m,c,"0 or 1" "${outfile}" -h
 
-ncdump -v lon,lat,latitude,longitude "${outfile}" > mask.cdl
+ncdump -v lon,lat,latitude,longitude "${outfile}" > mask_${seas}.cdl
 lines=$(wc -l mask.cdl | awk '{print $1-1}')
-head -n${lines} mask.cdl > mask.tmp
+head -n${lines} mask_${seas}.cdl > mask_${seas}.tmp
 
-$wrkdir/nctext_LJ -v lat "${outfile}" | awk '{print $NF}' | paste lonlat.tmp - | \
+$wrkdir/nctext_LJ -v lat "${outfile}" | awk '{print $NF}' | paste lonlat_${seas}.tmp - | \
 $wrkdir/polygon -px ${domain_x[*]} -py ${domain_y[*]} | awk \
 	'BEGIN{
 		printf("sktsfc = ");
@@ -131,11 +139,11 @@ $wrkdir/polygon -px ${domain_x[*]} -py ${domain_y[*]} | awk \
 	}
 	END{
 		printf("%s;\n}\n",oldline);
-	}' | cat mask.tmp - > mask.cdl
+	}' | cat mask_${seas}.tmp - > mask_${seas}.cdl
 
-ncgen -o "${outfile}" mask.cdl
+ncgen -o "${outfile}" mask_${seas}.cdl
 ncrename -v sktsfc,masking_var "${outfile}"
 #
 # Remove temporary files.
 #
-rm -f mask.{tmp,cdl} lonlat.tmp
+rm -f mask_${seas}.{tmp,cdl} lonlat_${seas}.tmp

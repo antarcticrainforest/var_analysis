@@ -50,13 +50,13 @@ opt_dir=${2%/}/
 mkdir -p $opt_dir
 # Set the output filename
 outfile=${3%/}
-
+seas=${4}
 wrkdir=$(dirname $(readlink -f $0))
 
 # Set the times we require
-date_begin=$(echo ${4}|sed s"/_/ /g")
-date_end=$(echo ${5}|sed s"/_/ /g")
-declare -a months=${@:5}
+date_begin=$(echo ${5}|sed s"/_/ /g")
+date_end=$(echo ${6}|sed s"/_/ /g")
+declare -a months=${@:6}
 # Names of all the months in between our two dates
 ##################################################################################
 
@@ -152,12 +152,12 @@ ncap -h -O -s "time = time_offset^1/86400.0" ${outfile} ${outfile}
 ncatted -h -a units,time,a,c,"days since ${base_date} 00:00:00 UTC" ${outfile}
 
 # make a masking file for the domain we require
-${wrkdir%}/make_mask_ecmwf -i "${outfile}" -o ${opt_dir%}/mask.nc -d pentagon
+${wrkdir%}/make_mask_ecmwf -i "${outfile}" -o ${opt_dir%}/mask_${seas}.nc -d square
 
 
 # average over the gridpoints specified by the masking file.
 # this is just a sum over the points inside the domain... nothing fancy.
-ncks -D 0 -h -A -v masking_var ${opt_dir%/}/mask.nc "${outfile}"
+ncks -D 0 -h -A -v masking_var ${opt_dir%/}/mask_${seas}.nc "${outfile}"
 ncwa -D 0 -h -O -a latitude,longitude -m masking_var -T gt -M -1.0 "${outfile}" "${outfile}"
 
 # clean up and make like Tim's file ###########################

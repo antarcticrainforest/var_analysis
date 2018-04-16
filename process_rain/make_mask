@@ -56,6 +56,10 @@ if [[ "${domain}" == "pentagon" ]]
 then
     declare -a domain_x=("131.7651"	"131.7609"	"131.1355"	"129.8"	"130.41669")
     declare -a domain_y=("-11.3081"	"-12.5858"	"-13.2287"	"-12.4"	"-11.40891")
+elif [[ "${domain}" == "square" ]]
+  then
+    declare -a domain_x=("130.47445"	"131.321"	"130.47445"	"131.321")
+    declare -a domain_y=("-12.806" "-12.806" "-11.978" "-11.978")
 elif [[ "${domain}" == "KWdomain" ]]
 then
 	declare -a domain_x=("167.7" "168.7" "169.1" "168.7" "167.7" "166.8" "166.4" "166.8")

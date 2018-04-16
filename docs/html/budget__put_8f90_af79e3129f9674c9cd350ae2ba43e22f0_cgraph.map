@@ -1,0 +1,5 @@
+<map id="budget_put" name="budget_put">
+<area shape="rect" id="node2" href="$namespaceio.html#aff87bbb9c43d6db1fedd086586aab0c6" title="io::ipt_2d_netcdf" alt="" coords="154,5,273,32"/>
+<area shape="rect" id="node3" href="$namespaceio.html#a0f9f8edb9a7173638e450ce3c4db7844" title="io::ipt_3d_netcdf" alt="" coords="154,56,273,83"/>
+<area shape="rect" id="node4" href="$namespaceio.html#ab1a423779bddf2d4557f39dd81431d93" title="io::opt_budget_netcdf" alt="" coords="140,107,287,133"/>
+</map>

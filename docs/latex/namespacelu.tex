@@ -1,0 +1,188 @@
+\hypertarget{namespacelu}{}\section{lu Module Reference}
+\label{namespacelu}\index{lu@{lu}}
+\subsection*{Functions/\+Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \hyperlink{namespacelu_a578a2275703e9c18d7f262f0a3482fbe}{ludcmp} (A, N, I\+N\+DX, D, C\+O\+DE)
+\item 
+subroutine \hyperlink{namespacelu_a588ba20d76e8dd5c49b370d9ba3ec379}{lubksb} (A, N, I\+N\+DX, B)
+\end{DoxyCompactItemize}
+
+
+\subsection{Function/\+Subroutine Documentation}
+\index{lu@{lu}!lubksb@{lubksb}}
+\index{lubksb@{lubksb}!lu@{lu}}
+\subsubsection[{\texorpdfstring{lubksb(\+A, N, I\+N\+D\+X, B)}{lubksb(A, N, INDX, B)}}]{\setlength{\rightskip}{0pt plus 5cm}subroutine lu\+::lubksb (
+\begin{DoxyParamCaption}
+\item[{real (kind=rk8), dimension(n,n), intent(in)}]{A, }
+\item[{integer (kind=ik4)}]{N, }
+\item[{integer (kind=ik4), dimension(n), intent(in)}]{I\+N\+DX, }
+\item[{real (kind=rk8), dimension(n), intent(inout)}]{B}
+\end{DoxyParamCaption}
+)}\hypertarget{namespacelu_a588ba20d76e8dd5c49b370d9ba3ec379}{}\label{namespacelu_a588ba20d76e8dd5c49b370d9ba3ec379}
+
+
+Definition at line 122 of file lu.\+f90.
+
+
+\begin{DoxyCode}
+122 
+123 \textcolor{keywordtype}{IMPLICIT NONE}
+124 \textcolor{keywordtype}{INTEGER (KIND=IK4)}                            :: n
+125 \textcolor{keywordtype}{REAL (KIND=RK8)}, \textcolor{keywordtype}{DIMENSION(N,N)}, \textcolor{keywordtype}{INTENT(IN)}   :: a
+126 \textcolor{keywordtype}{REAL (KIND=RK8)}, \textcolor{keywordtype}{DIMENSION(N)}, \textcolor{keywordtype}{INTENT(INOUT)}  :: b
+127 \textcolor{keywordtype}{INTEGER (KIND=IK4)}, \textcolor{keywordtype}{DIMENSION(N)}, \textcolor{keywordtype}{INTENT(IN)}  :: indx
+128 
+129 \textcolor{comment}{!}
+130 \textcolor{comment}{! Local variables.}
+131 \textcolor{comment}{!}
+132 \textcolor{keywordtype}{REAL (KIND=RK8)}                               :: total
+133 \textcolor{keywordtype}{INTEGER (KIND=IK4)}                            :: i, j, ll, ii
+134 
+135 ii = 0
+136 
+137 \textcolor{keywordflow}{DO} i=1,n
+138     ll = indx(i)
+139     total = b(ll)
+140     b(ll) = b(i)
+141     \textcolor{keywordflow}{IF}(ii.NE.0) \textcolor{keywordflow}{THEN}
+142         \textcolor{keywordflow}{DO} j=ii,i-1
+143             total = total - a(i,j)*b(j)
+144 \textcolor{keywordflow}{        END DO}
+145     \textcolor{keywordflow}{ELSE} \textcolor{keywordflow}{IF}(total .NE. 0.0) \textcolor{keywordflow}{THEN}
+146         ii = i
+147 \textcolor{keywordflow}{    END IF}
+148     b(i) = total
+149 \textcolor{keywordflow}{END DO}
+150 
+151 \textcolor{keywordflow}{DO} i=n,1,-1
+152     total = b(i)
+153     \textcolor{keywordflow}{IF}(i < n) \textcolor{keywordflow}{THEN}
+154         \textcolor{keywordflow}{DO} j=i+1,n
+155             total = total - a(i,j)*b(j)
+156 \textcolor{keywordflow}{        END DO}
+157 \textcolor{keywordflow}{    END IF}
+158     b(i) = total / a(i,i)
+159 \textcolor{keywordflow}{END DO}
+160 
+161 \textcolor{keywordflow}{RETURN}
+\end{DoxyCode}
+
+
+Here is the caller graph for this function\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacelu_a588ba20d76e8dd5c49b370d9ba3ec379_icgraph}
+\end{center}
+\end{figure}
+
+
+\index{lu@{lu}!ludcmp@{ludcmp}}
+\index{ludcmp@{ludcmp}!lu@{lu}}
+\subsubsection[{\texorpdfstring{ludcmp(\+A, N, I\+N\+D\+X, D, C\+O\+D\+E)}{ludcmp(A, N, INDX, D, CODE)}}]{\setlength{\rightskip}{0pt plus 5cm}subroutine lu\+::ludcmp (
+\begin{DoxyParamCaption}
+\item[{real (kind=rk8), dimension(n,n), intent(inout)}]{A, }
+\item[{integer (kind=ik4), intent(in)}]{N, }
+\item[{integer (kind=ik4), dimension(n), intent(out)}]{I\+N\+DX, }
+\item[{integer (kind=ik4), intent(out)}]{D, }
+\item[{integer (kind=ik4), intent(out)}]{C\+O\+DE}
+\end{DoxyParamCaption}
+)}\hypertarget{namespacelu_a578a2275703e9c18d7f262f0a3482fbe}{}\label{namespacelu_a578a2275703e9c18d7f262f0a3482fbe}
+
+
+Definition at line 30 of file lu.\+f90.
+
+
+\begin{DoxyCode}
+30 
+31 \textcolor{keywordtype}{IMPLICIT NONE}
+32 \textcolor{keywordtype}{INTEGER (KIND=IK4)}, \textcolor{keywordtype}{INTENT(IN)}                  :: n        \textcolor{comment}{! The size of the array.}
+33 \textcolor{keywordtype}{REAL (KIND=RK8)}, \textcolor{keywordtype}{DIMENSION(N,N)}, \textcolor{keywordtype}{INTENT(INOUT)}  :: a        \textcolor{comment}{! Array to operate on.}
+34 \textcolor{keywordtype}{INTEGER (KIND=IK4)}, \textcolor{keywordtype}{DIMENSION(N)}, \textcolor{keywordtype}{INTENT(OUT)}   :: indx
+35 \textcolor{keywordtype}{INTEGER (KIND=IK4)}, \textcolor{keywordtype}{INTENT(OUT)}                 :: d
+36 \textcolor{keywordtype}{INTEGER (KIND=IK4)}, \textcolor{keywordtype}{INTENT(OUT)}                 :: code
+37 
+38 \textcolor{comment}{!}
+39 \textcolor{comment}{! Local variables.}
+40 \textcolor{comment}{!}
+41 \textcolor{keywordtype}{INTEGER (KIND=IK4)}, \textcolor{keywordtype}{PARAMETER}                   :: nmax=100
+42 \textcolor{keywordtype}{REAL (KIND=RK8)}, \textcolor{keywordtype}{PARAMETER}                      :: tiny=1.5e-16
+43 \textcolor{keywordtype}{REAL (KIND=RK8)}                                 :: amax, dum, total
+44 \textcolor{keywordtype}{REAL (KIND=RK8)}, \textcolor{keywordtype}{DIMENSION(NMAX)}                :: vv
+45 \textcolor{keywordtype}{INTEGER (KIND=IK4)}                              :: imax
+46 \textcolor{keywordtype}{INTEGER (KIND=IK4)}                              :: i, j, k                               \textcolor{comment}{! Counters.}
+47 
+48 d=1; code=0; 
+49 imax=1          \textcolor{comment}{! Initialise IMAX so that the compiler does not complain that it is used when uninitialised
+       (it never will be,}
+50                 \textcolor{comment}{! but the compiler can't know that).}
+51 
+52 \textcolor{keywordflow}{DO} i=1,n
+53     amax=0.0
+54     \textcolor{keywordflow}{DO} j=1,n
+55         \textcolor{keywordflow}{IF} (abs(a(i,j)).GT.amax) amax=abs(a(i,j))
+56 \textcolor{keywordflow}{    END DO}
+57     \textcolor{keywordflow}{IF}(amax.LT.tiny) \textcolor{keywordflow}{THEN}
+58         code = 1
+59         \textcolor{keywordflow}{RETURN}
+60 \textcolor{keywordflow}{    END IF}
+61     vv(i) = 1.0 / amax
+62 \textcolor{keywordflow}{END DO}
+63 
+64 \textcolor{keywordflow}{DO} j=1,n
+65     \textcolor{keywordflow}{DO} i=1,j-1
+66         total = a(i,j)
+67         \textcolor{keywordflow}{DO} k=1,i-1
+68             total = total - a(i,k)*a(k,j) 
+69 \textcolor{keywordflow}{        END DO}
+70         a(i,j) = total
+71 \textcolor{keywordflow}{    END DO}
+72     amax = 0.0
+73     \textcolor{keywordflow}{DO} i=j,n
+74         total = a(i,j)
+75         \textcolor{keywordflow}{DO} k=1,j-1
+76             total = total - a(i,k)*a(k,j) 
+77 \textcolor{keywordflow}{        END DO}
+78         a(i,j) = total
+79         dum = vv(i)*abs(total)
+80         \textcolor{keywordflow}{IF}(dum.GE.amax) \textcolor{keywordflow}{THEN}
+81             imax = i
+82             amax = dum
+83 \textcolor{keywordflow}{        END IF}
+84 \textcolor{keywordflow}{    END DO}
+85 
+86     \textcolor{keywordflow}{IF}(j.NE.imax) \textcolor{keywordflow}{THEN}
+87         \textcolor{keywordflow}{DO} k=1,n
+88             dum = a(imax,k)
+89             a(imax,k) = a(j,k)
+90             a(j,k) = dum
+91 \textcolor{keywordflow}{        END DO}
+92         d = -d
+93         vv(imax) = vv(j)
+94 \textcolor{keywordflow}{    END IF}
+95 
+96     indx(j) = imax
+97     \textcolor{keywordflow}{IF}(abs(a(j,j)) < tiny) a(j,j) = tiny
+98 
+99     \textcolor{keywordflow}{IF}(j.NE.n) \textcolor{keywordflow}{THEN}
+100         dum = 1.0 / a(j,j)
+101         \textcolor{keywordflow}{DO} i=j+1,n
+102             a(i,j) = a(i,j)*dum
+103 \textcolor{keywordflow}{        END DO}
+104 \textcolor{keywordflow}{    END IF} 
+105 \textcolor{keywordflow}{END DO}
+106 
+107 \textcolor{keywordflow}{RETURN}
+\end{DoxyCode}
+
+
+Here is the caller graph for this function\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=350pt]{namespacelu_a578a2275703e9c18d7f262f0a3482fbe_icgraph}
+\end{center}
+\end{figure}
+
+

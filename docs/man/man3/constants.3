@@ -1,0 +1,182 @@
+.TH "constants" 3 "Mon Apr 16 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+constants \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "real(kind=rk8), parameter \fBpi\fP = 3\&.14159265"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBrearth\fP = 6371000"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBomega\fP = 7\&.292E\-05"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBrd\fP = 287\&.04"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBrw\fP = 461\&.50"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBg\fP = 9\&.8"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBlv0\fP = 2\&.5E6"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBlv\fP = 2\&.501E6"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBls\fP = 2\&.834E6"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBls1\fP = 2\&.834E6"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBcpd\fP = 1005\&.7"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBcpv\fP = 1870\&.0"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBcl\fP = 4190\&.0"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBt0\fP = 273\&.15"
+.br
+.ti -1c
+.RI "real(kind=rk8), parameter \fBcd\fP = 3\&.0E\-3"
+.br
+.in -1c
+.SH "Variable Documentation"
+.PP 
+.SS "real (kind=rk8), parameter constants::cd = 3\&.0E\-3"
+
+.PP
+Definition at line 25 of file constants\&.f90\&.
+.PP
+.nf
+25 REAL (KIND=RK8), PARAMETER  :: cd       = 3\&.0e-3            ! Skin friction coefficient\&.
+.fi
+.SS "real (kind=rk8), parameter constants::cl = 4190\&.0"
+
+.PP
+Definition at line 23 of file constants\&.f90\&.
+.PP
+.nf
+23 REAL (KIND=RK8), PARAMETER  :: cl       = 4190\&.0            ! Specific heat capcity of liquid water (J/kg/K)
+.fi
+.SS "real (kind=rk8), parameter constants::cpd = 1005\&.7"
+
+.PP
+Definition at line 21 of file constants\&.f90\&.
+.PP
+.nf
+21 REAL (KIND=RK8), PARAMETER  :: cpd      = 1005\&.7            ! Heat capacity of dry air at constant pressure (J/kg/K)
+.fi
+.SS "real (kind=rk8), parameter constants::cpv = 1870\&.0"
+
+.PP
+Definition at line 22 of file constants\&.f90\&.
+.PP
+.nf
+22 REAL (KIND=RK8), PARAMETER  :: cpv      = 1870\&.0            ! Heat capacity of water vapour at constant pressure (J/kg/K)
+.fi
+.SS "real (kind=rk8), parameter constants::g = 9\&.8"
+
+.PP
+Definition at line 16 of file constants\&.f90\&.
+.PP
+.nf
+16 REAL (KIND=RK8), PARAMETER  :: g        = 9\&.8               ! Gravitational acceleration, at Earth's surface (m/s^2)
+.fi
+.SS "real (kind=rk8), parameter constants::ls = 2\&.834E6"
+
+.PP
+Definition at line 19 of file constants\&.f90\&.
+.PP
+.nf
+19 REAL (KIND=RK8), PARAMETER  :: ls       = 2\&.834e6
+.fi
+.SS "real (kind=rk8), parameter constants::ls1 = 2\&.834E6"
+
+.PP
+Definition at line 20 of file constants\&.f90\&.
+.PP
+.nf
+20 REAL (KIND=RK8), PARAMETER  :: ls1      = 2\&.834e6
+.fi
+.SS "real (kind=rk8), parameter constants::lv = 2\&.501E6"
+
+.PP
+Definition at line 18 of file constants\&.f90\&.
+.PP
+.nf
+18 REAL (KIND=RK8), PARAMETER  :: lv       = 2\&.501e6
+.fi
+.SS "real (kind=rk8), parameter constants::lv0 = 2\&.5E6"
+
+.PP
+Definition at line 17 of file constants\&.f90\&.
+.PP
+.nf
+17 REAL (KIND=RK8), PARAMETER  :: lv0      = 2\&.5e6
+.fi
+.SS "real (kind=rk8), parameter constants::omega = 7\&.292E\-05"
+
+.PP
+Definition at line 13 of file constants\&.f90\&.
+.PP
+.nf
+13 REAL (KIND=RK8), PARAMETER  :: omega    = 7\&.292e-05         ! Rotational rate of Earth (rad/s) (note: 1 rev/sidereal day)
+.fi
+.SS "real (kind=rk8), parameter constants::pi = 3\&.14159265"
+
+.PP
+Definition at line 11 of file constants\&.f90\&.
+.PP
+.nf
+11 REAL (KIND=RK8), PARAMETER  :: pi       = 3\&.14159265
+.fi
+.SS "real (kind=rk8), parameter constants::rd = 287\&.04"
+
+.PP
+Definition at line 14 of file constants\&.f90\&.
+.PP
+.nf
+14 REAL (KIND=RK8), PARAMETER  :: rd       = 287\&.04            ! Gas constant for dry air\&.
+.fi
+.SS "real (kind=rk8), parameter constants::rearth = 6371000"
+
+.PP
+Definition at line 12 of file constants\&.f90\&.
+.PP
+.nf
+12 REAL (KIND=RK8), PARAMETER  :: rearth   = 6371000           ! Radius of the Earth, in metres\&.
+.fi
+.SS "real (kind=rk8), parameter constants::rw = 461\&.50"
+
+.PP
+Definition at line 15 of file constants\&.f90\&.
+.PP
+.nf
+15 REAL (KIND=RK8), PARAMETER  :: rw       = 461\&.50            ! Gas constant for saturated air\&.
+.fi
+.SS "real (kind=rk8), parameter constants::t0 = 273\&.15"
+
+.PP
+Definition at line 24 of file constants\&.f90\&.
+.PP
+.nf
+24 REAL (KIND=RK8), PARAMETER  :: t0       = 273\&.15            ! Temperature in Kelvin of 0 Celsius\&. (K)
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

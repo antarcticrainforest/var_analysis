@@ -1,0 +1,253 @@
+.TH "time" 3 "Mon Apr 16 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+time \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions/Subroutines"
+
+.in +1c
+.ti -1c
+.RI "subroutine \fBdays_to_date\fP (STYEAR, STMONTH, STDAY, DAYS, YYYY, MO, DD, HH, MM, SS)"
+.br
+.ti -1c
+.RI "integer(kind=ik4) function \fBdate_time_to_unix\fP (YYYY, MO, DD, HH, MM, SS)"
+.br
+.ti -1c
+.RI "logical function \fBleapyear\fP (YEAR)"
+.br
+.in -1c
+.SH "Function/Subroutine Documentation"
+.PP 
+.SS "integer (kind=ik4) function time::date_time_to_unix (integer (kind=ik4), intent(in), optional YYYY, integer (kind=ik4), intent(in), optional MO, integer (kind=ik4), intent(in), optional DD, integer (kind=ik4), intent(in), optional HH, integer (kind=ik4), intent(in), optional MM, integer (kind=ik4), intent(in), optional SS)"
+
+.PP
+Definition at line 90 of file time\&.f90\&.
+.PP
+.nf
+90 
+91 INTEGER (KIND=IK4), INTENT(IN), OPTIONAL    :: yyyy                     ! The year\&.
+92 INTEGER (KIND=IK4), INTENT(IN), OPTIONAL    :: mo                       ! The month\&.
+93 INTEGER (KIND=IK4), INTENT(IN), OPTIONAL    :: dd                       ! The day\&.
+94 INTEGER (KIND=IK4), INTENT(IN), OPTIONAL    :: hh                       ! The hour\&.
+95 INTEGER (KIND=IK4), INTENT(IN), OPTIONAL    :: mm                       ! The minute\&.
+96 INTEGER (KIND=IK4), INTENT(IN), OPTIONAL    :: ss                       ! The second\&.
+97 
+98 INTEGER (KIND=IK4), DIMENSION(6)            :: datetime                 ! Parts of the date and time\&.
+99 INTEGER (KIND=IK4)                          :: yycnt                    ! Year counter\&.
+100 INTEGER (KIND=IK4)                          :: mocnt                    ! Month counter\&.
+101 INTEGER (KIND=IK4), DIMENSION(12)           :: mdays = (/ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 /)
+102 INTEGER (KIND=IK4)                          :: utime                    ! UNIX time\&.
+103 
+104 !
+105 ! Set the date and time parts (and use default values if they are not specified by the user)\&.
+106 !
+107 IF (PRESENT(yyyy)) THEN
+108     datetime(1) = yyyy
+109 ELSE
+110     datetime(1) = 1970
+111 ENDIF
+112 
+113 IF (PRESENT(mo)) THEN
+114     datetime(2) = mo
+115 ELSE
+116     datetime(2) = 1
+117 ENDIF
+118 
+119 IF (PRESENT(dd)) THEN
+120     datetime(3) = dd
+121 ELSE
+122     datetime(3) = 1
+123 ENDIF
+124 
+125 IF (PRESENT(hh)) THEN
+126     datetime(4) = hh
+127 ELSE
+128     datetime(4) = 0
+129 ENDIF
+130 
+131 IF (PRESENT(mm)) THEN
+132     datetime(5) = mm
+133 ELSE
+134     datetime(5) = 0
+135 ENDIF
+136 
+137 IF (PRESENT(ss)) THEN
+138     datetime(6) = ss
+139 ELSE
+140     datetime(6) = 0
+141 ENDIF
+142 
+143 !
+144 ! Check inputs are valid\&.
+145 !
+146 IF ((datetime(1) \&.LT\&. 1970) \&.OR\&. (datetime(1) \&.GT\&. 2037)) THEN
+147     print *, 'W: Year is out of range (1970-2037)'
+148     date_time_to_unix   = -1
+149     RETURN
+150 ENDIF
+151 
+152 IF ((datetime(2) \&.LT\&. 1) \&.OR\&. (datetime(2) \&.GT\&. 12)) THEN
+153     print *, 'W: Month is out of range (1-12)'
+154     date_time_to_unix   = -1
+155     RETURN
+156 ENDIF
+157 
+158 IF (leapyear(datetime(1))) THEN     ! We'll use these results later as well\&.
+159     mdays(2)    = 29
+160 ELSE
+161     mdays(2)    = 28
+162 ENDIF
+163 IF ((datetime(3) \&.LT\&. 1) \&.OR\&. (datetime(3) \&.GT\&. mdays(datetime(2)))) THEN
+164     print *,'W: Day is out of range (1-',mdays(datetime(2)),')'
+165     date_time_to_unix   = -1
+166     RETURN
+167 ENDIF
+168 
+169 IF ((datetime(4) \&.LT\&. 0) \&.OR\&. (datetime(4) \&.GT\&. 23)) THEN
+170     print *,'W: Hour is out of range (0-23)'
+171     date_time_to_unix   = -1
+172     RETURN
+173 ENDIF
+174 
+175 IF ((datetime(5) \&.LT\&. 0) \&.OR\&. (datetime(4) \&.GT\&. 59)) THEN
+176     print *,'W: Minute is out of range (0-59)'
+177     date_time_to_unix   = -1
+178     RETURN
+179 ENDIF
+180 
+181 IF ((datetime(6) \&.LT\&. 0) \&.OR\&. (datetime(6) \&.GT\&. 59)) THEN
+182     print *,'W: Second is out of range (0-59)'
+183     date_time_to_unix   = -1
+184     RETURN
+185 ENDIF
+186 
+187 !
+188 ! Now compute the time\&.
+189 !
+190 yycnt   = 1970
+191 utime   = 0
+192 DO WHILE (yycnt \&.LT\&. datetime(1))
+193     IF (leapyear(yycnt)) THEN
+194         utime   = utime + 31622400  ! The number of seconds in a leap year\&.
+195     ELSE
+196         utime   = utime + 31536000  ! The number of seconds in a normal year (not taking account of leap seconds)\&.
+197     END IF
+198     yycnt   = yycnt + 1
+199 END DO
+200 
+201 mocnt=1
+202 DO WHILE (mocnt \&.LT\&. datetime(2))
+203     utime   = utime + mdays(mocnt)*86400    ! The number of seconds in the month\&.
+204     mocnt   = mocnt + 1
+205 END DO
+206 
+207 date_time_to_unix   = utime + (datetime(3)-1)*86400 + datetime(4)*3600 + datetime(5)*60 + datetime(6)
+208 
+.fi
+.SS "subroutine time::days_to_date (integer (kind=ik4), intent(in) STYEAR, integer (kind=ik4), intent(in) STMONTH, integer (kind=ik4), intent(in) STDAY, real (kind=rk8), dimension(:), intent(in) DAYS, integer (kind=ik4), dimension(:), intent(out), optional YYYY, integer (kind=ik4), dimension(:), intent(out), optional MO, integer (kind=ik4), dimension(:), intent(out), optional DD, integer (kind=ik4), dimension(:), intent(out), optional HH, integer (kind=ik4), dimension(:), intent(out), optional MM, integer (kind=ik4), dimension(:), intent(out), optional SS)"
+
+.PP
+Definition at line 14 of file time\&.f90\&.
+.PP
+.nf
+14 
+15 IMPLICIT NONE
+16 
+17 INTEGER (KIND=IK4), INTENT(IN)                          :: styear       ! The year which the day count is relative to\&.
+18 INTEGER (KIND=IK4), INTENT(IN)                          :: stmonth      ! The month which the day count is relative to\&.
+19 INTEGER (KIND=IK4), INTENT(IN)                          :: stday        ! The day which the day count is relative to\&.
+20 REAL (KIND=RK8), DIMENSION(:), INTENT(IN)               :: days         ! The time in days relative to STYEAR-STMONTH-STDAYT00:00:00
+21 INTEGER (KIND=IK4), DIMENSION(:), INTENT(OUT), OPTIONAL :: yyyy         ! The year\&.
+22 INTEGER (KIND=IK4), DIMENSION(:), INTENT(OUT), OPTIONAL :: mo           ! The month\&.
+23 INTEGER (KIND=IK4), DIMENSION(:), INTENT(OUT), OPTIONAL :: dd           ! The day\&.
+24 INTEGER (KIND=IK4), DIMENSION(:), INTENT(OUT), OPTIONAL :: hh           ! The hour\&.
+25 INTEGER (KIND=IK4), DIMENSION(:), INTENT(OUT), OPTIONAL :: mm           ! The minute\&.
+26 INTEGER (KIND=IK4), DIMENSION(:), INTENT(OUT), OPTIONAL :: ss           ! The second\&.
+27 
+28 INTEGER (KIND=IK4)                                      :: nt           ! Number of times in the time arrays\&.
+29 INTEGER (KIND=IK4), DIMENSION(12)                       :: mdays    = (/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31/)
+30 INTEGER (KIND=IK4)                                      :: ii           ! Counter\&.
+31 REAL (KIND=RK8)                                         :: tdn
+32 INTEGER (KIND=IK4)                                      :: tyy, tmo, tdd, thh, tmm, tss, tti
+33 
+34 nt  = SIZE(days)
+35 
+36 DO ii=1,nt
+37     tyy = styear
+38     !
+39     ! We do a bit of rounding stuff here, based on what outputs the user wants\&.
+40     !
+41     IF (PRESENT(ss)) THEN
+42         tdn = int((days(ii)+(stday))*86400 + 0\&.5)/86400\&.      ! Round to the nearest second\&.
+43     ELSE IF (PRESENT(mm)) THEN
+44         tdn = int((days(ii)+(stday))*1440 + 0\&.5)/1440\&.        ! Round to the nearest minute\&.
+45     ELSE
+46         tdn = int((days(ii)+(stday))*24 + 0\&.5)/24\&.            ! Round to the nearest hour\&.
+47     END IF
+48 
+49     !
+50     ! First calculate the date
+51     !
+52     tmo = stmonth
+53     DO WHILE (tdn \&.GE\&. (mdays(tmo)+1))
+54         IF (leapyear(tyy)) THEN
+55             mdays(2) = 29
+56         ELSE
+57             mdays(2) = 28
+58         END IF
+59         DO WHILE ((tdn \&.GE\&. (mdays(tmo)+1)))
+60             tdn = tdn - mdays(tmo)
+61             tmo = tmo + 1
+62             if (tmo > 12) exit
+63         END DO
+64         if (tmo > 12) then
+65             tyy = tyy + 1
+66             tmo = 1
+67        endif
+68     END DO
+69     tdd = int(tdn, kind=ik4)
+70     !
+71     ! Now calculate the time, to the nearest second\&.
+72     !
+73     tti = int((tdn - tdd)*86400\&. + 0\&.5, kind=ik4)     ! Round to the nearest second\&.
+74     thh = tti/3600
+75     tmm = (tti - thh*3600)/60
+76     tss = tti - thh*3600 - tmm*60
+77 
+78     IF (PRESENT(yyyy))  yyyy(ii)    = tyy
+79     IF (PRESENT(mo))    mo(ii)      = tmo
+80     IF (PRESENT(dd))    dd(ii)      = tdd
+81     IF (PRESENT(hh))    hh(ii)      = thh
+82     IF (PRESENT(mm))    mm(ii)      = tmm
+83     IF (PRESENT(ss))    ss(ii)      = tss
+84 END DO
+85     
+86 
+.fi
+.SS "logical function time::leapyear (integer (kind=ik4), intent(in) YEAR)"
+
+.PP
+Definition at line 220 of file time\&.f90\&.
+.PP
+.nf
+220 
+221 IMPLICIT NONE
+222 INTEGER (KIND=IK4), INTENT(IN)                          :: year         ! The year being tested\&.
+223 
+224 IF (mod(year,4) \&.EQ\&. 0) THEN
+225     IF ((mod(year,100) \&.EQ\&. 0) \&.AND\&. (mod(year,400) \&.NE\&. 0)) THEN
+226         leapyear    = \&.false\&.
+227     ELSE
+228         leapyear    = \&.true\&.
+229     END IF
+230 ELSE
+231     leapyear        = \&.false\&.
+232 END IF
+233 
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

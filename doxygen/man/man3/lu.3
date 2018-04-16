@@ -1,0 +1,155 @@
+.TH "lu" 3 "Mon Apr 16 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+lu \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions/Subroutines"
+
+.in +1c
+.ti -1c
+.RI "subroutine \fBludcmp\fP (A, N, INDX, D, CODE)"
+.br
+.ti -1c
+.RI "subroutine \fBlubksb\fP (A, N, INDX, B)"
+.br
+.in -1c
+.SH "Function/Subroutine Documentation"
+.PP 
+.SS "subroutine lu::lubksb (real (kind=rk8), dimension(n,n), intent(in) A, integer (kind=ik4) N, integer (kind=ik4), dimension(n), intent(in) INDX, real (kind=rk8), dimension(n), intent(inout) B)"
+
+.PP
+Definition at line 122 of file lu\&.f90\&.
+.PP
+.nf
+122 
+123 IMPLICIT NONE
+124 INTEGER (KIND=IK4)                            :: n
+125 REAL (KIND=RK8), DIMENSION(N,N), INTENT(IN)   :: a
+126 REAL (KIND=RK8), DIMENSION(N), INTENT(INOUT)  :: b
+127 INTEGER (KIND=IK4), DIMENSION(N), INTENT(IN)  :: indx
+128 
+129 !
+130 ! Local variables\&.
+131 !
+132 REAL (KIND=RK8)                               :: total
+133 INTEGER (KIND=IK4)                            :: i, j, ll, ii
+134 
+135 ii = 0
+136 
+137 DO i=1,n
+138     ll = indx(i)
+139     total = b(ll)
+140     b(ll) = b(i)
+141     IF(ii\&.NE\&.0) THEN
+142         DO j=ii,i-1
+143             total = total - a(i,j)*b(j)
+144         END DO
+145     ELSE IF(total \&.NE\&. 0\&.0) THEN
+146         ii = i
+147     END IF
+148     b(i) = total
+149 END DO
+150 
+151 DO i=n,1,-1
+152     total = b(i)
+153     IF(i < n) THEN
+154         DO j=i+1,n
+155             total = total - a(i,j)*b(j)
+156         END DO
+157     END IF
+158     b(i) = total / a(i,i)
+159 END DO
+160 
+161 RETURN
+.fi
+.SS "subroutine lu::ludcmp (real (kind=rk8), dimension(n,n), intent(inout) A, integer (kind=ik4), intent(in) N, integer (kind=ik4), dimension(n), intent(out) INDX, integer (kind=ik4), intent(out) D, integer (kind=ik4), intent(out) CODE)"
+
+.PP
+Definition at line 30 of file lu\&.f90\&.
+.PP
+.nf
+30 
+31 IMPLICIT NONE
+32 INTEGER (KIND=IK4), INTENT(IN)                  :: n        ! The size of the array\&.
+33 REAL (KIND=RK8), DIMENSION(N,N), INTENT(INOUT)  :: a        ! Array to operate on\&.
+34 INTEGER (KIND=IK4), DIMENSION(N), INTENT(OUT)   :: indx
+35 INTEGER (KIND=IK4), INTENT(OUT)                 :: d
+36 INTEGER (KIND=IK4), INTENT(OUT)                 :: code
+37 
+38 !
+39 ! Local variables\&.
+40 !
+41 INTEGER (KIND=IK4), PARAMETER                   :: nmax=100
+42 REAL (KIND=RK8), PARAMETER                      :: tiny=1\&.5e-16
+43 REAL (KIND=RK8)                                 :: amax, dum, total
+44 REAL (KIND=RK8), DIMENSION(NMAX)                :: vv
+45 INTEGER (KIND=IK4)                              :: imax
+46 INTEGER (KIND=IK4)                              :: i, j, k                               ! Counters\&.
+47 
+48 d=1; code=0; 
+49 imax=1          ! Initialise IMAX so that the compiler does not complain that it is used when uninitialised (it never will be,
+50                 ! but the compiler can't know that)\&.
+51 
+52 DO i=1,n
+53     amax=0\&.0
+54     DO j=1,n
+55         IF (abs(a(i,j))\&.GT\&.amax) amax=abs(a(i,j))
+56     END DO
+57     IF(amax\&.LT\&.tiny) THEN
+58         code = 1
+59         RETURN
+60     END IF
+61     vv(i) = 1\&.0 / amax
+62 END DO
+63 
+64 DO j=1,n
+65     DO i=1,j-1
+66         total = a(i,j)
+67         DO k=1,i-1
+68             total = total - a(i,k)*a(k,j) 
+69         END DO
+70         a(i,j) = total
+71     END DO
+72     amax = 0\&.0
+73     DO i=j,n
+74         total = a(i,j)
+75         DO k=1,j-1
+76             total = total - a(i,k)*a(k,j) 
+77         END DO
+78         a(i,j) = total
+79         dum = vv(i)*abs(total)
+80         IF(dum\&.GE\&.amax) THEN
+81             imax = i
+82             amax = dum
+83         END IF
+84     END DO
+85 
+86     IF(j\&.NE\&.imax) THEN
+87         DO k=1,n
+88             dum = a(imax,k)
+89             a(imax,k) = a(j,k)
+90             a(j,k) = dum
+91         END DO
+92         d = -d
+93         vv(imax) = vv(j)
+94     END IF
+95 
+96     indx(j) = imax
+97     IF(abs(a(j,j)) < tiny) a(j,j) = tiny
+98 
+99     IF(j\&.NE\&.n) THEN
+100         dum = 1\&.0 / a(j,j)
+101         DO i=j+1,n
+102             a(i,j) = a(i,j)*dum
+103         END DO
+104     END IF 
+105 END DO
+106 
+107 RETURN
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

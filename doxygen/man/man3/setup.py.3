@@ -1,0 +1,125 @@
+.TH "/home/unimelb.edu.au/mbergemann/va_analysis/src/setup.py" 3 "Mon Apr 16 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/home/unimelb.edu.au/mbergemann/va_analysis/src/setup.py \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Namespaces"
+
+.in +1c
+.ti -1c
+.RI " \fBsetup\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "def \fBsetup\&.file_search\fP (file)"
+.br
+.ti -1c
+.RI "def \fBsetup\&.checkenv\fP (var, alt)"
+.br
+.in -1c
+.SS "Variables"
+
+.in +1c
+.ti -1c
+.RI "\fBsetup\&.Os\fP = platform\&.system()"
+.br
+.ti -1c
+.RI "\fBsetup\&.host\fP = socket\&.gethostname()\&.lower()"
+.br
+.ti -1c
+.RI "float \fBsetup\&.sleep\fP = 0\&.2"
+.br
+.ti -1c
+.RI "string \fBsetup\&.Path\fP = '/opt/local'"
+.br
+.ti -1c
+.RI "bool \fBsetup\&.help\fP = True"
+.br
+.ti -1c
+.RI "string \fBsetup\&.txt\fP"
+.br
+.ti -1c
+.RI "\fBsetup\&.altnames\fP = dict(sed='sed',awk='awk',date='date')"
+.br
+.ti -1c
+.RI "\fBsetup\&.LDFLAGS\fP = LDFLAGS\&.split(',')"
+.br
+.ti -1c
+.RI "list \fBsetup\&.missing_package\fP = []"
+.br
+.ti -1c
+.RI "tuple \fBsetup\&.checkbin\fP"
+.br
+.ti -1c
+.RI "\fBsetup\&.status\fP = False"
+.br
+.ti -1c
+.RI "\fBsetup\&.fn\fP"
+.br
+.ti -1c
+.RI "list \fBsetup\&.missing_module\fP = []"
+.br
+.ti -1c
+.RI "\fBsetup\&.method\fP = dict(pbs='qsub',slurm='sbatch')[BATCH]"
+.br
+.ti -1c
+.RI "\fBsetup\&.BATCH\fP = BATCH\&.lower()"
+.br
+.ti -1c
+.RI "\fBsetup\&.proj_file\fP = os\&.path\&.join(os\&.pardir,'\&.proj')"
+.br
+.ti -1c
+.RI "\fBsetup\&.a\fP = raw_input('Warning option for creating batch jobs is set but no PROJECT if given, is that correct? [Y|n]: ')"
+.br
+.ti -1c
+.RI "\fBsetup\&.f\fP = open(proj_file,'w')"
+.br
+.ti -1c
+.RI "\fBsetup\&.MAIL\fP = raw_input('No user email is given, enter now: ')"
+.br
+.ti -1c
+.RI "string \fBsetup\&.batch_header\fP = u''"
+.br
+.ti -1c
+.RI "string \fBsetup\&.batch_job\fP"
+.br
+.ti -1c
+.RI "\fBsetup\&.bash_script\fP = os\&.path\&.join(os\&.pardir,'submit_%s\&.sh'%BATCH)"
+.br
+.ti -1c
+.RI "list \fBsetup\&.version_conflict\fP = []"
+.br
+.ti -1c
+.RI "\fBsetup\&.cmd\fP = altnames[command]"
+.br
+.ti -1c
+.RI "\fBsetup\&.process\fP = Popen([cmd,'\-\-version'],stdout=PIPE)"
+.br
+.ti -1c
+.RI "\fBsetup\&.output\fP"
+.br
+.ti -1c
+.RI "\fBsetup\&.err\fP"
+.br
+.ti -1c
+.RI "\fBsetup\&.exit_code\fP = process\&.wait()"
+.br
+.ti -1c
+.RI "\fBsetup\&.fl\fP = float('\&.'\&.join(re\&.findall(r'\\d+',output\&.split('\\n')[0])[0:2]))"
+.br
+.ti -1c
+.RI "string \fBsetup\&.makefile_var\fP"
+.br
+.ti -1c
+.RI "string \fBsetup\&.makefile_radar\fP"
+.br
+.in -1c
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

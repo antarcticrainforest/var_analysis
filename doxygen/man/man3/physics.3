@@ -1,0 +1,401 @@
+.TH "physics" 3 "Mon Apr 16 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+physics \- 
+.SH SYNOPSIS
+.br
+.PP
+.SS "Functions/Subroutines"
+
+.in +1c
+.ti -1c
+.RI "subroutine \fBs_r_to_t_z\fP (P, PS, ZS, S, R, T, Z)"
+.br
+.ti -1c
+.RI "subroutine \fBt_r_to_s_z\fP (P, PS, ZS, T, R, S, Z)"
+.br
+.ti -1c
+.RI "subroutine \fBdiverg\fP (UNITH, VAR, U, V, DIVU, DIVV, DIV1)"
+.br
+.ti -1c
+.RI "subroutine \fBfcorlx\fP (UNITH, NSTU, F, V, FCX1)"
+.br
+.ti -1c
+.RI "subroutine \fBfcorly\fP (UNITH, NSTU, F, U, FCY1)"
+.br
+.ti -1c
+.RI "subroutine \fBfpgd\fP (UNITH, Z, DZDX, FP1)"
+.br
+.ti -1c
+.RI "subroutine \fBheight\fP (NP, KS, KT, P, T, R, Z)"
+.br
+.ti -1c
+.RI "subroutine \fBcalht2\fP (PS, ZS, N, P, TC, R, HT, DEW)"
+.br
+.ti -1c
+.RI "subroutine \fBcalc_state2\fP (P, T, TD, E, Z, R, RH, H, HDRY, S)"
+.br
+.in -1c
+.SH "Function/Subroutine Documentation"
+.PP 
+.SS "subroutine physics::calc_state2 (real (kind=rk8), intent(in) P, real (kind=rk8), intent(in) T, real (kind=rk8), intent(in) TD, real (kind=rk8), intent(in) E, real (kind=rk8), intent(in) Z, real (kind=rk8), intent(out) R, real (kind=rk8), intent(in) RH, real (kind=rk8), intent(out) H, real (kind=rk8), intent(out) HDRY, real (kind=rk8), intent(out) S)"
+
+.PP
+Definition at line 368 of file physics\&.f90\&.
+.PP
+.nf
+368 USE portable
+369 USE constants
+370 
+371 IMPLICIT NONE
+372 REAL (KIND=RK8), INTENT(IN)     :: p    ! Pressure (Pa) - check units\&.
+373 REAL (KIND=RK8), INTENT(IN)     :: t    ! Temperature (K)\&.
+374 REAL (KIND=RK8), INTENT(IN)     :: td   ! Dew point temperature (K)\&.
+375 REAL (KIND=RK8), INTENT(IN)     :: e    ! Vapour pressure (Pa - check units\&.
+376 REAL (KIND=RK8), INTENT(IN)     :: z    ! Geopotential height (m) - check units\&.
+377 REAL (KIND=RK8), INTENT(OUT)    :: r    ! Mixing ratio\&.
+378 REAL (KIND=RK8), INTENT(IN)     :: rh   ! Relative humidity (decimal fraction between 0 and 1)\&. 
+379 REAL (KIND=RK8), INTENT(OUT)    :: h    !
+380 REAL (KIND=RK8), INTENT(OUT)    :: hdry !
+381 REAL (KIND=RK8), INTENT(OUT)    :: s    !
+382 
+383 !
+384 ! Local variables\&.
+385 !
+386 REAL (KIND=RK8)                 :: ep, es, rs, lv1
+387 
+388 ep      = rd/rw
+389 es      = 1\&.003*exp(53\&.67957 - 6743\&.769/t - 4\&.8451*log(t))  ! An empirical formula for the saturation vapour pressure\&.
+390 rs      = ep*es/(p-es)
+391 r       = rs*rh
+392 lv1     = lv0 + (cpv-cl)*(t-t0)
+393 h       = (cpd + r*cl)*t + lv1*r + (1\&.0 + r)*g*z
+394 hdry    = cpd*t + g*z
+395 s       = cpd*log(t) - rd*log(p) + lv0*r/t - r*rw*log(rh)
+.fi
+.SS "subroutine physics::calht2 (real (kind=rk8), intent(in) PS, real (kind=rk8), intent(in) ZS, integer (kind=ik4), intent(in) N, real (kind=rk8), dimension(n), intent(in) P, real (kind=rk8), dimension(n), intent(in) TC, real (kind=rk8), dimension(n), intent(inout) R, real (kind=rk8), dimension(n), intent(out) HT, real (kind=rk8), dimension(n), intent(out) DEW)"
+
+.PP
+Definition at line 284 of file physics\&.f90\&.
+.PP
+.nf
+284 USE portable
+285 USE constants
+286 
+287 IMPLICIT NONE
+288 REAL (KIND=RK8), INTENT(IN)                       :: ps     ! Surface pressure (units)\&.
+289 REAL (KIND=RK8), INTENT(IN)                       :: zs     ! Surface geopotential (units)\&.
+290 INTEGER (KIND=IK4), INTENT(IN)                    :: n      ! Number of vertical levels\&.
+291 REAL (KIND=RK8), DIMENSION(N), INTENT(IN)         :: p      ! Pressures (units)\&.
+292 REAL (KIND=RK8), DIMENSION(N), INTENT(IN)         :: tc     ! Temperatures (Celsius)\&.
+293 REAL (KIND=RK8), DIMENSION(N), INTENT(INOUT)      :: r      ! Relative humidity (%)\&.
+294 REAL (KIND=RK8), DIMENSION(N), INTENT(OUT)        :: ht     ! Geopotential height (units)\&.
+295 REAL (KIND=RK8), DIMENSION(N), INTENT(OUT)        :: dew    ! Dew-point temperature? (units)\&.
+296 
+297 !
+298 ! Local variables\&.
+299 !
+300 REAL (KIND=RK8), DIMENSION(N)                     :: rh     ! Relative humidity converted to 0-1 range\&.
+301 REAL (KIND=RK8), DIMENSION(N)                     :: t      ! Temperature in Kelvin\&.
+302 REAL (KIND=RK8), DIMENSION(N)                     :: es     ! Saturation vapour pressure\&.
+303 REAL (KIND=RK8), DIMENSION(N)                     :: rs     ! Saturated mixing ratio\&.
+304 REAL (KIND=RK8)                                   :: ep     ! = RD/RW
+305 INTEGER (KIND=IK4)                                :: ks     ! Index of first vertical level at or above the surface\&.
+306 REAL (KIND=RK8)                                   :: r1, dz
+307 
+308 !
+309 ! Convert the relative humidity to the 0-1 range\&. Any humidities less than 0 or greater than 1 are set to 1\&. Not sure of the
+310 ! reasoning behind making RH<0 go to 1 \&.\&.\&. maybe missing data is better substituted with 1 RH than some other value?
+311 !
+312 rh  = r/100\&.0               
+313 WHERE ((rh \&.LT\&. 0\&.0) \&.OR\&. (rh \&.GT\&. 1\&.0)) rh = 1\&.0
+314 
+315 t   = tc + t0               ! Convert temperatures in Celsius to Kelvin\&.
+316 
+317 !
+318 ! Calculate the saturation vapour pressure using a modified form of the Clausius-Clayperon equation\&. I believe this equation might
+319 ! be in Emanuel (1994): "Atmospheric Convection" (maybe)\&.
+320 !
+321 es  = 1\&.003*exp(53\&.67957 - 6743\&.769/t - 4\&.8451*log(t))
+322 ep  = rd/rw                 ! This will be used several times in this subroutine (so save resources by only calculating it once)\&.
+323 
+324 rs  = ep*es/(p-es)          ! Calculate the saturated mixing ratio\&.
+325 
+326 !
+327 ! Overwrite the input relative humidities (R, in %) with mixing ratio\&.
+328 !
+329 r   = rs*rh
+330 
+331 !
+332 ! Locate the first level, at or above the surface (which has pressure PS)\&. Default to 1 if we can't find the surface\&.
+333 !
+334 ks  = max(transfer(maxloc(p, mask = p \&.LE\&. ps), 0),1)
+335 
+336 !
+337 ! Work out the geopotential height of the first level\&. I added a little bit of code to deal with the situation where KS=1\&. The IDL
+338 ! code did not seem to deal with this, assuming that there was always at least one pressure level "below the surface", and did a
+339 ! simple interpolation\&. If there is no level below the surface, can't do interpolation\&.
+340 !
+341 r1      = rd*0\&.5*((1+r(max(1,ks-1))/ep)/(1+r(max(1,ks-1))) + (1+r(ks)/ep)/(1+r(ks)))
+342 dz      = r1/g*0\&.5*(t(max(1,ks-1))/p(max(1,ks-1)) + t(ks)/p(ks)) * (ps/p(ks))
+343 ht(ks)  = zs + dz
+344 
+345 !
+346 ! Work out the geopotential height of all the vertical levels above the surface\&.
+347 !
+348 CALL height(n, ks, n, p, t, r, ht)
+349 
+350 !
+351 ! Assign the surface geopotential height to all levels below the surface\&.
+352 !
+353 ht(1:max(1,ks-1))  = zs
+354 
+.fi
+.SS "subroutine physics::diverg (real (kind=rk8), dimension(:), intent(in) UNITH, real (kind=rk8), dimension(:,:), intent(in) VAR, real (kind=rk8), dimension(:,:), intent(in) U, real (kind=rk8), dimension(:,:), intent(in) V, real (kind=rk8), dimension(:,:), intent(in) DIVU, real (kind=rk8), dimension(:,:), intent(in) DIVV, real (kind=rk8), dimension(:), intent(out) DIV1)"
+
+.PP
+Definition at line 170 of file physics\&.f90\&.
+.PP
+.nf
+170 USE portable
+171 
+172 IMPLICIT NONE
+173 REAL (KIND=RK8), DIMENSION(:), INTENT(IN)     :: unith      ! One dimensional array with y columns\&.
+174 REAL (KIND=RK8), DIMENSION(:,:), INTENT(IN)   :: var        ! Array with x columns and y rows containing the variable\&.
+175 REAL (KIND=RK8), DIMENSION(:,:), INTENT(IN)   :: u          ! Array with x columns and y rows containing U-component of wind\&.
+176 REAL (KIND=RK8), DIMENSION(:,:), INTENT(IN)   :: v          ! Array with x columns and y rows containing V-component of wind\&.
+177 REAL (KIND=RK8), DIMENSION(:,:), INTENT(IN)   :: divu       ! Array with x columns and y rows containing DIVU\&.
+178 REAL (KIND=RK8), DIMENSION(:,:), INTENT(IN)   :: divv       ! Array with x columns and y rows containing DIVV\&.
+179 REAL (KIND=RK8), DIMENSION(:), INTENT(OUT)    :: div1       ! Array with x columns containing divergence\&.
+180 
+181 div1    = matmul((u*var*divu + v*var*divv), unith)
+182 
+.fi
+.SS "subroutine physics::fcorlx (real (kind=rk8), dimension(nstu), intent(in) UNITH, integer(kind=ik4), intent(in) NSTU, real (kind=rk8), dimension(:,:), intent(in) F, real (kind=rk8), dimension(:,:), intent(in) V, real (kind=rk8), dimension(:), intent(out) FCX1)"
+
+.PP
+Definition at line 188 of file physics\&.f90\&.
+.PP
+.nf
+188 USE portable
+189 
+190 IMPLICIT NONE
+191 INTEGER(KIND=IK4), INTENT(IN)                     :: nstu   ! Number of stations
+192 REAL (KIND=RK8), DIMENSION(NSTU), INTENT(IN)      :: unith
+193 REAL (KIND=RK8), DIMENSION(:,:), INTENT(IN)       :: f      ! Coriolis parameter at each station and level\&.
+194 REAL (KIND=RK8), DIMENSION(:,:), INTENT(IN)       :: v      ! V-wind component at each station and level\&.
+195 REAL (KIND=RK8), DIMENSION(:), INTENT(OUT)        :: fcx1
+196 
+197 fcx1    = matmul((v*f/nstu), unith)
+198 
+.fi
+.SS "subroutine physics::fcorly (real (kind=rk8), dimension(nstu), intent(in) UNITH, integer(kind=ik4), intent(in) NSTU, real (kind=rk8), dimension(:,:), intent(in) F, real (kind=rk8), dimension(:,:), intent(in) U, real (kind=rk8), dimension(:), intent(out) FCY1)"
+
+.PP
+Definition at line 204 of file physics\&.f90\&.
+.PP
+.nf
+204 USE portable
+205 
+206 IMPLICIT NONE
+207 INTEGER(KIND=IK4), INTENT(IN)                     :: nstu   ! Number of stations
+208 REAL (KIND=RK8), DIMENSION(NSTU), INTENT(IN)      :: unith
+209 REAL (KIND=RK8), DIMENSION(:,:), INTENT(IN)       :: f      ! Coriolis parameter at each station and level\&.
+210 REAL (KIND=RK8), DIMENSION(:,:), INTENT(IN)       :: u      ! U-wind component at each station and level\&.
+211 REAL (KIND=RK8), DIMENSION(:), INTENT(OUT)        :: fcy1
+212 
+213 fcy1    = matmul((-u*f/nstu), unith)
+214 
+.fi
+.SS "subroutine physics::fpgd (real (kind=rk8), dimension(:), intent(in) UNITH, real (kind=rk8), dimension(:,:), intent(in) Z, real (kind=rk8), dimension(:,:), intent(in) DZDX, real (kind=rk8), dimension(:), intent(out) FP1)"
+
+.PP
+Definition at line 220 of file physics\&.f90\&.
+.PP
+.nf
+220 USE portable
+221 USE constants
+222 
+223 IMPLICIT NONE
+224 REAL (KIND=RK8), DIMENSION(:), INTENT(IN)     :: unith
+225 REAL (KIND=RK8), DIMENSION(:,:), INTENT(IN)   :: z
+226 REAL (KIND=RK8), DIMENSION(:,:), INTENT(IN)   :: dzdx
+227 REAL (KIND=RK8), DIMENSION(:), INTENT(OUT)    :: fp1
+228 
+229 fp1 = matmul((-g*z*dzdx), unith)
+230 
+.fi
+.SS "subroutine physics::height (integer (kind=ik4), intent(in) NP, integer (kind=ik4), intent(in) KS, integer (kind=ik4), intent(in) KT, real (kind=rk8), dimension(np), intent(in) P, real (kind=rk8), dimension(np), intent(in) T, real (kind=rk8), dimension(np), intent(in) R, real (kind=rk8), dimension(np), intent(out) Z)"
+
+.PP
+Definition at line 244 of file physics\&.f90\&.
+.PP
+.nf
+244 USE portable
+245 USE constants
+246 
+247 IMPLICIT NONE
+248 
+249 INTEGER (KIND=IK4), INTENT(IN)                :: np         ! Number of pressure levels in the P, T, R and Z arrays\&.
+250 INTEGER (KIND=IK4), INTENT(IN)                :: ks         ! The level which the surface is at\&.
+251 INTEGER (KIND=IK4), INTENT(IN)                :: kt         ! Level at which the variational analysis stops\&.
+252 REAL (KIND=RK8), DIMENSION(NP), INTENT(IN)    :: p          ! Pressure of each level\&.
+253 REAL (KIND=RK8), DIMENSION(NP), INTENT(IN)    :: t          ! Temperature of each level\&.
+254 REAL (KIND=RK8), DIMENSION(NP), INTENT(IN)    :: r          ! Mixing ratio at each level?
+255 REAL (KIND=RK8), DIMENSION(NP), INTENT(OUT)   :: z          ! Geopotential height\&.
+256 
+257 !
+258 ! Local variables\&.
+259 !
+260 REAL (KIND=RK8)                               :: ep, r1, dz ! Temporary variables\&.
+261 INTEGER (KIND=IK4)                            :: kk         ! Counter\&.
+262 
+263 ep  = rd/rw
+264 
+265 DO kk=ks+1,kt
+266     r1      = rd*0\&.5*((1+r(kk-1)/ep)/(1+r(kk-1))+(1+r(kk)/ep)/(1+r(kk)))
+267     dz      = r1/g*0\&.5*(t(kk-1)/p(kk-1)+t(kk)/p(kk))*(p(kk-1)-p(kk))
+268     z(kk)   = z(kk-1)+dz
+269 END DO
+270 
+.fi
+.SS "subroutine physics::s_r_to_t_z (real (kind=rk8), dimension(:), intent(in) P, real (kind=rk8), intent(in) PS, real (kind=rk8), intent(in) ZS, real (kind=rk8), dimension(:), intent(in) S, real (kind=rk8), dimension(:), intent(in) R, real (kind=rk8), dimension(:), intent(out) T, real (kind=rk8), dimension(:), intent(out) Z)"
+
+.PP
+Definition at line 22 of file physics\&.f90\&.
+.PP
+.nf
+22 USE portable
+23 USE constants
+24 
+25 IMPLICIT NONE
+26 REAL (KIND=RK8), DIMENSION(:), INTENT(IN)       :: p    ! Pressures of a vertical column (hPa)
+27 REAL (KIND=RK8), INTENT(IN)                     :: ps   ! Surface pressure (hPa)
+28 REAL (KIND=RK8), INTENT(IN)                     :: zs   ! Surface geopotential height (m)
+29 REAL (KIND=RK8), DIMENSION(:), INTENT(IN)       :: s    ! (K)
+30 REAL (KIND=RK8), DIMENSION(:), INTENT(IN)       :: r    ! Mixing ration (g/kg)
+31 REAL (KIND=RK8), DIMENSION(:), INTENT(OUT)      :: t    ! Temperature at each level (K)
+32 REAL (KIND=RK8), DIMENSION(:), INTENT(OUT)      :: z    ! Geopotential height at each level (m)
+33 
+34 !
+35 ! Local variables\&.
+36 !
+37 REAL (KIND=RK8)                                 :: g2       ! 2*G
+38 REAL (KIND=RK8)                                 :: ep       ! RD/RW
+39 INTEGER (KIND=IK4)                              :: ii       ! Counter
+40 REAL (KIND=RK8)                                 :: rv, a1, p1, t1, r1, z1, p2, r2
+41 
+42 !
+43 ! Assign and initialise some variables\&.
+44 !
+45 g2  = 2\&.0*g
+46 ep  = rd/rw
+47 t   = 0\&.0
+48 z   = 0\&.0
+49 
+50 WHERE (p \&.GE\&. ps)
+51     z   = zs
+52     t   = s(1) - g*zs/cpd
+53 END WHERE
+54 
+55 p1  = ps
+56 t1  = t(1)
+57 r1  = r(1)
+58 z1  = zs
+59 
+60 DO ii=transfer(maxloc(p, mask=p\&.LT\&.ps), 0),SIZE(p)
+61     p2      = p(ii)
+62     r2      = r(ii)
+63     rv      = rd*0\&.5*((1+r1/ep)/(1+r1)+(1+r2/ep)/(1+r2))
+64     a1      = rv/2\&.0/cpd*log(p1/p2)
+65     t(ii)   = (s(ii) - g/cpd*z1 - a1*t1)/(1\&.0 + a1)
+66     z(ii)   = z1 + rv*(t1+t(ii))/g2*log(p1/p2)
+67 
+68     p1      = p2
+69     r1      = r2
+70     z1      = z(ii)
+71     t1      = t(ii)
+72 END DO
+73 
+.fi
+.SS "subroutine physics::t_r_to_s_z (real (kind=rk8), dimension(:), intent(in) P, real (kind=rk8), intent(in) PS, real (kind=rk8), intent(in) ZS, real (kind=rk8), dimension(:), intent(in) T, real (kind=rk8), dimension(:), intent(in) R, real (kind=rk8), dimension(:), intent(out) S, real (kind=rk8), dimension(:), intent(out) Z)"
+
+.PP
+Definition at line 87 of file physics\&.f90\&.
+.PP
+.nf
+87 USE portable
+88 USE constants
+89 
+90 IMPLICIT NONE
+91 REAL (KIND=RK8), INTENT(IN)                             :: ps       ! Surface pressure (hPa)\&.
+92 REAL (KIND=RK8), INTENT(IN)                             :: zs       ! Surface geopotential height (m)\&.
+93 REAL (KIND=RK8), DIMENSION(:), INTENT(IN)               :: p        ! Pressure levels (hPa)\&.
+94 REAL (KIND=RK8), DIMENSION(:), INTENT(IN)               :: t        ! Temperature (K)\&.
+95 REAL (KIND=RK8), DIMENSION(:), INTENT(IN)               :: r        ! Mixing ration (g/kg)\&.
+96 REAL (KIND=RK8), DIMENSION(:), INTENT(OUT)              :: s        ! Dry static energy divided by CPD (K)\&.
+97 REAL (KIND=RK8), DIMENSION(:), INTENT(OUT)              :: z        ! Geopotential height (m)\&.
+98 
+99 !
+100 ! Local variables\&.
+101 !
+102 REAL (KIND=RK8)                                         :: ep, g2, p1, t1, r1, p2, r2, t2, rv
+103 INTEGER (KIND=IK4)                                      :: ll       ! Counter\&.
+104 
+105 !
+106 ! Do some basic checks of the input data\&. This is an unfortunate necessity (otherwise bad input data can cause overflows in the
+107 ! calculations\&. If bad data are detected, set the geopotential height and dry static energy to an undefined value (-9999\&.99)
+108 !
+109 
+110 
+111 
+112 IF ((ps \&.LE\&. 0) \&.OR\&. (minval(p) \&.LE\&. 0) \&.OR\&. (minval(t) \&.LT\&. 0) \&.OR\&. (minval(r) \&.LT\&. 0)) THEN
+113     s   = -9999\&.99
+114     z   = -9999\&.99
+115     RETURN
+116 END IF
+117 
+118 !
+119 ! Set some variables which are frequently used\&.
+120 !
+121 ep  = rd/rw
+122 g2  = 2\&.0*g
+123 
+124 !
+125 ! Where P is greater than PS, we are presumably below the surface\&. Set the geopotential height and dry static energy to surface
+126 ! values\&. We also ensure the geopotential height of the lowest level is the same as the surface\&.
+127 !
+128 
+129 z(1)    = zs
+130 z       = 0
+131 s       = 0
+132 
+133 WHERE (p \&.GE\&. ps)
+134     z   = zs
+135     s   = t(1) + g*zs/cpd
+136 END WHERE
+137 
+138 !
+139 ! For each non-surface level, calculate the geopotential height and dry static energy\&.
+140 !
+141 p1  = ps
+142 t1  = t(1)
+143 r1  = r(1)
+144 DO ll=max(1,transfer(maxloc(p, mask=p\&.LT\&.ps), 0)),SIZE(p)
+145     p2      = p(ll)
+146     t2      = t(ll)
+147     r2      = r(ll)
+148     rv      = rd*0\&.5*((1+r1/ep)/(1+r1) + (1+r2/ep)/(1+r2))
+149     IF (ll\&.gt\&.1)  z(ll)   = z(ll-1) + rv*(t1+t2)/g2*log(p1/p2)
+150     t1      = t2
+151     p1      = p2
+152     r1      = r2
+153     s(ll)   = t(ll) + g*z(ll)/cpd
+154 END DO
+155 
+156 
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

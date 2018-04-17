@@ -1,0 +1,103 @@
+.TH "/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/read_command.c" 3 "Tue Apr 17 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/read_command.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'radar_error\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBread_command\fP (int argc, char *argv[], struct \fBcli\fP *cmdline)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "int read_command (int argc, char * argv[], struct \fBcli\fP * cmdline)"
+
+.PP
+Definition at line 11 of file read_command\&.c\&.
+.PP
+.nf
+11                                                              {
+12    int      option;
+13    int      return_status   = 0;
+14 
+15    cmdline->infile            = NULL;
+16    cmdline->errorstats_file   = NULL;
+17    cmdline->outfile         = NULL;
+18 
+19    while ((option = getopt(argc, argv, "i:e:o:")) != -1){
+20       switch (option){
+21          case 'i':
+22             if (!(cmdline->infile = realloc(cmdline->infile, (strlen(optarg)+1)*sizeof(char)))){
+23                fprintf(stderr,"E: Memory allocation error\&.\n");
+24                return_status   = 1;
+25                goto finish;
+26             }
+27             strncpy(cmdline->infile, optarg, (strlen(optarg)+1));
+28             break;
+29          case 'e':
+30             if (!(cmdline->errorstats_file = realloc(cmdline->errorstats_file, (strlen(optarg)+1)*sizeof(char)))){
+31                fprintf(stderr,"E: Memory allocation error\&.\n");
+32                return_status   = 1;
+33                goto finish;
+34             }
+35             strncpy(cmdline->errorstats_file, optarg, (strlen(optarg)+1));
+36             break;
+37          case 'o':
+38             if (!(cmdline->outfile = realloc(cmdline->outfile, (strlen(optarg)+1)*sizeof(char)))){
+39                fprintf(stderr,"E: Memory allocation error\&.\n");
+40                return_status   = 1;
+41                goto finish;
+42             }
+43             strncpy(cmdline->outfile, optarg, (strlen(optarg)+1));
+44             break;
+45          case '?':
+46             if (isprint(optopt)){
+47                fprintf(stderr,"E: Unknown option `-%c'\&.\n",optopt);
+48             } else {
+49                fprintf(stderr,"E: Unknown option charcater `\\x%x'\&.\n",optopt);
+50             }
+51             return_status   = 2;
+52             goto finish;
+53          default:
+54             fprintf(stderr,"E: Unable to parse the command line\&.\n");
+55             return_status   = 2;
+56             goto finish;
+57       }
+58    }
+59 
+60    /*
+61     * Check if the required input was provided\&.
+62     */
+63    if (cmdline->infile == NULL){
+64       fprintf(stderr,"E: An input file must be specified\&.\n");
+65       return_status = 2;
+66       goto finish;
+67    }
+68 
+69    if (cmdline->errorstats_file == NULL){
+70       fprintf(stderr,"E: An error statistics file must be specified\&.\n");
+71       return_status = 2;
+72       goto finish;
+73    }
+74 
+75    if (cmdline->outfile == NULL){
+76       fprintf(stderr,"E: An output file must be specified\&.\n");
+77       return_status = 2;
+78       goto finish;
+79    }
+80 
+81    finish:
+82    return return_status;
+83 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

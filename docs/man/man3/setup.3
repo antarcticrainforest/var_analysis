@@ -1,4 +1,4 @@
-.TH "setup" 3 "Mon Apr 16 2018" "Variational Analysis" \" -*- nroff -*-
+.TH "setup" 3 "Tue Apr 17 2018" "Variational Analysis" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -104,7 +104,7 @@ setup \-
 .RI "\fBexit_code\fP = process\&.wait()"
 .br
 .ti -1c
-.RI "\fBfl\fP = float('\&.'\&.join(re\&.findall(r'\\d+',output\&.split('\\n')[0])[0:2]))"
+.RI "\fBfl\fP = float(b'\&.'\&.join(re\&.findall(b'\\d+',output\&.split(b'\\n')[0])[0:2]))"
 .br
 .ti -1c
 .RI "string \fBmakefile_var\fP"
@@ -265,7 +265,7 @@ Definition at line 359 of file setup\&.py\&.
 
 .PP
 Definition at line 206 of file setup\&.py\&.
-.SS "setup\&.fl = float('\&.'\&.join(re\&.findall(r'\\d+',output\&.split('\\n')[0])[0:2]))"
+.SS "setup\&.fl = float(b'\&.'\&.join(re\&.findall(b'\\d+',output\&.split(b'\\n')[0])[0:2]))"
 
 .PP
 Definition at line 360 of file setup\&.py\&.

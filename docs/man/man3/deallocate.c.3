@@ -1,0 +1,63 @@
+.TH "/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/deallocate.c" 3 "Tue Apr 17 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/deallocate.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'radar_error\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "void \fBdeallocate\fP (struct \fBerrorstats\fP *error_statistics, struct \fBradar\fP *radar_data)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "void deallocate (struct \fBerrorstats\fP * error_statistics, struct \fBradar\fP * radar_data)"
+
+.PP
+Definition at line 11 of file deallocate\&.c\&.
+.PP
+.nf
+11                                                                               {
+12    int      ii;
+13 
+14    if (error_statistics->lon)      free(error_statistics->lon);
+15    if (error_statistics->lat)      free(error_statistics->lat);
+16    if (error_statistics->mu)      free(error_statistics->mu);
+17    if (error_statistics->sigma)   free(error_statistics->sigma);
+18 
+19    if (radar_data->rain_rate)      free(radar_data->rain_rate);
+20    if (radar_data->lon)         free(radar_data->lon);
+21    if (radar_data->lat)         free(radar_data->lat);
+22    if (radar_data->nearest_stn)   free(radar_data->nearest_stn);
+23    if (radar_data->rain_rate_pdf){
+24       for (ii=0; ii<(radar_data->nx*radar_data->ny); ++ii){
+25          if (*(radar_data->rain_rate_pdf + ii))   free(*(radar_data->rain_rate_pdf + ii));
+26          *(radar_data->rain_rate_pdf + ii)   = NULL;
+27       }
+28       free (radar_data->rain_rate_pdf);
+29    }
+30 
+31    error_statistics->lon      = NULL;
+32    error_statistics->lat      = NULL;
+33    error_statistics->mu      = NULL;
+34    error_statistics->sigma      = NULL;
+35 
+36    radar_data->rain_rate      = NULL;
+37    radar_data->lon            = NULL;
+38    radar_data->lat            = NULL;
+39    radar_data->nearest_stn      = NULL;
+40    radar_data->rain_rate_pdf   = NULL;
+41 
+42    return;
+43 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

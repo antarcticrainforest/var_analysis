@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.11"/>
-<title>Variational Analysis: Main Page</title>
+<title>Variational Analysis: 3D Variational Data Assimilation of ECMWF Analysis Model Data</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -30,6 +30,7 @@
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr style="height: 56px;">
+  <td id="projectlogo"><img alt="Logo" src="dataassim.jpeg"/></td>
   <td id="projectalign" style="padding-left: 0.5em;">
    <div id="projectname">Variational Analysis
    </div>
@@ -48,6 +49,7 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
     <ul class="tablist">
       <li class="current"><a href="index.html"><span>Main&#160;Page</span></a></li>
       <li><a href="namespaces.html"><span>Modules</span></a></li>
+      <li><a href="annotated.html"><span>Data&#160;Types&#160;List</span></a></li>
       <li><a href="files.html"><span>Files</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -98,10 +100,92 @@ $(document).ready(function(){initNavTree('index.html','');});
 
 <div class="header">
   <div class="headertitle">
-<div class="title">Variational Analysis Documentation</div>  </div>
+<div class="title">3D Variational Data Assimilation of ECMWF Analysis Model Data </div>  </div>
 </div><!--header-->
 <div class="contents">
-</div><!-- contents -->
+<div class="textblock"><p>This repository contains the source-code of a 3D Variational Analysis (3D Var)</p>
+<p>For more details, see the scientific publications:</p>
+<ul>
+<li><a href="https://doi.org/10.1175/1520-0469(1997)054&lt;1503:CVAOSD&gt;2.0.CO;2">Constrained Variational Analysis of Sounding Data Based on Column-Integrated Budgets of Mass, Heat, Moisture, and Momentum: Approach and Application to ARM Measurements</a></li>
+<li><a href="http://doi.org/10.1175/2009jcli3071.1">Observed Large-Scale Structures and Diabatic Heating and Drying Profiles during TWP-ICE</a></li>
+</ul>
+<p>The repository is available on GitHub: <a href="https://github.com/antarcticrainforest/va_analysis">github.com/antarcticrainforest/va_analysis</a> and includes the following directories:</p>
+<ul>
+<li>2D_create - directory with scripts to create the 2D input fields for the 3D Var</li>
+<li>3D_create - and the scripts for the 3D input field</li>
+<li>process_MWR - scripts to process the microwave based observations</li>
+<li>process_rain - scripts to process the radar based rainfall estimates</li>
+<li>src - the source code for the variational analysis</li>
+<li>docs - documentation for GitHub-Pages</li>
+</ul>
+<h1>Prerequisites </h1>
+<p>You will need:</p>
+<ul>
+<li><a href="http://www.python.org/">Python 2.7 Release</a></li>
+<li>IDL or the GPL version of it (<a href="http://gnudatalanguage.sourceforge.net">Gnu Data Language</a></li>
+<li><a href="http://nco.sourceforge.net">netCDF Operator (nco)</a></li>
+<li>A working C compiler</li>
+<li>A working Fortran compiler</li>
+</ul>
+<h2>Additional Python Packages and Libraries </h2>
+<p>Additionally the following python packages must be installed on the system to run the pattern recognition:</p>
+<ul>
+<li><a href="http://www.numpy.org/">Numpy</a></li>
+<li><a href="http://www.unidata.ucar.edu/software/netcdf">Netcdf4 Library with fortran support</a></li>
+<li><a href="http://netcdf4-python.googlecode.com">Netcdf4-Python</a></li>
+</ul>
+<p>All packages are open source and should be available via the package manager of your OS.</p>
+<p>To install the packages for Ubuntu 12.04 and later, and Debian wheezy and later::</p>
+<p>apt-get install python-numpy python-netcdf gnudatalanguage netcdf-fortran</p>
+<p>On Arch 2012.07.15 and later::</p>
+<p>pacman -S python2-numpy netcdf-fortran python2-netcdf4 gnudatalanguage (via AUR)</p>
+<p>On Gentoo Base System release 2.X and later::</p>
+<p>emerge numpy (with python2_7 use flag) gnudatalanguage netcdf netcdf4-python netcdf-fortran</p>
+<p>On Mac OS X 10.6 and later (via port reposetory system)::</p>
+<p>port install py27-numpy py27-netcdf4 gnudatalanguage netcdf-fortran</p>
+<h2>Data and format </h2>
+<p>You might need to <a href="https://www.archive.arm.gov/armuserreg/#/new">create</a> an account at the Atmospheric Radiation Measurement (ARM) Climate Research Programm. Once you have an account you will need to download the following data:</p>
+<p>Suppose you want to run the analysis for Feb 2014: Go to the <a href="http://www.archive.arm.gov/discovery/#v/results/s">arm data catalogue</a> and search for :</p>
+<ul>
+<li>Surface data from ecmwf model (e.g. twpecmwfsurfX1 for data over Darwin)</li>
+<li>Supplement data from ecmwf model (e.g. twpecmwfsuppX1 for data over Darwin)</li>
+<li>Upper atmosphere data from ecmwf model (e.g. twpecmwfupaX1 for data over Darwin)</li>
+<li>Microwave Water Radiometer measurements (e.g. twpmwrlosC3.b1 for data from Darwin)</li>
+<li>Surface measurements (e.g. twpmetC3.b1 for data from Darwin)</li>
+</ul>
+<p>If you want to retreive data from Darwin than just copy and paste the acronyms. If not, you can choose any facility that is offered on the ARM site. You only have to make sure to download the supplemental model data from ecmwf (<em>ecmwfsupp</em>), the surface data (<em>surf</em>), upper atmosphere data (<em>upp</em>) from ecmwf, microwave radiometer (<em>mwrlos</em>) and surface met measurements (<em>met</em>). The prefix twp stands for tropical western pacific and the suffix X1/C3.b1 for model data/observations over Darwin. Replace the prefixes and suffixes by the desired region and station. The acronyms can be found on the search page under the sites and facility bars.</p>
+<p>Once you downloaded the data make sure all files are located in <code>one</code> folder.</p>
+<p>You also have to download rainfall radar data from your preferred side. Make sure that the files come in daily format. The data can either be in ascii or netcdf format. Once again make sure that all files are stored in the same folder.</p>
+<h1>Building </h1>
+<p>The <code><a class="el" href="setup_8py.html">setup.py</a></code> script in the <code>src</code> folder helps you creating a Makefile for building the 3D Var program. Some important environment variables are:</p>
+<ul>
+<li>FC Fortran compiler command [default gfortran]</li>
+<li>CC C compiler command [default gcc]</li>
+<li>FCFLAGS Fortran compiler flags [default -O3 -Wpedantic -fimplicit-none -fsign-zero]</li>
+<li>CFLAGS C compiler flags [default -O3 -Wpedantic]</li>
+<li>LD_LIBRAY_PATH linker flags, e.g. -L&lt;lib dir&gt;=""&gt; if you have libraries in a nonstandard directory &lt;lib dir&gt;=""&gt; [default s]</li>
+<li>INCLUDE include flags e.g. -I in a the headers in a nonstandard directory  [default s]</li>
+<li>FLIBS fortran libraries to pass to the linker, e.g. -l&lt;library&gt; [default netcdff]</li>
+<li>CLIBS c libraries to pass to the linker, e.g. -l&lt;library&gt; [default netcdf,m]</li>
+</ul>
+<p>Use these variables to override the choices made by <a class="el" href="setup_8py.html">setup.py</a> or to help it to find libraries and programs with nonstandard names/locations.</p>
+<p>To create the Makefile simply type:: </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;$:  python setup.py</div></div><!-- fragment --><p> Comiple the source code with:: </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;$:  make &amp;&amp; make install</div></div><!-- fragment --><h1>Testing </h1>
+<p>Some test data with comes with the code. The data is stored in .test in this directory. The output of the test is written to the file <code>test.out</code> in the <code>src</code> directory. It is recommended to look for any suspicious errors and warnings in the file.</p>
+<h1>Usage </h1>
+<p>Once everything is downloaded and working ok run the <code>preprocess.sh</code> script. The script takes the following command line arguments:</p>
+<ul>
+<li>-a , &ndash;arminput : Input dir of the atmospheric data</li>
+<li>-r , &ndash;raininput : Input dir of the radar data</li>
+<li>-o , &ndash;output : Output dir of the varational analysis</li>
+<li>-v , &ndash;va_input : Input dir of the variational analysis</li>
+</ul>
+<h2>Submission to a Computing Cluster </h2>
+<p>To speed computation up and and run multiple seasons paralell an option to submit all (pre-)processing to a Linux computing has been implemented. To create a submission script that submits the (pre-)processing scripts to a cluster simply run: </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;$: python setup.py --BATCH=system</div></div><!-- fragment --><p>Where <code>system</code> can either be pbs or slurm. You will be asked for a email address and a project ID for resource allocation (optional). This will create a <code>submit</code> script in the main va_analysis directory. You can change the resource allocation if necessary. The output of the (pre-)processing will be redirected into <code>Jobs</code> in the va_analysis main directory.</p>
+<p>For more options and how to use this script see: </p><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;$: submit_system.sh --help</div></div><!-- fragment --><h1>Contributing </h1>
+<p>We welcome all types of contributions, from blueprint designs to documentation to testing to deployment scripts.</p>
+<h1>Bugs </h1>
+<p>Bugs should be discussed directly on <a href="https://github.com/antarcticrainforest/va_analysis">Github</a> </p>
+</div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->

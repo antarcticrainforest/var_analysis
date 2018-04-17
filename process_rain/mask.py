@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 from netCDF4 import Dataset as nc
 #import Polygon
 import numpy as np
@@ -119,7 +117,7 @@ if __name__ == "__main__":
         else:
             lats=np.arange(float(lats[0]),float(lats[1]),float(res[1]))
     poly=[]
-    for i in xrange(len(polyx)):
+    for i in range(len(polyx)):
         if len(polyx) and len(polyy) and len(str(polyx[i])) and len(str(polyy[i])):
             poly.append((float(polyx[i]),float(polyy[i])))
     lats=lats[...,::-1]
@@ -129,8 +127,8 @@ if __name__ == "__main__":
     
     f.variables['rain_rate'].missing_value=mask
     rr=creatpoly(poly,lons,lats,mask=mask)
-    maskfile = os.path.join(os.path.dirname(sys.argv[0]),'cpol_mask_ring.nc')
-    ma = np.ma.masked_invalid(nc(maskfile).variables['mask_ring'][:])
+    maskfile = os.path.join(os.path.dirname(sys.argv[0]),'ring_mask.npz')
+    ma = np.ma.masked_equal(np.load(maskfile)['mask'],-99.9)
     try:
       f.variables['rain_rate'][:] = ma * rr
     except (IndexError, ValueError):

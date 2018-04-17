@@ -1,5 +1,3 @@
-#!/usr/bin/env python2.7
-
 from netCDF4 import Dataset as nc
 from netCDF4 import date2num,num2date
 import numpy as np
@@ -192,8 +190,8 @@ class NC(object):
             #Get the source
             r_source=np.ma.masked_less(self.source.variables[
                     self.metadata['rain_rate'].varname][tstep],0.1).filled(0)
-            maskf = os.path.join(os.path.dirname(sys.argv[0]),'cpol_mask_ring.nc')
-            mask = nc(maskf).variables['mask_ring'][:]
+            maskf = os.path.join(os.path.dirname(sys.argv[0]),'ring_mask.npz')
+            mask = np.ma.masked_equal(np.load(maskf)['mask'],-99.9)
             r_source=np.ma.masked_invalid(r_source * mask)
             r_source=np.ma.masked_greater(r_source,1000.)
             t.variables['time'][:]=self.metadata['time'].data[tstep]
@@ -224,7 +222,7 @@ if __name__ == '__main__':
 
     #Get the metadata
     Meta = NC(infile)
-    for tt in xrange(len(Meta.metadata['time'].data)):
+    for tt in range(len(Meta.metadata['time'].data)):
         Meta.create_ncfile(tt,head)
     Meta.source.close()
     sys.stdout.write('%s: created netcdffiles from %s\n' %(sys.argv[0],infile))

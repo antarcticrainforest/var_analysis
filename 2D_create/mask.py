@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 from netCDF4 import Dataset as nc
 #import Polygon
 import numpy as np

@@ -28,7 +28,7 @@ fi
 
 #Set the variables
 export TZ=UTC								# Always a safe thing to do.
-seas=$(python2 -c "print '${input%/}'.split('/')[-1]")
+seas=$(python -c "print('${input%/}'.split('/')[-1])")
 #Now define the variables we need to run the run_assim script
 exe_dir=${wrkdir%/} #1
 ipt_dir=${input%/}

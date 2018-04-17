@@ -87,7 +87,7 @@ for date in ${dates[*]};do
                 fi
             else
               echo "$(basename $0) on $proc : call create_netcdf.py"
-                python2.7 ${workdir%/}/create_netcdf.py ${old_dir%/}/${infile} ${ipt_dir%/}/${outfile}
+                python ${workdir%/}/create_netcdf.py ${old_dir%/}/${infile} ${ipt_dir%/}/${outfile}
                 if [ $? -ne 0 ];then
                   echoerr "$(basename $0) on $proc : create_netcdf failed"
                 fi
@@ -108,7 +108,7 @@ for date in ${dates[*]};do
               if [ ! -f ${pdffile} ] ; then
                 echo "$(basename $0) on $proc : Creating percentiles for $(basename $file)"
                       ${workdir%/}/radar_error -i ${file} -e ${workdir%/}/errfile.txt -o ${pdffile}
-                      #python2.7 ${workdir%/}/correct_rain.py ${pdffile} 'full'
+                      #python ${workdir%/}/correct_rain.py ${pdffile} 'full'
                       if [ $? -ne 0 ];then
                         echoerr "$(basename $0) on $proc : radar_error failed"
                     fi
@@ -120,7 +120,7 @@ for date in ${dates[*]};do
               if [ ! -f ${avgfile} ];then
                 echo "$(basename $0) on $proc : Domain averaging $(basename ${avgfile})"
                 # do the domain average
-                python2.7 ${workdir%/}/make_domain_avg.py ${pdffile} ${avgfile} ${workdir%/}/mask_${proc}.nc 0
+                python ${workdir%/}/make_domain_avg.py ${pdffile} ${avgfile} ${workdir%/}/mask_${proc}.nc 0
                     #python ${workdir%/}/correct_rain.py ${avgfile} 'time'
                   if [ $? -ne 0 ];then
                     echoerr "$(basename $0) on $proc : domain averaging failed"

@@ -53,7 +53,7 @@ def datetimes_to_ranges(iterable):
 
 def main(cpoldir):
   dates={}
-  for key,value in dict(cpol=cpoldir).iteritems():
+  for key,value in dict(cpol=cpoldir).items():
     dates[key]=get_filenames(value,key)
   out =[]
   maxl = 0
@@ -69,7 +69,7 @@ if __name__ == '__main__':
 
     try:
       raininput=sys.argv[1]
-    except IndexError, ValueError:
+    except(IndexError, ValueError):
         sys.exit('Usage: \t python %s CPOL-INPUTDIR'%(sys.argv[0]))
     
 

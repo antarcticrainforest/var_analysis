@@ -76,11 +76,11 @@ clone(){
       ft_mwrlos=$(find ${input%/}/*mwrlos*$tstring*.cdf 2> /dev/null)
       if [ -z "$ft_met" ];then
         echo "get_micro: Creating file for met at $tstring"
-        python2 ${workdir%/}/clone.py ${input%/} ${meta_met[0]} $tstring
+        python ${workdir%/}/clone.py ${input%/} ${meta_met[0]} $tstring
       fi
       if [ -z "$ft_mwrlos" ];then
         echo "get_micro: Creating file for mwrlos at $tstring"
-        python2 ${workdir%/}/clone.py ${input%/} ${meta_mwrlos[0]} $tstring
+        python ${workdir%/}/clone.py ${input%/} ${meta_mwrlos[0]} $tstring
       fi
 
       nday=$(($nday+86400)) #Increase by one day (86400 sec)
@@ -109,16 +109,16 @@ get_micro_input(){
     #  ft_mwrlos=$(find ${input%/}/*mwrlos*$tstring*.cdf 2> /dev/null)
     #  if [ -z "$ft_met" ];then
     #    echo "get_micro: Creating file for met at $tstring"
-    #    python2 ${workdir%/}/clone.py ${input%/} ${meta_met[0]} $tstring
+    #    python ${workdir%/}/clone.py ${input%/} ${meta_met[0]} $tstring
     #  fi
     #  if [ -z "$ft_mwrlos" ];then
     #    echo "get_micro: Creating file for mwrlos at $tstring"
-    #    python2 ${workdir%/}/clone.py ${input%/} ${meta_mwrlos[0]} $tstring
+    #    python ${workdir%/}/clone.py ${input%/} ${meta_mwrlos[0]} $tstring
     #  fi
 
     #  nday=$(($nday+86400)) #Increase by one day (86400 sec)
     #done
-    python2 ${workdir%/}/process_MWR/date.py $seas ${dates[*]}
+    python ${workdir%/}/process_MWR/date.py $seas ${dates[*]}
     mapfile -t  years_str <  ${workdir%/}/process_MWR/.years_${seas}
     mapfile -t months_str < ${workdir%/}/process_MWR/.months_${seas}
     mapfile -t first < ${workdir%/}/process_MWR/.first_${seas}
@@ -249,23 +249,23 @@ get_rain_input(){
     fi
     DATES_LAST=$(echo ${DATES[1]}|cut -d _ -f1)
     DATES_FIRST=$(echo ${DATES[0]}|cut -d _ -f1)
-    dates=$(python2 -c "from datetime import datetime, timedelta as td;\
+    dates=$(python -c "from datetime import datetime, timedelta as td;\
         d1,d2=datetime.strptime('${DATES_FIRST}','%Y%m%d'),\
         datetime.strptime('${DATES_LAST}','%Y%m%d');\
-        dt=d2-d1;d=[(d1+td(days=i)).strftime('%Y%m%d') for i in xrange(dt.days+1)];\
-        print ' '.join(d).strip('\n')")
-    python2 ${workdir%/}/process_rain/mask.py ${seas} #${workdir%/}/process_rain/tmp.nc ${workdir%/}/process_rain/mask.nc
+        dt=d2-d1;d=[(d1+td(days=i)).strftime('%Y%m%d') for i in range(dt.days+1)];\
+        print(' '.join(d).strip('\n'))")
+    python ${workdir%/}/process_rain/mask.py ${seas} #${workdir%/}/process_rain/tmp.nc ${workdir%/}/process_rain/mask.nc
     if [ $? -ne 0 ];then
           echoerr "$proc : mask.py in get_rain_input had an error, aborting"
     fi
     #Get the number of max. threads
     IFS=' ' read -a array <<< "$dates"
-    base_date=$(python2 -c "from datetime import datetime;\
+    base_date=$(python -c "from datetime import datetime;\
         d1=datetime.strptime('${array[0]}','%Y%m%d');\
-        print d1.strftime('%Y%m01')")
+        print(d1.strftime('%Y%m01'))")
     #let nproc=$(get_num_process)
     let nproc=1
-    ary_split=$(python2 ${workdir%/}/split.py $nproc ${dates[*]})
+    ary_split=$(python ${workdir%/}/split.py $nproc ${dates[*]})
     let proc=1
     #for a in ${ary_split[*]};do
     for d in ${dates[*]};do
@@ -377,14 +377,14 @@ cd ${workdir}
 ##########################################
 #####Get dates:
 #Get the start and end date of the wet season (Radar rain availability)
-split_dates=$(python2 ${workdir%/}/get_dates.py $raininput $input)
+split_dates=$(python ${workdir%/}/get_dates.py $raininput $input)
 if [ $? -ne 0 ];then
   echoerr 'No overlapping periods found for microw. radiom. and cpol data'
 fi
 seas=$(echo ${output}|rev|cut -d / -f1 |rev)
 old_output=${output}
 old_va_output=${va_output}
-#split_dates="20130201_0000,20130413_1800,20130201,20130301,20130401"
+split_dates="20021101_0000,20021103_1800,20021101"
 
 let n_split=0
 for d in ${split_dates};do
@@ -409,34 +409,33 @@ for d in ${split_dates};do
   mkdir -p ${output}
   mkdir -p ${va_output}
 
-  ${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${seas} ${DATES[*]}
+#  ${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${seas} ${DATES[*]}
   if [ $? -ne 0 ];then
     echoerr "create_2d_input_files had an error, aborting"
   fi
 
   ###Get the 3d_data
-  ${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
+#  ${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
   if [ $? -ne 0 ];then
     echoerr "concatenate_arm_data had an error, aborting"
   fi
-  #get_3d_input
+#  get_3d_input
   if [ $? -ne 0 ];then
     echoerr "get_3d_input had an error, aborting"
   fi
   #####Get the microwave input data
   #clone 'smet' 'mwrlos' ${DATES[*]}
-  get_micro_input 'smet' 'mwrlos' ${DATES[*]}
+#  get_micro_input 'smet' 'mwrlos' ${DATES[*]}
   outf=${output%/}/MWR-DATA/mwrlos_6h_interp.nc
-  echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_pwv'][:]=np.ma.masked_invalid(f.variables['be_pwv'][:]);f.close()"
-  echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_lwp'][:]=np.ma.masked_invalid(f.variables['be_lwp'][:]);f.close()"
+#  echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_pwv'][:]=np.ma.masked_invalid(f.variables['be_pwv'][:]);f.close()"
+#  echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_lwp'][:]=np.ma.masked_invalid(f.variables['be_lwp'][:]);f.close()"
 
 
   if [ $? -ne 0 ];then
     echoerr "get_micro_input had an error, aborting"
   fi
-  exit
   ####Prepare the raindata
-  iget_rain_input
+#  get_rain_input
   if [ $? -ne 0 ];then
     echoerr "get_rain_input had an error, aborting"
   fi
@@ -448,12 +447,13 @@ for d in ${split_dates};do
 #    echoerr "3D VAR had an error, aborting"
 #  fi
   let n_split=$n_split+1
+  exit
 done
 #if [ $n_split -eq 1 ];then
 #    mv ${va_output} ${old_va_output%/}/merge
 #else
 #  mkdir -p ${old_va_output%/}/merge
-#  python2 ${workdir%}/postprocess.py ${old_va_output%/} ${split_dates}
+#  python ${workdir%}/postprocess.py ${old_va_output%/} ${split_dates}
 #  if [ $? -ne 0 ];then
 #      echoerr "Post-processing had an error, aborting"
 #  fi

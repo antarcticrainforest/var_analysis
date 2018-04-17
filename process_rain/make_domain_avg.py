@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 import numpy as np
 from netCDF4 import date2num
 from netCDF4 import Dataset as nc

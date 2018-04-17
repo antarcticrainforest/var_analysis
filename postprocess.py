@@ -17,7 +17,7 @@ def get_periods(start,end):
 
   out =[]
   dt = timedelta(hours=6)
-  for i in xrange(len(start)):
+  for i in range(len(start)):
     out.append((start[i],end[i],True))
     if not i == len(start)-1 :
       missing_s = end[i]+dt
@@ -102,7 +102,7 @@ def merge(folder,dates):
   #Which variables should not be merged because they don't change or will be fixed later?
   exclude=('base_time','time','time_offset','lat','lon','phis','lev','string','stations','levels','variables','stru','strs','vbudget_column','vbudget_layer','weight')
   
-  for p in xrange(1):
+  for p in range(1):
     if p == 0:
       t = 'best_est'
     else:

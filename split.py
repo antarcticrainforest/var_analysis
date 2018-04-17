@@ -14,4 +14,4 @@ if __name__ == '__main__':
 
     ary=np.array_split(dates,ntask)
     for a in list(ary):
-        print ','.join(list(a))
+        print(','.join(list(a)))

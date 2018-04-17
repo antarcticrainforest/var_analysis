@@ -152,7 +152,7 @@ ncap -h -O -s "time = time_offset^1/86400.0" ${outfile} ${outfile}
 ncatted -h -a units,time,a,c,"days since ${base_date} 00:00:00 UTC" ${outfile}
 
 # make a masking file for the domain we require
-${wrkdir%}/make_mask_ecmwf -i "${outfile}" -o ${opt_dir%}/mask_${seas}.nc -d square
+${wrkdir%}/make_mask_ecmwf -i "${outfile}" -o ${opt_dir%}/mask_${seas}.nc -d square -s ${seas}
 
 
 # average over the gridpoints specified by the masking file.

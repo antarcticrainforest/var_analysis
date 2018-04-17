@@ -1,5 +1,3 @@
-#!/usr/bin/env python2
-
 from netCDF4 import Dataset as nc, num2date, date2num
 #import pandas as pd
 import sys, os,glob
@@ -29,7 +27,7 @@ class CPOL(object):
     '''
     def __init__(self,folder):
         self.filenames=[]
-        for ii in xrange(-1,100):
+        for ii in range(-1,100):
             if ii == -1:
                 perc='pret_06h_NOGAUGE_*'
             else:

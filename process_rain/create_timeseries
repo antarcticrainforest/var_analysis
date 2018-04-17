@@ -27,7 +27,7 @@ then
      fi
 fi
 
-base_string=$(python2.7 -c "from datetime import datetime;print datetime.strptime('${base_date}','%Y%m%d').strftime('%Y-%m-%d')")
+base_string=$(python -c "from datetime import datetime;print(datetime.strptime('${base_date}','%Y%m%d').strftime('%Y-%m-%d'))")
 wrkdir=$(readlink -f $(basename $0))
 mkdir -p ${opt_dir}
 ##########################################################################

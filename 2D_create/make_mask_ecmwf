@@ -56,7 +56,7 @@ do
 		;;
 	esac
 done
-outfile=${maskfile}_${seas}.nc
+outfile=${maskfile}
 wrkdir=$(dirname $(readlink -f $0))
 
 #
@@ -124,7 +124,7 @@ ncatted -O -a long_name,sktsfc,m,c,"Inside domain flag" \
 -a units,sktsfc,m,c,"0 or 1" "${outfile}" -h
 
 ncdump -v lon,lat,latitude,longitude "${outfile}" > mask_${seas}.cdl
-lines=$(wc -l mask.cdl | awk '{print $1-1}')
+lines=$(wc -l mask_${seas}.cdl | awk '{print $1-1}')
 head -n${lines} mask_${seas}.cdl > mask_${seas}.tmp
 
 $wrkdir/nctext_LJ -v lat "${outfile}" | awk '{print $NF}' | paste lonlat_${seas}.tmp - | \

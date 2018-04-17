@@ -24,7 +24,7 @@ Prerequisites
 You will need:
 
  * [Python 2.7 Release](http://www.python.org/)
- * IDL or the GPL version of it ([Gnu Data Language](http://gnudatalanguage.sourceforge.net)
+ * IDL or the GPL version of it ([Gnu Data Language](http://gnudatalanguage.sourceforge.net))
  * [netCDF Operator (nco)](http://nco.sourceforge.net)
  *  A working C compiler
  *  A working Fortran compiler

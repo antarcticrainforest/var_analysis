@@ -100,13 +100,13 @@ end
 ; Positions of stations. 
 ; Stations must be in anticlockwise order 
 ; CENTRAL STATION LAST.
- 
-   
+
+
+   lons=[130.121,131.962,131,962,130.131,131.0444]
+   lats=[-11.348,-11.348,-13.147,-13.147,-12.2491]
+   stf=['ulcorner','urcorner','lrcorner','llcorner','center']
    ;lons =[130.41669,129.8,131.1355,131.7609,131.7651,130.8925]
    ;lats =[-11.40891,-12.4,-13.2287,-12.5858,-11.3081,-12.4239]
-   lons = [130.121,131.962,131,962,130.131]
-   lats = [-11.348,-11.348,-13.147,-13.147]
-   
     ;polyx= [130.121, 131.962, 131.962, 130.121 ]
     ;polyy= [-13.147, -13.147, -11.348, -11.348 ]
    nsts = n_elements(lats)
@@ -371,7 +371,6 @@ ipt_vht,inputs,instruments,nvs,nps,nsts,nts,vs,ps,sts,ts,ds
       
         vr_f=['temp(K)','rh(%)','u','v']
         vr_f2=['ps(mb)','rh(%)','T(C)','u(m/s)','v(m/s)','z(m)']
-	stf=['F1','F2','F3','F4','F5','FC']
 
 
 	

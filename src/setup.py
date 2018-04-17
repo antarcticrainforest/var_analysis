@@ -355,9 +355,9 @@ for command,min_v in (('sed',3.5),('bash',3.5),('date',6.0),('awk',3.1)):
     sys.stdout.flush()
     time.sleep(sleep)
     process=Popen([cmd,'--version'],stdout=PIPE)
-    (output, err) = process.communicate()
+    output, err = process.communicate()
     exit_code = process.wait()
-    fl = float('.'.join(re.findall(r'\d+',output.split('\n')[0])[0:2]))
+    fl = float(b'.'.join(re.findall(b'\d+',output.split(b'\n')[0])[0:2]))
     if fl < min_v:
         sys.stdout.write('%2.2f < %2.2f\n'%(fl,min_v))
         version_conflict.append(command)
@@ -445,11 +445,11 @@ source:		$(OBJS)
 		$(FC) $(FFLAGS) lu.o time.o constants.o portable.o settings.o process_va_output.o io.o physics.o numerics.o \\
 			-o test/process_va_output $(LIBS)
 		cd ./raerr; make
-		@echo "########### MAKE TESTS #############################"
-		cd test ; ./preprocess.sh all 2> ../test.out
-		@echo    Test output wirtten to test.out
-		@echo    Check test result for errors if desired
-		@echo "########### TESTS DONE ############################"
+		#@echo "########### MAKE TESTS #############################"
+		#cd test ; ./preprocess.sh all 2> ../test.out
+		#@echo    Test output wirtten to test.out
+		#@echo    Check test result for errors if desired
+		#@echo "########### TESTS DONE ############################"
 		@echo " Now type 'make install' and 'make clean' "
 
 clean:

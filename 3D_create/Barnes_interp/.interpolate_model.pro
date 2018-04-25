@@ -102,9 +102,9 @@ end
 ; CENTRAL STATION LAST.
 
 
-   lons=[130.121,131.962,131,962,130.131,131.0444]
-   lats=[-11.348,-11.348,-13.147,-13.147,-12.2491]
-   stf=['ulcorner','urcorner','lrcorner','llcorner','center']
+   lons=[130.121,130.121,131.962,131.962,131.0444]
+   lats=[-11.348,-13.147,-13.147,-11.147,-12.2491]
+   stf=['ulcorner','llcorner','lrcorner','urcorner','center']
    ;lons =[130.41669,129.8,131.1355,131.7609,131.7651,130.8925]
    ;lats =[-11.40891,-12.4,-13.2287,-12.5858,-11.3081,-12.4239]
     ;polyx= [130.121, 131.962, 131.962, 130.121 ]
@@ -172,7 +172,7 @@ print,inputr2
 	 cdfread,inputr2,'no10vsfc',vsr,rcode
 	 cdfread,inputr2,'zsfc',zsr,rcode
 	 ;convert geoopotential to height
-	 zsr = zsr/9.8
+	 zsr = zsr/9.81
 	 
 	 Td_2_rh, psr,tdsr,tsr,rhsr
           for ilat =0,nlatr-1 do begin
@@ -282,7 +282,6 @@ ipt_vht,inputs,instruments,nvs,nps,nsts,nts,vs,ps,sts,ts,ds
 ; Variables (m,nvr_f) and pressure levels (j,nps).
 
      for i=0,ntr-1 do begin
-       print,i + 1
         for ist=0,nsts-1 do begin
            for m=0,nvr_f-1 do begin
              for j=0,nps-1 do begin

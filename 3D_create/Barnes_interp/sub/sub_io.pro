@@ -158,10 +158,10 @@
 	  p=fltarr(np)
 	  st=strarr(nst)
 ; +++++++++++++++++++++++++++++++++++++++++++++11/12/98 
-            print,'warning, for TOGACOARE  nst changed from 5 to 14!'
-             if(strpos(inputfile,'/tmp/jlin/') ge 0)then begin
-               if(nst eq 5)then st=strarr(14) 
-             endif
+;            print,'warning, for TOGACOARE  nst changed from 5 to 14!'
+;             if(strpos(inputfile,'/tmp/jlin/') ge 0)then begin
+;               if(nst eq 5)then st=strarr(14) 
+;             endif
 ;+++++++++++++++++++++++++++++++++++++++++++++++
 	  t=fltarr(nt)
 	  d=fltarr(nv,np,nst,nt)

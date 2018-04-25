@@ -351,7 +351,6 @@ DU0(7,1,:,:)    = D_T(2,:,:)                ! Surface temperature.
 DU0(9,1,:,:)    = D_RH(2,:,:)               ! Surface relative humidity.
 DU0(10,1,:,:)   = D_Z(2,:,:)                ! Surface geopotential.
 
-
 !
 ! Fill the upper levels of the DU0 array with geopotential height and dew (point temperature?)
 ! This comment is from the IDL code: Use cal_state2 later to avoid dew calculation.

@@ -297,6 +297,7 @@ ensemble_wrapper() {
 
         #Run the variational analysis wrapper function
         run_assim -O ${dir%/} --PRECIP_DATA ${rain#${ipt_dir%/}/}
+        exit
         if [ $? -ne 0 ];then
           echoerr "run_assim function had an error, aborting"
         fi

@@ -1941,7 +1941,7 @@ CONTAINS
     IOST    = NF90_PUT_ATT(NCID, TEMP_VAR_ID, "missing_value", REAL(-9999, KIND=RK4))
     IF (IOST .NE. NF90_NOERR) GO TO 9999
 
-    IOST    = NF90_DEF_VAR(NCID, "q", NF90_FLOAT, (/ LEV_DIM_ID, TIME_DIM_ID /), Q_VAR_ID)
+    IOST    = NF90_DEF_VAR(NCID, "r", NF90_FLOAT, (/ LEV_DIM_ID, TIME_DIM_ID /), Q_VAR_ID)
     IF (IOST .NE. NF90_NOERR) GO TO 9999
     IOST    = NF90_PUT_ATT(NCID, Q_VAR_ID, "long_name", 'Water vapour mixing ratio'//CHAR(0))
     IF (IOST .NE. NF90_NOERR) GO TO 9999
@@ -2004,18 +2004,18 @@ CONTAINS
     IOST    = NF90_PUT_ATT(NCID, TADVV_VAR_ID, "missing_value", REAL(-9999, KIND=RK4))
     IF (IOST .NE. NF90_NOERR) GO TO 9999
 
-    IOST    = NF90_DEF_VAR(NCID, "q_adv_h", NF90_FLOAT, (/ LEV_DIM_ID, TIME_DIM_ID /), QADVH_VAR_ID)
+    IOST    = NF90_DEF_VAR(NCID, "r_adv_h", NF90_FLOAT, (/ LEV_DIM_ID, TIME_DIM_ID /), QADVH_VAR_ID)
     IF (IOST .NE. NF90_NOERR) GO TO 9999
-    IOST    = NF90_PUT_ATT(NCID, QADVH_VAR_ID, "long_name", 'Horizontal q advection'//CHAR(0))
+    IOST    = NF90_PUT_ATT(NCID, QADVH_VAR_ID, "long_name", 'Horizontal r advection'//CHAR(0))
     IF (IOST .NE. NF90_NOERR) GO TO 9999
     IOST    = NF90_PUT_ATT(NCID, QADVH_VAR_ID, "units", 'g/kg/hour'//CHAR(0))
     IF (IOST .NE. NF90_NOERR) GO TO 9999
     IOST    = NF90_PUT_ATT(NCID, QADVH_VAR_ID, "missing_value", REAL(-9999, KIND=RK4))
     IF (IOST .NE. NF90_NOERR) GO TO 9999
 
-    IOST    = NF90_DEF_VAR(NCID, "q_adv_v", NF90_FLOAT, (/ LEV_DIM_ID, TIME_DIM_ID /), QADVV_VAR_ID)
+    IOST    = NF90_DEF_VAR(NCID, "r_adv_v", NF90_FLOAT, (/ LEV_DIM_ID, TIME_DIM_ID /), QADVV_VAR_ID)
     IF (IOST .NE. NF90_NOERR) GO TO 9999
-    IOST    = NF90_PUT_ATT(NCID, QADVV_VAR_ID, "long_name", 'Vertical q advection'//CHAR(0))
+    IOST    = NF90_PUT_ATT(NCID, QADVV_VAR_ID, "long_name", 'Vertical r advection'//CHAR(0))
     IF (IOST .NE. NF90_NOERR) GO TO 9999
     IOST    = NF90_PUT_ATT(NCID, QADVV_VAR_ID, "units", 'g/kg/hour'//CHAR(0))
     IF (IOST .NE. NF90_NOERR) GO TO 9999
@@ -2067,7 +2067,7 @@ CONTAINS
     IOST    = NF90_PUT_ATT(NCID, DTDT_VAR_ID, "missing_value", REAL(-9999, KIND=RK4))
     IF (IOST .NE. NF90_NOERR) GO TO 9999
 
-    IOST    = NF90_DEF_VAR(NCID, "dqdt", NF90_FLOAT, (/ LEV_DIM_ID, TIME_DIM_ID /), DQDT_VAR_ID)
+    IOST    = NF90_DEF_VAR(NCID, "drdt", NF90_FLOAT, (/ LEV_DIM_ID, TIME_DIM_ID /), DQDT_VAR_ID)
     IF (IOST .NE. NF90_NOERR) GO TO 9999
     IOST    = NF90_PUT_ATT(NCID, DQDT_VAR_ID, "long_name", 'd(water vapour mixing ratio)/dt'//CHAR(0))
     IF (IOST .NE. NF90_NOERR) GO TO 9999
@@ -2373,11 +2373,11 @@ CONTAINS
     IOST    = NF90_PUT_ATT(NCID, OMEGAS_VAR_ID, "missing_value", REAL(-9999, KIND=RK4))
     IF (IOST .NE. NF90_NOERR) GO TO 9999
 
-    IOST    = NF90_DEF_VAR(NCID, "q_srf", NF90_FLOAT, (/ TIME_DIM_ID /), QS_VAR_ID)
+    IOST    = NF90_DEF_VAR(NCID, "r_srf", NF90_FLOAT, (/ TIME_DIM_ID /), QS_VAR_ID)
     IF (IOST .NE. NF90_NOERR) GO TO 9999
     IOST    = NF90_PUT_ATT(NCID, QS_VAR_ID, "long_name", '2m water vapour mixing ratio'//CHAR(0))
     IF (IOST .NE. NF90_NOERR) GO TO 9999
-    IOST    = NF90_PUT_ATT(NCID, QS_VAR_ID, "units", 'kg/kg'//CHAR(0))
+    IOST    = NF90_PUT_ATT(NCID, QS_VAR_ID, "units", 'g/kg'//CHAR(0))
     IF (IOST .NE. NF90_NOERR) GO TO 9999
     IOST    = NF90_PUT_ATT(NCID, QS_VAR_ID, "missing_value", REAL(-9999, KIND=RK4))
     IF (IOST .NE. NF90_NOERR) GO TO 9999

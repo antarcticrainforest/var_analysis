@@ -41,8 +41,8 @@ CHARACTER (LEN=64), DIMENSION(:), ALLOCATABLE           :: V                ! Na
 CHARACTER (LEN=64), DIMENSION(:), ALLOCATABLE           :: ST               ! Names of stations in D_FINAL.
 REAL (KIND=RK8), DIMENSION(:), ALLOCATABLE              :: P                ! Pressure levels in D_FINAL.
 REAL (KIND=RK8), DIMENSION(:), ALLOCATABLE              :: T                ! Time steps in D_FINAL.
-!INTEGER (KIND=IK4)                                      :: NV, NP, NST, NT  ! Sizes of the four dimensions in D_FINAL.
-INTEGER (KIND=IK4)                                      :: NP, NT      ! Sizes of some of the dimensions in D_FINAL.
+INTEGER (KIND=IK4)                                      :: NV, NP, NST, NT  ! Sizes of the four dimensions in D_FINAL.
+!INTEGER (KIND=IK4)                                     :: NP, NT           ! Sizes of some of the dimensions in D_FINAL.
 
 REAL (KIND=RK8), DIMENSION(:), ALLOCATABLE              :: MG_TSKIN         ! Surface (skin) temperature.
 REAL (KIND=RK8), DIMENSION(:), ALLOCATABLE              :: MG_T             !
@@ -120,7 +120,7 @@ READ (FMT='(A512)', UNIT=5) INPUTFILE
 CALL IPT_3D_NETCDF(INPUTFILE=INPUTFILE, DU=D_FINAL, VU=V, LEV=P, T=T, STN=ST)
 !NV  = SIZE(V)
 NP  = SIZE(P)
-!NST = SIZE(ST)
+NST = SIZE(ST)
 NT  = SIZE(T)
 !
 ! Read the budget terms.
@@ -187,9 +187,7 @@ CALL IPT_2DRAW_NETCDF(INPUTFILE, 'zsfc', MG_ZSFC)                               
 
 ! Now convert dew point temperature to relative humidity: (Using Bolton's formula for now --> check whether this is good enough
 ALLOCATE(MG_RH(NT))
-MG_RH = exp(17.67*((MG_TDAIR-273.15)/(MG_TDAIR-29.65) - ((MG_TAIR-273.15)/(MG_TAIR-29.65))))
-
-
+MG_RH = 100 * exp(17.67*((MG_TDAIR-273.15)/(MG_TDAIR-29.65) - ((MG_TAIR-273.15)/(MG_TAIR-29.65))))
 !
 ! Read the MWR data.
 !
@@ -413,7 +411,7 @@ DD(7,:)     = MG_PREC(2:NT-1)
 DD(8,:)     = -MG_LH(2:NT-1)
 DD(9,:)     = -MG_SH(2:NT-1)
 DD(10,:)    = MG_P(2:NT-1)
-DD(11,:)    = DF_P(2,6,2:NT-1)                       ! Pressure from the central facility.
+DD(11,:)    = DF_P(2,NST,2:NT-1)                       ! Pressure from the central facility.
 DD(12,:)    = MG_TAIR(2:NT-1) - T0                   ! Convert from K to C.
 DD(13,:)    = MG_TSKIN(2:NT-1) - T0                  ! Convert from K to C.
 DD(14,:)    = MG_RH(2:NT-1)
@@ -440,7 +438,7 @@ DD(33,:)    = BUDGET_COLUMN(3,7,2:NT-1)*CPD
 DD(34,:)    = BUDGET_COLUMN(3,4,2:NT-1)*CPD
 DD(35,:)    = BUDGET_COLUMN(3,5,2:NT-1)*CPD
 DD(36,:)    = -BUDGET_COLUMN(1,3,2:NT-1)*9.8*36.0
-DD(37,:)    = BUDGET_COLUMN(1,5,2:NT-1)*CPD/LV
+DD(37,:)    = BUDGET_COLUMN(1,5,2:NT-1)*CPD/LV * 1000. ! Q srf g/kg
 DD(38,:)    = BUDGET_COLUMN(1,6,2:NT-1)
 DD(39,:)    = MG_VAP(2:NT-1)
 DD(40,:)    = MG_LWSUP(2:NT-1)

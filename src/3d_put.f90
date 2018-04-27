@@ -339,7 +339,7 @@ DU0(4,:,:,:)    = SPREAD(SPREAD(LATF, DIM=1, NCOPIES=NP), DIM=3, NCOPIES=NTU)   
 DU0(5,:,:,:)    = DB_F(3,:,:,:)
 DU0(6,:,:,:)    = DB_F(4,:,:,:)
 DU0(7,:,:,:)    = DB_F(1,:,:,:) - T0        ! Convert K (in DB_F) to C.
-DU0(9,:,:,:)    = DB_F(2,:,:,:) * 100.0     ! Convert to % (in DU0).
+DU0(9,:,:,:)    = DB_F(2,:,:,:)             ! RH
 
 !
 ! Add the surface layer data to DU0
@@ -364,7 +364,7 @@ END IF
 DO II=1,NTU
     DO IST=1,NSTU
         TC(:)   = DU0(7,:,IST,II)   ! Temperatures in Celsius extracted from the DU0 array.
-        RH(:)   = DU0(9,:,IST,II)   ! RH in %
+        RH(:)   = DU0(9,:,IST,II)   ! RH in fraction of 1
         CALL CALHT2(DU0(2,1,IST,II), DU0(10,1,IST,II), NP, P, TC, RH, DU0(10,:,IST,II), DU0(8,:,IST,II))
         !           ---------------  ----------------         --  --  ----------------  ----------------
         !                 Ps                Zs                T   RH  Geopotential Ht.  Dew Pt. Temp.?
@@ -477,7 +477,7 @@ DO LL=1,NTU
         TMP_T           = DU0(7,1,IST,LL) + T0          ! Convert from Celsius to Kelvin.
         TMP_TD          = DU0(8,1,IST,LL) + T0          ! Convert from Celsius to Kelvin.
         TMP_VAP_PRES    = 99999.0                       ! Missing value.
-        TMP_RH          = DU0(9,1,IST,LL)/100.0         ! Convert from % to decimal fraction.
+        TMP_RH          = DU0(9,1,IST,LL)
         TMP_Z           = DU0(10,1,IST,LL)
 
         TMP_R           = -9999.0*CPD/LV0               ! This is dodgy (-9999.0 is a missing value!), but its in the IDL code.
@@ -519,7 +519,7 @@ DO LL=1,NTU
             TMP_T           = DU0(7,KK,IST,LL) + T0         ! Convert from Celsius to Kelvin.
             TMP_TD          = DU0(8,KK,IST,LL) + T0         ! Convert from Celsius to Kelvin.  
             TMP_VAP_PRES    = -99999.0                      ! Missing value
-            TMP_RH          = DU0(9,KK,IST,LL)/100.0        ! Convert from % to decimal fraction.
+            TMP_RH          = DU0(9,KK,IST,LL)
             TMP_Z           = DU0(10,KK,IST,LL)
 
             TMP_R           = -9999.0*CPD/LV0               ! Dodgy initialisation!

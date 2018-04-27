@@ -409,13 +409,13 @@ for d in ${split_dates};do
   mkdir -p ${output}
   mkdir -p ${va_output}
 
-#  ${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${seas} ${DATES[*]}
+  ${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${seas} ${DATES[*]}
   if [ $? -ne 0 ];then
     echoerr "create_2d_input_files had an error, aborting"
   fi
 
   ###Get the 3d_data
-#  ${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
+  ${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
   if [ $? -ne 0 ];then
     echoerr "concatenate_arm_data had an error, aborting"
   fi
@@ -425,17 +425,17 @@ for d in ${split_dates};do
   fi
   #####Get the microwave input data
   #clone 'smet' 'mwrlos' ${DATES[*]}
-#  get_micro_input 'smet' 'mwrlos' ${DATES[*]}
+  get_micro_input 'smet' 'mwrlos' ${DATES[*]}
   outf=${output%/}/MWR-DATA/mwrlos_6h_interp.nc
-#  echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_pwv'][:]=np.ma.masked_invalid(f.variables['be_pwv'][:]);f.close()"
-#  echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_lwp'][:]=np.ma.masked_invalid(f.variables['be_lwp'][:]);f.close()"
+  echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_pwv'][:]=np.ma.masked_invalid(f.variables['be_pwv'][:]);f.close()"
+  echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_lwp'][:]=np.ma.masked_invalid(f.variables['be_lwp'][:]);f.close()"
 
 
   if [ $? -ne 0 ];then
     echoerr "get_micro_input had an error, aborting"
   fi
   ####Prepare the raindata
-#  get_rain_input
+  get_rain_input
   if [ $? -ne 0 ];then
     echoerr "get_rain_input had an error, aborting"
   fi
@@ -443,19 +443,10 @@ for d in ${split_dates};do
   echo 'Preprocessing done, running variational analysis'
 
   ${workdir%/}/process.sh ${output} ${va_output}
-#  if [ $? -ne 0 ];then
-#    echoerr "3D VAR had an error, aborting"
-#  fi
+  if [ $? -ne 0 ];then
+    echoerr "3D VAR had an error, aborting"
+  fi
   let n_split=$n_split+1
   exit
 done
-#if [ $n_split -eq 1 ];then
-#    mv ${va_output} ${old_va_output%/}/merge
-#else
-#  mkdir -p ${old_va_output%/}/merge
-#  python ${workdir%}/postprocess.py ${old_va_output%/} ${split_dates}
-#  if [ $? -ne 0 ];then
-#      echoerr "Post-processing had an error, aborting"
-#  fi
-#fi
 echo "Var analysis for season ${seas} done"

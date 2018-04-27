@@ -1,0 +1,89 @@
+.TH "/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/find_percentile_error.c" 3 "Tue Apr 17 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/find_percentile_error.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'radar_error\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "double \fBfind_percentile_error\fP (double percentile, double mu, double sigma)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "double find_percentile_error (double percentile, double mu, double sigma)"
+
+.PP
+Definition at line 12 of file find_percentile_error\&.c\&.
+.PP
+.nf
+12                                                                         {
+13    double   error_min   = 0\&.01;               /* Assume the minimum error, Rr/Rt, will be greater than this\&. */
+14    double   error_max   = 100\&.;               /* Assume the maximum error, Rr/Rt, will be less than this\&. */
+15    double   error_mid;                     /* (error_min + error_max)/2 */
+16    double   error;
+17    double   prob_min;                     /* The probability that the error is less than error_min\&.*/
+18    double   prob_max;                     /* The probability that the error is less than error_max\&. */
+19    double   prob_mid;                     /* The probability that the error is less than error_mid\&. */
+20    double   closeness   = DBL_MAX;            /* |percentile - prob_mid| */
+21 
+22    prob_min   = lncdf(error_min, mu, sigma);
+23    prob_max   = lncdf(error_max, mu, sigma);
+24 
+25    /*
+26     * Check that the percentile does not lie outside the initial values of prob_min and prob_max\&.
+27     */
+28    if (percentile < prob_min){
+29       fprintf(stderr,"W: error for %f percentile is less than %f\n",percentile*100,error_min);
+30       error      = 0\&.01;
+31       closeness   = 0;
+32    }
+33 
+34    if (percentile > prob_max){
+35       fprintf(stderr,"W: error for %f percentile is greater than %f\n",percentile*100,error_max);
+36       error      = 100\&.;
+37       closeness   = 0;
+38    }
+39 
+40    /*
+41     * Iterate until we get the approximate error\&.
+42     */
+43    while (closeness > 0\&.001){
+44       error_mid   = (error_min + error_max)/2;
+45       prob_mid   = lncdf(error_mid, mu, sigma);
+46       if (prob_mid >= percentile){
+47          if ((prob_mid - percentile) >= (percentile - prob_min)){
+48             closeness   = percentile - prob_min;
+49             error      = error_min;
+50          } else {
+51             closeness   = prob_mid - percentile;
+52             error      = error_mid;
+53          }
+54          prob_max      = prob_mid;
+55          error_max      = error_mid;
+56       } else {
+57          if ((prob_max - percentile) >= (percentile - prob_mid)){
+58             closeness   = percentile - prob_mid;
+59             error      = error_mid;
+60          } else {
+61             closeness   = prob_max - percentile;
+62             error      = error_max;
+63          }
+64          prob_min      = prob_mid;
+65          error_min      = error_mid;
+66       }
+67    }
+68 
+69    return error;
+70 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

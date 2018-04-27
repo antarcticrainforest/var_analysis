@@ -1,0 +1,99 @@
+.TH "/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/read_error_stats.c" 3 "Tue Apr 17 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/read_error_stats.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'radar_error\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBread_error_stats\fP (char *error_file, struct \fBerrorstats\fP *error_statistics)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "int read_error_stats (char * error_file, struct \fBerrorstats\fP * error_statistics)"
+
+.PP
+Definition at line 21 of file read_error_stats\&.c\&.
+.PP
+.nf
+21                                                                            {
+22    FILE   *errfile;               /* Pointer to the error statistics file\&.                                    */
+23    char   line[1000];               /* Holds a line of input\&.                                                */
+24    int      return_status = 0;
+25 
+26    /*
+27     * Open the file for reading\&.
+28     */
+29    if (!(errfile = fopen(error_file, "r"))){
+30       fprintf(stderr,"E: Cannot open error statistics file, %s, for reading\n",error_file);
+31       return_status = 1;
+32       goto finish;
+33    }
+34 
+35    /*
+36     * Read the file until it is finished\&.
+37     */
+38    do {
+39       if (fgets(line, 1000, errfile)){
+40          /*
+41           * Need to increase the amount of memory allocated to the error_statistics structure\&.
+42           */
+43          error_statistics->nstns   ++;
+44          if (!(error_statistics->lon = realloc(error_statistics->lon, error_statistics->nstns * sizeof(double)))){
+45             fprintf(stderr,"E: Memory allocation problem\&.\n");
+46             goto finish;
+47          }
+48          if (!(error_statistics->lat = realloc(error_statistics->lat, error_statistics->nstns * sizeof(double)))){
+49             fprintf(stderr,"E: Memory allocation problem\&.\n");
+50             goto finish;
+51          }
+52          if (!(error_statistics->mu = realloc(error_statistics->mu, error_statistics->nstns * sizeof(double)))){
+53             fprintf(stderr,"E: Memory allocation problem\&.\n");
+54             goto finish;
+55          }
+56          if (!(error_statistics->sigma = realloc(error_statistics->sigma, error_statistics->nstns * sizeof(double)))){
+57             fprintf(stderr,"E: Memory allocation problem\&.\n");
+58             goto finish;
+59          }
+60          if (sscanf(line, "%*s %lf %lf %lf %lf",(error_statistics->lon + error_statistics->nstns - 1),
+61                (error_statistics->lat + error_statistics->nstns - 1), (error_statistics->mu + error_statistics->nstns - 1),
+62                (error_statistics->sigma + error_statistics->nstns - 1)) != 4){
+63             fprintf(stderr,"E: Unable to parse line %d in %s\n",(int)error_statistics->nstns, error_file);
+64             return_status = 1;
+65             goto finish;
+66          }
+67       } else if (ferror(errfile)){
+68          fprintf(stderr,"E: Problem encountered while reading %s\n",error_file);
+69          return_status = 1;
+70          goto finish;
+71       }
+72    } while (!feof(errfile));
+73 
+74    /*
+75     * Check that statistics for at leasts one station have been read from the file\&.
+76     */
+77    if (error_statistics->nstns < 1){
+78       fprintf(stderr,"E: Error statistics for at least one rain gauge must be presented\&.\n");
+79       return_status = 1;
+80    }
+81 
+82    finish:
+83    if (fclose(errfile)){
+84       fprintf(stderr,"E: Unable to close %s\n",error_file);
+85       return_status = 1;
+86    }
+87 
+88    return return_status;
+89 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

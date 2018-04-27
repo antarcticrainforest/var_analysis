@@ -1,0 +1,706 @@
+.TH "/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/radar_error.h" 3 "Tue Apr 17 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/radar_error.h \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include <stdio\&.h>\fP
+.br
+\fC#include <stdlib\&.h>\fP
+.br
+\fC#include <netcdf\&.h>\fP
+.br
+\fC#include <string\&.h>\fP
+.br
+\fC#include <ctype\&.h>\fP
+.br
+\fC#include <unistd\&.h>\fP
+.br
+\fC#include <float\&.h>\fP
+.br
+\fC#include <math\&.h>\fP
+.br
+
+.SS "Data Structures"
+
+.in +1c
+.ti -1c
+.RI "struct \fBcli\fP"
+.br
+.ti -1c
+.RI "struct \fBradar\fP"
+.br
+.ti -1c
+.RI "struct \fBerrorstats\fP"
+.br
+.in -1c
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBread_command\fP (int, char **, struct \fBcli\fP *)"
+.br
+.ti -1c
+.RI "int \fBread_error_stats\fP (char *, struct \fBerrorstats\fP *)"
+.br
+.ti -1c
+.RI "void \fBdeallocate\fP (struct \fBerrorstats\fP *, struct \fBradar\fP *)"
+.br
+.ti -1c
+.RI "int \fBread_radar_data\fP (char *, struct \fBradar\fP *)"
+.br
+.ti -1c
+.RI "int \fBcalculate_pdfs\fP (struct \fBradar\fP *, struct \fBerrorstats\fP *)"
+.br
+.ti -1c
+.RI "double \fBdistance\fP (double, double, double, double)"
+.br
+.ti -1c
+.RI "double \fBfind_percentile_error\fP (double, double, double)"
+.br
+.ti -1c
+.RI "double \fBlncdf\fP (double, double, double)"
+.br
+.ti -1c
+.RI "int \fBwrite_pdfs\fP (char *, char *, struct \fBradar\fP *)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "int calculate_pdfs (struct \fBradar\fP *, struct \fBerrorstats\fP *)"
+
+.PP
+Definition at line 11 of file calculate_pdfs\&.c\&.
+.PP
+.nf
+11                                                                                  {
+12    size_t   pix;                     /* Pixel we are currently computing the PDF for\&.*/
+13    size_t   stn;                     /* Station number\&.*/
+14 
+15    double   stn_dist;                  /* Distance from the pixel to a rain gauge\&.*/
+16    double   min_dist;                  /* Distance to the closest rain gauge\&.*/
+17    size_t   closest_stn;               /* Closest rain gauge number\&.*/
+18 
+19    double   mu;                        /* Mean of ln(Rr/Rg)*/
+20    double   sigma;                     /* Standard deviation of ln(Rr/Rg)*/
+21    double   error;                     /* Value of Rr/Rt for the given percentile\&.*/
+22    int      percentile;                  /* PDF percentile\&.*/
+23    int      return_status = 0;
+24 
+25    for (pix=0; pix<(radar_data->nx*radar_data->ny); ++pix){
+26       /*
+27        * Determine which station (which we have error statistics for) is closest\&.*/
+28       min_dist   = FLT_MAX;            /* Every station should be closer than this\&. */
+29       closest_stn   = 0;
+30       for (stn=0; stn<error_statistics->nstns; ++stn){
+31          stn_dist   = distance(*(radar_data->lon+pix), *(radar_data->lat+pix), *(error_statistics->lon+stn),
+32                *(error_statistics->lat+stn));
+33          if (stn_dist < min_dist){
+34             closest_stn   = stn;
+35             min_dist   = stn_dist;
+36          }
+37       }
+38       *(radar_data->nearest_stn + pix)   = (int)closest_stn;
+39 
+40       /*
+41        * Based on the error statistics for the closest station and the radar rain rate, calculate a PDF for the true
+42        * rain rate\&. This assumes the radar error, Rr/Rt (Rr = radar rain rate, Rt = true rain rate) has a log-normal
+43        * distribution which is the same as Rr/Rg (Rg = gauge rain rate)\&.
+44        */
+45       mu      = *(error_statistics->mu + closest_stn);
+46       sigma   = *(error_statistics->sigma + closest_stn);
+47       for (percentile=0; percentile<100; ++percentile){
+48          if (*(radar_data->rain_rate+pix) < 1){
+49             /*
+50              * For radar rain rates less than 1 mm/hour, assume the radar is pretty accurate (its very likely
+51              * recording 0 mm/hour)\&.
+52              */
+53             error   = 1\&.0;
+54          } else {
+55             /*
+56              * Assume the radar error (Rr/Rt) is log-normal\&.
+57              */
+58             error   = find_percentile_error(((double)percentile)/100+0\&.005, mu, sigma);
+59          }
+60          *(*(radar_data->rain_rate_pdf+pix)+percentile) = *(radar_data->rain_rate+pix)/error;
+61       }
+62    }
+63 
+64    return return_status;
+65 }
+.fi
+.SS "void deallocate (struct \fBerrorstats\fP *, struct \fBradar\fP *)"
+
+.PP
+Definition at line 11 of file deallocate\&.c\&.
+.PP
+.nf
+11                                                                               {
+12    int      ii;
+13 
+14    if (error_statistics->lon)      free(error_statistics->lon);
+15    if (error_statistics->lat)      free(error_statistics->lat);
+16    if (error_statistics->mu)      free(error_statistics->mu);
+17    if (error_statistics->sigma)   free(error_statistics->sigma);
+18 
+19    if (radar_data->rain_rate)      free(radar_data->rain_rate);
+20    if (radar_data->lon)         free(radar_data->lon);
+21    if (radar_data->lat)         free(radar_data->lat);
+22    if (radar_data->nearest_stn)   free(radar_data->nearest_stn);
+23    if (radar_data->rain_rate_pdf){
+24       for (ii=0; ii<(radar_data->nx*radar_data->ny); ++ii){
+25          if (*(radar_data->rain_rate_pdf + ii))   free(*(radar_data->rain_rate_pdf + ii));
+26          *(radar_data->rain_rate_pdf + ii)   = NULL;
+27       }
+28       free (radar_data->rain_rate_pdf);
+29    }
+30 
+31    error_statistics->lon      = NULL;
+32    error_statistics->lat      = NULL;
+33    error_statistics->mu      = NULL;
+34    error_statistics->sigma      = NULL;
+35 
+36    radar_data->rain_rate      = NULL;
+37    radar_data->lon            = NULL;
+38    radar_data->lat            = NULL;
+39    radar_data->nearest_stn      = NULL;
+40    radar_data->rain_rate_pdf   = NULL;
+41 
+42    return;
+43 }
+.fi
+.SS "double distance (double, double, double, double)"
+
+.PP
+Definition at line 11 of file distance\&.c\&.
+.PP
+.nf
+11                                                                    {
+12    double   distance;            /* Distance between points (lon1, lat1) and (lon2, lat2) */
+13    double   r2d = 57\&.2958;         /* Factor to convert from radians to degrees   */
+14 
+15    distance = 1\&.852*60*r2d * acos(sin(lat1/r2d)*sin(lat2/r2d) + cos(lat1/r2d)*cos(lat2/r2d)*cos((lon2-lon1)/r2d));
+16 
+17    return distance;
+18 }
+.fi
+.SS "double find_percentile_error (double, double, double)"
+
+.PP
+Definition at line 12 of file find_percentile_error\&.c\&.
+.PP
+.nf
+12                                                                         {
+13    double   error_min   = 0\&.01;               /* Assume the minimum error, Rr/Rt, will be greater than this\&. */
+14    double   error_max   = 100\&.;               /* Assume the maximum error, Rr/Rt, will be less than this\&. */
+15    double   error_mid;                     /* (error_min + error_max)/2 */
+16    double   error;
+17    double   prob_min;                     /* The probability that the error is less than error_min\&.*/
+18    double   prob_max;                     /* The probability that the error is less than error_max\&. */
+19    double   prob_mid;                     /* The probability that the error is less than error_mid\&. */
+20    double   closeness   = DBL_MAX;            /* |percentile - prob_mid| */
+21 
+22    prob_min   = lncdf(error_min, mu, sigma);
+23    prob_max   = lncdf(error_max, mu, sigma);
+24 
+25    /*
+26     * Check that the percentile does not lie outside the initial values of prob_min and prob_max\&.
+27     */
+28    if (percentile < prob_min){
+29       fprintf(stderr,"W: error for %f percentile is less than %f\n",percentile*100,error_min);
+30       error      = 0\&.01;
+31       closeness   = 0;
+32    }
+33 
+34    if (percentile > prob_max){
+35       fprintf(stderr,"W: error for %f percentile is greater than %f\n",percentile*100,error_max);
+36       error      = 100\&.;
+37       closeness   = 0;
+38    }
+39 
+40    /*
+41     * Iterate until we get the approximate error\&.
+42     */
+43    while (closeness > 0\&.001){
+44       error_mid   = (error_min + error_max)/2;
+45       prob_mid   = lncdf(error_mid, mu, sigma);
+46       if (prob_mid >= percentile){
+47          if ((prob_mid - percentile) >= (percentile - prob_min)){
+48             closeness   = percentile - prob_min;
+49             error      = error_min;
+50          } else {
+51             closeness   = prob_mid - percentile;
+52             error      = error_mid;
+53          }
+54          prob_max      = prob_mid;
+55          error_max      = error_mid;
+56       } else {
+57          if ((prob_max - percentile) >= (percentile - prob_mid)){
+58             closeness   = percentile - prob_mid;
+59             error      = error_mid;
+60          } else {
+61             closeness   = prob_max - percentile;
+62             error      = error_max;
+63          }
+64          prob_min      = prob_mid;
+65          error_min      = error_mid;
+66       }
+67    }
+68 
+69    return error;
+70 }
+.fi
+.SS "double lncdf (double, double, double)"
+
+.PP
+Definition at line 11 of file lncdf\&.c\&.
+.PP
+.nf
+11                                                {
+12    double  cdf;
+13 
+14    if (x > 0){
+15       cdf   = 0\&.5 + 0\&.5*erf((log(x) - mu)/(sigma*sqrt(2)));
+16    } else {
+17       fprintf(stderr,"W: log-normal CDF undefined for x<=0\n");
+18       cdf   = -1;
+19    }
+20 
+21    return cdf;
+22 }
+.fi
+.SS "int read_command (int, char **, struct \fBcli\fP *)"
+
+.SS "int read_error_stats (char *, struct \fBerrorstats\fP *)"
+
+.PP
+Definition at line 21 of file read_error_stats\&.c\&.
+.PP
+.nf
+21                                                                            {
+22    FILE   *errfile;               /* Pointer to the error statistics file\&.                                    */
+23    char   line[1000];               /* Holds a line of input\&.                                                */
+24    int      return_status = 0;
+25 
+26    /*
+27     * Open the file for reading\&.
+28     */
+29    if (!(errfile = fopen(error_file, "r"))){
+30       fprintf(stderr,"E: Cannot open error statistics file, %s, for reading\n",error_file);
+31       return_status = 1;
+32       goto finish;
+33    }
+34 
+35    /*
+36     * Read the file until it is finished\&.
+37     */
+38    do {
+39       if (fgets(line, 1000, errfile)){
+40          /*
+41           * Need to increase the amount of memory allocated to the error_statistics structure\&.
+42           */
+43          error_statistics->nstns   ++;
+44          if (!(error_statistics->lon = realloc(error_statistics->lon, error_statistics->nstns * sizeof(double)))){
+45             fprintf(stderr,"E: Memory allocation problem\&.\n");
+46             goto finish;
+47          }
+48          if (!(error_statistics->lat = realloc(error_statistics->lat, error_statistics->nstns * sizeof(double)))){
+49             fprintf(stderr,"E: Memory allocation problem\&.\n");
+50             goto finish;
+51          }
+52          if (!(error_statistics->mu = realloc(error_statistics->mu, error_statistics->nstns * sizeof(double)))){
+53             fprintf(stderr,"E: Memory allocation problem\&.\n");
+54             goto finish;
+55          }
+56          if (!(error_statistics->sigma = realloc(error_statistics->sigma, error_statistics->nstns * sizeof(double)))){
+57             fprintf(stderr,"E: Memory allocation problem\&.\n");
+58             goto finish;
+59          }
+60          if (sscanf(line, "%*s %lf %lf %lf %lf",(error_statistics->lon + error_statistics->nstns - 1),
+61                (error_statistics->lat + error_statistics->nstns - 1), (error_statistics->mu + error_statistics->nstns - 1),
+62                (error_statistics->sigma + error_statistics->nstns - 1)) != 4){
+63             fprintf(stderr,"E: Unable to parse line %d in %s\n",(int)error_statistics->nstns, error_file);
+64             return_status = 1;
+65             goto finish;
+66          }
+67       } else if (ferror(errfile)){
+68          fprintf(stderr,"E: Problem encountered while reading %s\n",error_file);
+69          return_status = 1;
+70          goto finish;
+71       }
+72    } while (!feof(errfile));
+73 
+74    /*
+75     * Check that statistics for at leasts one station have been read from the file\&.
+76     */
+77    if (error_statistics->nstns < 1){
+78       fprintf(stderr,"E: Error statistics for at least one rain gauge must be presented\&.\n");
+79       return_status = 1;
+80    }
+81 
+82    finish:
+83    if (fclose(errfile)){
+84       fprintf(stderr,"E: Unable to close %s\n",error_file);
+85       return_status = 1;
+86    }
+87 
+88    return return_status;
+89 }
+.fi
+.SS "int read_radar_data (char *, struct \fBradar\fP *)"
+
+.PP
+Definition at line 11 of file read_radar_data\&.c\&.
+.PP
+.nf
+11                                                            {
+12    int      return_status   = 0;
+13    int      nc_status;
+14    size_t   ii;                  /* Counter\&.                                                               */
+15 
+16    int      ncid;               /* ID of the NetCDF file\&.                                                   */
+17    int      i_dimid;
+18    int      j_dimid;
+19    int      lat_varid;
+20    int      lon_varid;
+21    int      rainrate_varid;
+22 
+23    /*
+24     * Open the file\&.
+25     */
+26    if ((nc_status = nc_open(infile, NC_NOWRITE, &ncid)) != NC_NOERR){
+27       fprintf(stderr,"E: Cannot open %s: %s\n",infile, nc_strerror(nc_status));
+28       return_status = 1;
+29       goto finish;
+30    }
+31 
+32    /*
+33     * Get the size of the dimensions\&.
+34     */
+35    if ((nc_status = nc_inq_dimid(ncid, "i", &i_dimid)) != NC_NOERR){
+36       fprintf(stderr,"E: Cannot find i dimension: %s\n",nc_strerror(nc_status));
+37       return_status = 1;
+38       goto finish;
+39    }
+40 
+41    if ((nc_status = nc_inq_dimid(ncid, "j", &j_dimid)) != NC_NOERR){
+42       fprintf(stderr,"E: Cannot find j dimension: %s\n",nc_strerror(nc_status));
+43       return_status = 1;
+44       goto finish;
+45    }
+46 
+47    if ((nc_status = nc_inq_dimlen(ncid, i_dimid, &radar_data->nx)) != NC_NOERR){
+48       fprintf(stderr,"E: Cannot get i dimension length: %s\n",nc_strerror(nc_status));
+49       return_status = 1;
+50       goto finish;
+51    }
+52 
+53    if ((nc_status = nc_inq_dimlen(ncid, j_dimid, &radar_data->ny)) != NC_NOERR){
+54       fprintf(stderr,"E: Cannot get j dimension length: %s\n",nc_strerror(nc_status));
+55       return_status = 1;
+56       goto finish;
+57    }
+58 
+59    /*
+60     * Allocate memory for the various data arrays\&.
+61     */
+62    if (!(radar_data->rain_rate = malloc(radar_data->nx * radar_data->ny * sizeof(double)))){
+63       fprintf(stderr,"Memory allocation error\&.\n");
+64       return_status = 1;
+65       goto finish;
+66    }
+67 
+68    if (!(radar_data->lon = malloc(radar_data->nx * radar_data->ny * sizeof(double)))){
+69       fprintf(stderr,"Memory allocation error\&.\n");
+70       return_status = 1;
+71       goto finish;
+72    }
+73 
+74    if (!(radar_data->lat = malloc(radar_data->nx * radar_data->ny * sizeof(double)))){
+75       fprintf(stderr,"Memory allocation error\&.\n");
+76       return_status = 1;
+77       goto finish;
+78    }
+79 
+80    if (!(radar_data->nearest_stn = malloc(radar_data->nx * radar_data->ny * sizeof(int)))){
+81       fprintf(stderr,"Memory allocation error\&.\n");
+82       return_status = 1;
+83       goto finish;
+84    }
+85 
+86    if (!(radar_data->rain_rate_pdf = malloc(radar_data->nx * radar_data->ny * sizeof(double*)))){
+87       fprintf(stderr,"Memory allocation error\&.\n");
+88       return_status = 1;
+89       goto finish;
+90    }
+91    for (ii=0; ii<radar_data->nx * radar_data->ny; ++ii){
+92       *(radar_data->rain_rate_pdf + ii) = NULL;
+93       if (!(*(radar_data->rain_rate_pdf + ii) = malloc(100*sizeof(double)))){
+94          fprintf(stderr,"Memory allocation error\&.\n");
+95          return_status = 1;
+96          goto finish;
+97       }
+98    }
+99 
+100    /*
+101     * Read the relevant data\&.
+102     */
+103    if ((nc_status = nc_inq_varid(ncid, "lon", &lon_varid)) != NC_NOERR){
+104       fprintf(stderr,"E: Cannot find lon variable in %s: %s\n",infile, nc_strerror(nc_status));
+105       return_status = 1;
+106       goto finish;
+107    }
+108 
+109    if ((nc_status = nc_inq_varid(ncid, "lat", &lat_varid)) != NC_NOERR){
+110       fprintf(stderr,"E: Cannot find lat variable in %s: %s\n",infile, nc_strerror(nc_status));
+111       return_status = 1;
+112       goto finish;
+113    }
+114 
+115    if ((nc_status = nc_inq_varid(ncid, "rain_rate", &rainrate_varid)) != NC_NOERR){
+116       fprintf(stderr,"E: Cannot find rain_rate variable in %s: %s\n",infile, nc_strerror(nc_status));
+117       return_status = 1;
+118       goto finish;
+119    }
+120 
+121    if ((nc_status = nc_get_var_double(ncid, lon_varid, radar_data->lon)) != NC_NOERR){
+122       fprintf(stderr,"E: Cannot read lon from %s: %s\n",infile, nc_strerror(nc_status));
+123       return_status = 1;
+124       goto finish;
+125    }
+126 
+127    if ((nc_status = nc_get_var_double(ncid, lat_varid, radar_data->lat)) != NC_NOERR){
+128       fprintf(stderr,"E: Cannot read lat from %s: %s\n",infile, nc_strerror(nc_status));
+129       return_status = 1;
+130       goto finish;
+131    }
+132 
+133    if ((nc_status = nc_get_var_double(ncid, rainrate_varid, radar_data->rain_rate)) != NC_NOERR){
+134       fprintf(stderr,"E: Cannot read rain_rate from %s: %s\n",infile, nc_strerror(nc_status));
+135       return_status = 1;
+136       goto finish;
+137    }
+138 
+139    finish:
+140 
+141    if ((nc_status = nc_close(ncid)) != NC_NOERR){
+142       fprintf(stderr,"E: Cannot close %s: %s\n",infile, nc_strerror(nc_status));
+143       return_status = 1;
+144    }
+145 
+146    return return_status;
+147 }
+.fi
+.SS "int write_pdfs (char *, char *, struct \fBradar\fP *)"
+
+.PP
+Definition at line 11 of file write_pdfs\&.c\&.
+.PP
+.nf
+11                                                                      {
+12    int      ncid;                  /* ID of the output NetCDF file\&. */
+13    int      in_ncid;               /* ID of the input NetCDF file\&.  */
+14 
+15    int      dimids[3];               /* IDs of up to three dimensions\&. It is OK to use less than 3 dimensions\&. */
+16    size_t   start[3];               /* Starting point of a slab of data with up to 3 dimensions\&. */
+17    size_t   count[3];               /* Size of a slab of data with up to 3 dimensions\&.  */
+18    double   percentiles[100];         /* Holds the percentiles\&.  */
+19 
+20    int      varid;                  /* Variable ID\&. */
+21    int      lat_varid;               /* ID of the latitude variable\&.*/
+22    int      lon_varid;               /* ID of the longitude variable\&.  */
+23    int      neareststn_varid;         /* ID of the variable containing the closest station number\&.   */
+24    int      percentile_varid;         /* ID of the percentile variable ID\&. */
+25    int      rainrate_varid;            /* ID of the rain rate variable\&.  */
+26    int      rainratepdf_varid;         /* ID of the rain rate PDF variable\&. */
+27    double   missing_value;            /* Missing value attribute\&. */
+28 
+29    size_t   ii;                     /* Counter\&. */
+30    int      nc_status;               /* Return value from NetCDF functions\&.   */
+31    int      return_status = 0;
+32 
+33    /*
+34     * Open the file for writing\&.
+35     */
+36    if ((nc_status = nc_create(outfile, NC_WRITE, &ncid)) != NC_NOERR){
+37       fprintf(stderr,"E: Cannot create %s: %s\n",outfile, nc_strerror(nc_status));
+38       return_status = 1;
+39       goto finish;
+40    }
+41 
+42    /*
+43     * Define the dimensions in the file\&.
+44     */
+45    if ((nc_status = nc_def_dim(ncid, "i", radar_data->nx, &dimids[0])) != NC_NOERR){
+46       fprintf(stderr,"E: Cannot define the i dimension in %s: %s\n",outfile, nc_strerror(nc_status));
+47       return_status = 1;
+48       goto finish;
+49    }
+50    if ((nc_status = nc_def_dim(ncid, "j", radar_data->nx, &dimids[1])) != NC_NOERR){
+51       fprintf(stderr,"E: Cannot define the j dimension in %s: %s\n",outfile, nc_strerror(nc_status));
+52       return_status = 1;
+53       goto finish;
+54    }
+55    if ((nc_status = nc_def_dim(ncid, "percentile", 100, &dimids[2])) != NC_NOERR){
+56       fprintf(stderr,"E: Cannot define the percentile dimension in %s: %s\n",outfile, nc_strerror(nc_status));
+57       return_status = 1;
+58       goto finish;
+59    }
+60 
+61    /*
+62     * Define the variables in the file\&.
+63     */
+64    if ((nc_status = nc_def_var(ncid, "lon", NC_DOUBLE, 2, dimids, &lon_varid)) != NC_NOERR){
+65       fprintf(stderr,"E: Cannot define the lon variable in %s: %s\n",outfile, nc_strerror(nc_status));
+66       return_status = 1;
+67       goto finish;
+68    }
+69    if ((nc_status = nc_def_var(ncid, "lat", NC_DOUBLE, 2, dimids, &lat_varid)) != NC_NOERR){
+70       fprintf(stderr,"E: Cannot define the lat variable in %s: %s\n",outfile, nc_strerror(nc_status));
+71       return_status = 1;
+72       goto finish;
+73    }
+74    if ((nc_status = nc_def_var(ncid, "nearest_stn", NC_INT, 2, dimids, &neareststn_varid)) != NC_NOERR){
+75       fprintf(stderr,"E: Cannot define the nearest_stn variable in %s: %s\n",outfile, nc_strerror(nc_status));
+76       return_status = 1;
+77       goto finish;
+78    }
+79    if ((nc_status = nc_def_var(ncid, "percentile", NC_DOUBLE, 1, (dimids+2), &percentile_varid)) != NC_NOERR){
+80       fprintf(stderr,"E: Cannot define the percentile variable in %s: %s\n",outfile, nc_strerror(nc_status));
+81       return_status = 1;
+82       goto finish;
+83    }
+84    if ((nc_status = nc_def_var(ncid, "rain_rate", NC_DOUBLE, 2, dimids, &rainrate_varid)) != NC_NOERR){
+85       fprintf(stderr,"E: Cannot define the rain_rate variable in %s: %s\n",outfile, nc_strerror(nc_status));
+86       return_status = 1;
+87       goto finish;
+88    }
+89    if ((nc_status = nc_def_var(ncid, "rain_rate_pdf", NC_DOUBLE, 3, dimids, &rainratepdf_varid)) != NC_NOERR){
+90       fprintf(stderr,"E: Cannot define the rain_rate_pdf variable in %s: %s\n",outfile, nc_strerror(nc_status));
+91       return_status = 1;
+92       goto finish;
+93    }
+94 
+95    /*
+96     * Copy the attributes from the input file to the output file\&.
+97     */
+98    if ((nc_status = nc_open(infile, NC_NOWRITE, &in_ncid)) != NC_NOERR){
+99       fprintf(stderr,"E: Cannot open %s: %s\n",infile, nc_strerror(nc_status));
+100       return_status = 1;
+101       goto finish;
+102    }
+103 
+104    if ((nc_status = nc_inq_varid(in_ncid, "rain_rate", &varid)) != NC_NOERR){
+105       fprintf(stderr,"E: Cannot get rain_rate variable ID in %s: %s\n",infile, nc_strerror(nc_status));
+106       return_status = 1;
+107       goto finish;
+108    }
+109 
+110    if ((nc_status = nc_get_att_double(in_ncid, varid, "missing_value", &missing_value)) != NC_NOERR){
+111       fprintf(stderr,"E: Cannot read missing value attribute for rain_rate in %s: %s\n",infile, nc_strerror(nc_status));
+112       return_status = 1;
+113       goto finish;
+114    }
+115 
+116    if ((nc_status = nc_put_att_double(ncid, rainrate_varid, "missing_value", NC_DOUBLE, 1, &missing_value)) != NC_NOERR){
+117       fprintf(stderr,"E: Cannot write missing_value attribute for rain_rate to %s: %s\n", outfile, nc_strerror(nc_status));
+118       return_status = 1;
+119       goto finish;
+120    }
+121 
+122    if ((nc_status = nc_put_att_double(ncid, rainratepdf_varid, "missing_value", NC_DOUBLE, 1, &missing_value)) 
+123          != NC_NOERR){
+124       fprintf(stderr,"E: Cannot write missing_value attribute for rain_rate_pdf to %s: %s\n", outfile, nc_strerror(nc_status));
+125       return_status = 1;
+126       goto finish;
+127    }
+128 
+129    if ((nc_status = nc_put_att_text(ncid, percentile_varid, "long_name", 11, "percentile\0")) != NC_NOERR){
+130       fprintf(stderr,"E: Cannot write long_name attribute for percentile to %s: %s\n",outfile, nc_strerror(nc_status));
+131       return_status = 1;
+132       goto finish;
+133    }
+134 
+135    if ((nc_status = nc_put_att_text(ncid, percentile_varid, "units", 2, "%\0")) != NC_NOERR){
+136       fprintf(stderr,"E: Cannot write long_name attribute for percentile to %s: %s\n",outfile, nc_strerror(nc_status));
+137       return_status = 1;
+138       goto finish;
+139    }
+140 
+141    if ((nc_status = nc_close(in_ncid)) != NC_NOERR){
+142       fprintf(stderr,"E: Cannot close %s: %s\n",infile, nc_strerror(nc_status));
+143       return_status = 1;
+144       goto finish;
+145    }
+146 
+147    /*
+148     * Write the data to the file\&.
+149     */
+150    if ((nc_status = nc_enddef(ncid)) != NC_NOERR){
+151       fprintf(stderr,"E: %s\n",nc_strerror(nc_status));
+152       return_status = 1;
+153       goto finish;
+154    }
+155 
+156    for (ii=0; ii<(radar_data->nx * radar_data->ny); ++ii){
+157       start[0]   = ii/radar_data->ny;
+158       start[1]   = ii%radar_data->ny;
+159       start[2]   = 0;
+160       count[0]   = 1;
+161       count[1]   = 1;
+162       count[2]   = 100;
+163       if ((nc_status = nc_put_vara_double(ncid, rainratepdf_varid, start, count, *(radar_data->rain_rate_pdf+ii))) != NC_NOERR){
+164          fprintf(stderr,"E: Cannot write rain_rate_pdf data to %s: %s\n",outfile, nc_strerror(nc_status));
+165          return_status = 1;
+166          goto finish;
+167       }
+168    }
+169 
+170    if ((nc_status = nc_put_var_double(ncid, rainrate_varid, radar_data->rain_rate)) != NC_NOERR){
+171       fprintf(stderr,"E: Cannot write rain_rate data to %s: %s\n",outfile, nc_strerror(nc_status));
+172       return_status = 1;
+173       goto finish;
+174    }
+175 
+176    if ((nc_status = nc_put_var_double(ncid, lon_varid, radar_data->lon)) != NC_NOERR){
+177       fprintf(stderr,"E: Cannot write lon data to %s: %s\n",outfile, nc_strerror(nc_status));
+178       return_status = 1;
+179       goto finish;
+180    }
+181 
+182    if ((nc_status = nc_put_var_int(ncid, neareststn_varid, radar_data->nearest_stn)) != NC_NOERR){
+183       fprintf(stderr,"E: Cannot write nearest_stn data to %s: %s\n",outfile, nc_strerror(nc_status));
+184       return_status = 1;
+185       goto finish;
+186    }
+187 
+188    if ((nc_status = nc_put_var_double(ncid, lat_varid, radar_data->lat)) != NC_NOERR){
+189       fprintf(stderr,"E: Cannot write lat data to %s: %s\n",outfile, nc_strerror(nc_status));
+190       return_status = 1;
+191       goto finish;
+192    }
+193 
+194    for (ii=0; ii<100; ++ii) percentiles[ii] = 99\&.5 - (double)ii;
+195    if ((nc_status = nc_put_var_double(ncid, percentile_varid, percentiles)) != NC_NOERR){
+196       fprintf(stderr,"E: Cannot write percentiles data to %s: %s\n",outfile, nc_strerror(nc_status));
+197       return_status = 1;
+198       goto finish;
+199    }
+200 
+201 finish:
+202    /*
+203     * Close the file\&.
+204     */
+205    if ((nc_status = nc_close(ncid)) != NC_NOERR){
+206       fprintf(stderr,"E: Cannot close %s: %s\n",outfile, nc_strerror(nc_status));
+207       return_status = 1;
+208    }
+209 
+210    return return_status;
+211 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

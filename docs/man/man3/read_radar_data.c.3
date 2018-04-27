@@ -1,0 +1,167 @@
+.TH "/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/read_radar_data.c" 3 "Tue Apr 17 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/read_radar_data.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'radar_error\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBread_radar_data\fP (char *infile, struct \fBradar\fP *radar_data)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "int read_radar_data (char * infile, struct \fBradar\fP * radar_data)"
+
+.PP
+Definition at line 11 of file read_radar_data\&.c\&.
+.PP
+.nf
+11                                                            {
+12    int      return_status   = 0;
+13    int      nc_status;
+14    size_t   ii;                  /* Counter\&.                                                               */
+15 
+16    int      ncid;               /* ID of the NetCDF file\&.                                                   */
+17    int      i_dimid;
+18    int      j_dimid;
+19    int      lat_varid;
+20    int      lon_varid;
+21    int      rainrate_varid;
+22 
+23    /*
+24     * Open the file\&.
+25     */
+26    if ((nc_status = nc_open(infile, NC_NOWRITE, &ncid)) != NC_NOERR){
+27       fprintf(stderr,"E: Cannot open %s: %s\n",infile, nc_strerror(nc_status));
+28       return_status = 1;
+29       goto finish;
+30    }
+31 
+32    /*
+33     * Get the size of the dimensions\&.
+34     */
+35    if ((nc_status = nc_inq_dimid(ncid, "i", &i_dimid)) != NC_NOERR){
+36       fprintf(stderr,"E: Cannot find i dimension: %s\n",nc_strerror(nc_status));
+37       return_status = 1;
+38       goto finish;
+39    }
+40 
+41    if ((nc_status = nc_inq_dimid(ncid, "j", &j_dimid)) != NC_NOERR){
+42       fprintf(stderr,"E: Cannot find j dimension: %s\n",nc_strerror(nc_status));
+43       return_status = 1;
+44       goto finish;
+45    }
+46 
+47    if ((nc_status = nc_inq_dimlen(ncid, i_dimid, &radar_data->nx)) != NC_NOERR){
+48       fprintf(stderr,"E: Cannot get i dimension length: %s\n",nc_strerror(nc_status));
+49       return_status = 1;
+50       goto finish;
+51    }
+52 
+53    if ((nc_status = nc_inq_dimlen(ncid, j_dimid, &radar_data->ny)) != NC_NOERR){
+54       fprintf(stderr,"E: Cannot get j dimension length: %s\n",nc_strerror(nc_status));
+55       return_status = 1;
+56       goto finish;
+57    }
+58 
+59    /*
+60     * Allocate memory for the various data arrays\&.
+61     */
+62    if (!(radar_data->rain_rate = malloc(radar_data->nx * radar_data->ny * sizeof(double)))){
+63       fprintf(stderr,"Memory allocation error\&.\n");
+64       return_status = 1;
+65       goto finish;
+66    }
+67 
+68    if (!(radar_data->lon = malloc(radar_data->nx * radar_data->ny * sizeof(double)))){
+69       fprintf(stderr,"Memory allocation error\&.\n");
+70       return_status = 1;
+71       goto finish;
+72    }
+73 
+74    if (!(radar_data->lat = malloc(radar_data->nx * radar_data->ny * sizeof(double)))){
+75       fprintf(stderr,"Memory allocation error\&.\n");
+76       return_status = 1;
+77       goto finish;
+78    }
+79 
+80    if (!(radar_data->nearest_stn = malloc(radar_data->nx * radar_data->ny * sizeof(int)))){
+81       fprintf(stderr,"Memory allocation error\&.\n");
+82       return_status = 1;
+83       goto finish;
+84    }
+85 
+86    if (!(radar_data->rain_rate_pdf = malloc(radar_data->nx * radar_data->ny * sizeof(double*)))){
+87       fprintf(stderr,"Memory allocation error\&.\n");
+88       return_status = 1;
+89       goto finish;
+90    }
+91    for (ii=0; ii<radar_data->nx * radar_data->ny; ++ii){
+92       *(radar_data->rain_rate_pdf + ii) = NULL;
+93       if (!(*(radar_data->rain_rate_pdf + ii) = malloc(100*sizeof(double)))){
+94          fprintf(stderr,"Memory allocation error\&.\n");
+95          return_status = 1;
+96          goto finish;
+97       }
+98    }
+99 
+100    /*
+101     * Read the relevant data\&.
+102     */
+103    if ((nc_status = nc_inq_varid(ncid, "lon", &lon_varid)) != NC_NOERR){
+104       fprintf(stderr,"E: Cannot find lon variable in %s: %s\n",infile, nc_strerror(nc_status));
+105       return_status = 1;
+106       goto finish;
+107    }
+108 
+109    if ((nc_status = nc_inq_varid(ncid, "lat", &lat_varid)) != NC_NOERR){
+110       fprintf(stderr,"E: Cannot find lat variable in %s: %s\n",infile, nc_strerror(nc_status));
+111       return_status = 1;
+112       goto finish;
+113    }
+114 
+115    if ((nc_status = nc_inq_varid(ncid, "rain_rate", &rainrate_varid)) != NC_NOERR){
+116       fprintf(stderr,"E: Cannot find rain_rate variable in %s: %s\n",infile, nc_strerror(nc_status));
+117       return_status = 1;
+118       goto finish;
+119    }
+120 
+121    if ((nc_status = nc_get_var_double(ncid, lon_varid, radar_data->lon)) != NC_NOERR){
+122       fprintf(stderr,"E: Cannot read lon from %s: %s\n",infile, nc_strerror(nc_status));
+123       return_status = 1;
+124       goto finish;
+125    }
+126 
+127    if ((nc_status = nc_get_var_double(ncid, lat_varid, radar_data->lat)) != NC_NOERR){
+128       fprintf(stderr,"E: Cannot read lat from %s: %s\n",infile, nc_strerror(nc_status));
+129       return_status = 1;
+130       goto finish;
+131    }
+132 
+133    if ((nc_status = nc_get_var_double(ncid, rainrate_varid, radar_data->rain_rate)) != NC_NOERR){
+134       fprintf(stderr,"E: Cannot read rain_rate from %s: %s\n",infile, nc_strerror(nc_status));
+135       return_status = 1;
+136       goto finish;
+137    }
+138 
+139    finish:
+140 
+141    if ((nc_status = nc_close(ncid)) != NC_NOERR){
+142       fprintf(stderr,"E: Cannot close %s: %s\n",infile, nc_strerror(nc_status));
+143       return_status = 1;
+144    }
+145 
+146    return return_status;
+147 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

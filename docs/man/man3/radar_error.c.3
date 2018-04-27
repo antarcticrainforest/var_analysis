@@ -1,0 +1,82 @@
+.TH "/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/radar_error.c" 3 "Tue Apr 17 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/radar_error.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'radar_error\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBmain\fP (int argc, char *argv[])"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "int main (int argc, char * argv[])"
+
+.PP
+Definition at line 11 of file radar_error\&.c\&.
+.PP
+.nf
+11                                  {
+12    struct cli         cmdline;                  /* Holds the command line arguments\&. */
+13    struct errorstats   error_statistics;            /* Error statistics at rain gauge pixels\&. */
+14    struct radar      radar_data;                  /* Holds the radar rain rate data\&. */
+15 
+16    error_statistics\&.nstns      = 0;
+17    error_statistics\&.lon      = NULL;
+18    error_statistics\&.lat      = NULL;
+19    error_statistics\&.mu         = NULL;
+20    error_statistics\&.sigma      = NULL;
+21 
+22    radar_data\&.nx            = 0;
+23    radar_data\&.ny            = 0;
+24    radar_data\&.rain_rate      = NULL;
+25    radar_data\&.lon            = NULL;
+26    radar_data\&.lat            = NULL;
+27    radar_data\&.nearest_stn      = NULL;
+28    radar_data\&.rain_rate_pdf   = NULL;
+29 
+30    /*
+31     * Read the command line\&.
+32     */
+33    if (read_command(argc, argv, &cmdline)) goto finish;
+34 
+35    /*
+36     * Read the error statistics file (the error statistics are for the radar pixels where there is a colocated rain gauge\&.
+37     */
+38    if (read_error_stats(cmdline\&.errorstats_file, &error_statistics)) goto finish;
+39 
+40    /*
+41     * Read the radar data\&.
+42     */
+43    if (read_radar_data(cmdline\&.infile, &radar_data)) goto finish;
+44 
+45    /*
+46     * Calculate the radar rain rate PDFs\&.
+47     */
+48    if (calculate_pdfs(&radar_data, &error_statistics)) goto finish;
+49 
+50    /*
+51     * Write the rain rate PDFs to a file\&.
+52     */
+53    if (write_pdfs(cmdline\&.infile, cmdline\&.outfile, &radar_data)) goto finish;
+54 
+55    /*
+56     * Finish up\&.
+57     */
+58    finish:
+59    deallocate(&error_statistics, &radar_data);
+60 
+61    return 0;
+62 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

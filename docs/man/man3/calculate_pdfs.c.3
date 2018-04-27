@@ -1,0 +1,85 @@
+.TH "/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/calculate_pdfs.c" 3 "Tue Apr 17 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/calculate_pdfs.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'radar_error\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBcalculate_pdfs\fP (struct \fBradar\fP *radar_data, struct \fBerrorstats\fP *error_statistics)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "int calculate_pdfs (struct \fBradar\fP * radar_data, struct \fBerrorstats\fP * error_statistics)"
+
+.PP
+Definition at line 11 of file calculate_pdfs\&.c\&.
+.PP
+.nf
+11                                                                                  {
+12    size_t   pix;                     /* Pixel we are currently computing the PDF for\&.*/
+13    size_t   stn;                     /* Station number\&.*/
+14 
+15    double   stn_dist;                  /* Distance from the pixel to a rain gauge\&.*/
+16    double   min_dist;                  /* Distance to the closest rain gauge\&.*/
+17    size_t   closest_stn;               /* Closest rain gauge number\&.*/
+18 
+19    double   mu;                        /* Mean of ln(Rr/Rg)*/
+20    double   sigma;                     /* Standard deviation of ln(Rr/Rg)*/
+21    double   error;                     /* Value of Rr/Rt for the given percentile\&.*/
+22    int      percentile;                  /* PDF percentile\&.*/
+23    int      return_status = 0;
+24 
+25    for (pix=0; pix<(radar_data->nx*radar_data->ny); ++pix){
+26       /*
+27        * Determine which station (which we have error statistics for) is closest\&.*/
+28       min_dist   = FLT_MAX;            /* Every station should be closer than this\&. */
+29       closest_stn   = 0;
+30       for (stn=0; stn<error_statistics->nstns; ++stn){
+31          stn_dist   = distance(*(radar_data->lon+pix), *(radar_data->lat+pix), *(error_statistics->lon+stn),
+32                *(error_statistics->lat+stn));
+33          if (stn_dist < min_dist){
+34             closest_stn   = stn;
+35             min_dist   = stn_dist;
+36          }
+37       }
+38       *(radar_data->nearest_stn + pix)   = (int)closest_stn;
+39 
+40       /*
+41        * Based on the error statistics for the closest station and the radar rain rate, calculate a PDF for the true
+42        * rain rate\&. This assumes the radar error, Rr/Rt (Rr = radar rain rate, Rt = true rain rate) has a log-normal
+43        * distribution which is the same as Rr/Rg (Rg = gauge rain rate)\&.
+44        */
+45       mu      = *(error_statistics->mu + closest_stn);
+46       sigma   = *(error_statistics->sigma + closest_stn);
+47       for (percentile=0; percentile<100; ++percentile){
+48          if (*(radar_data->rain_rate+pix) < 1){
+49             /*
+50              * For radar rain rates less than 1 mm/hour, assume the radar is pretty accurate (its very likely
+51              * recording 0 mm/hour)\&.
+52              */
+53             error   = 1\&.0;
+54          } else {
+55             /*
+56              * Assume the radar error (Rr/Rt) is log-normal\&.
+57              */
+58             error   = find_percentile_error(((double)percentile)/100+0\&.005, mu, sigma);
+59          }
+60          *(*(radar_data->rain_rate_pdf+pix)+percentile) = *(radar_data->rain_rate+pix)/error;
+61       }
+62    }
+63 
+64    return return_status;
+65 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['variational_5fanalysis',['variational_analysis',['../variational__analysis_8f90.html#a0f4a4c6f0c078ae2f3474734189851ca',1,'variational_analysis.f90']]]
+  ['s_5fr_5fto_5ft_5fz',['s_r_to_t_z',['../namespacephysics.html#a3f1959e7b3ff1a8d052f1e0441b1c379',1,'physics']]],
+  ['smooth',['smooth',['../namespacenumerics.html#a354d8c793bd1515de7af7cfa32c51389',1,'numerics']]]
 ];

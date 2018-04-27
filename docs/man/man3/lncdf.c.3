@@ -1,0 +1,42 @@
+.TH "/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/lncdf.c" 3 "Tue Apr 17 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/lncdf.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'radar_error\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "double \fBlncdf\fP (double x, double mu, double sigma)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "double lncdf (double x, double mu, double sigma)"
+
+.PP
+Definition at line 11 of file lncdf\&.c\&.
+.PP
+.nf
+11                                                {
+12    double  cdf;
+13 
+14    if (x > 0){
+15       cdf   = 0\&.5 + 0\&.5*erf((log(x) - mu)/(sigma*sqrt(2)));
+16    } else {
+17       fprintf(stderr,"W: log-normal CDF undefined for x<=0\n");
+18       cdf   = -1;
+19    }
+20 
+21    return cdf;
+22 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

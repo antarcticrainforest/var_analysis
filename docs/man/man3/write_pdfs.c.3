@@ -1,0 +1,231 @@
+.TH "/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/write_pdfs.c" 3 "Tue Apr 17 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/write_pdfs.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'radar_error\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "int \fBwrite_pdfs\fP (char *infile, char *outfile, struct \fBradar\fP *radar_data)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "int write_pdfs (char * infile, char * outfile, struct \fBradar\fP * radar_data)"
+
+.PP
+Definition at line 11 of file write_pdfs\&.c\&.
+.PP
+.nf
+11                                                                      {
+12    int      ncid;                  /* ID of the output NetCDF file\&. */
+13    int      in_ncid;               /* ID of the input NetCDF file\&.  */
+14 
+15    int      dimids[3];               /* IDs of up to three dimensions\&. It is OK to use less than 3 dimensions\&. */
+16    size_t   start[3];               /* Starting point of a slab of data with up to 3 dimensions\&. */
+17    size_t   count[3];               /* Size of a slab of data with up to 3 dimensions\&.  */
+18    double   percentiles[100];         /* Holds the percentiles\&.  */
+19 
+20    int      varid;                  /* Variable ID\&. */
+21    int      lat_varid;               /* ID of the latitude variable\&.*/
+22    int      lon_varid;               /* ID of the longitude variable\&.  */
+23    int      neareststn_varid;         /* ID of the variable containing the closest station number\&.   */
+24    int      percentile_varid;         /* ID of the percentile variable ID\&. */
+25    int      rainrate_varid;            /* ID of the rain rate variable\&.  */
+26    int      rainratepdf_varid;         /* ID of the rain rate PDF variable\&. */
+27    double   missing_value;            /* Missing value attribute\&. */
+28 
+29    size_t   ii;                     /* Counter\&. */
+30    int      nc_status;               /* Return value from NetCDF functions\&.   */
+31    int      return_status = 0;
+32 
+33    /*
+34     * Open the file for writing\&.
+35     */
+36    if ((nc_status = nc_create(outfile, NC_WRITE, &ncid)) != NC_NOERR){
+37       fprintf(stderr,"E: Cannot create %s: %s\n",outfile, nc_strerror(nc_status));
+38       return_status = 1;
+39       goto finish;
+40    }
+41 
+42    /*
+43     * Define the dimensions in the file\&.
+44     */
+45    if ((nc_status = nc_def_dim(ncid, "i", radar_data->nx, &dimids[0])) != NC_NOERR){
+46       fprintf(stderr,"E: Cannot define the i dimension in %s: %s\n",outfile, nc_strerror(nc_status));
+47       return_status = 1;
+48       goto finish;
+49    }
+50    if ((nc_status = nc_def_dim(ncid, "j", radar_data->nx, &dimids[1])) != NC_NOERR){
+51       fprintf(stderr,"E: Cannot define the j dimension in %s: %s\n",outfile, nc_strerror(nc_status));
+52       return_status = 1;
+53       goto finish;
+54    }
+55    if ((nc_status = nc_def_dim(ncid, "percentile", 100, &dimids[2])) != NC_NOERR){
+56       fprintf(stderr,"E: Cannot define the percentile dimension in %s: %s\n",outfile, nc_strerror(nc_status));
+57       return_status = 1;
+58       goto finish;
+59    }
+60 
+61    /*
+62     * Define the variables in the file\&.
+63     */
+64    if ((nc_status = nc_def_var(ncid, "lon", NC_DOUBLE, 2, dimids, &lon_varid)) != NC_NOERR){
+65       fprintf(stderr,"E: Cannot define the lon variable in %s: %s\n",outfile, nc_strerror(nc_status));
+66       return_status = 1;
+67       goto finish;
+68    }
+69    if ((nc_status = nc_def_var(ncid, "lat", NC_DOUBLE, 2, dimids, &lat_varid)) != NC_NOERR){
+70       fprintf(stderr,"E: Cannot define the lat variable in %s: %s\n",outfile, nc_strerror(nc_status));
+71       return_status = 1;
+72       goto finish;
+73    }
+74    if ((nc_status = nc_def_var(ncid, "nearest_stn", NC_INT, 2, dimids, &neareststn_varid)) != NC_NOERR){
+75       fprintf(stderr,"E: Cannot define the nearest_stn variable in %s: %s\n",outfile, nc_strerror(nc_status));
+76       return_status = 1;
+77       goto finish;
+78    }
+79    if ((nc_status = nc_def_var(ncid, "percentile", NC_DOUBLE, 1, (dimids+2), &percentile_varid)) != NC_NOERR){
+80       fprintf(stderr,"E: Cannot define the percentile variable in %s: %s\n",outfile, nc_strerror(nc_status));
+81       return_status = 1;
+82       goto finish;
+83    }
+84    if ((nc_status = nc_def_var(ncid, "rain_rate", NC_DOUBLE, 2, dimids, &rainrate_varid)) != NC_NOERR){
+85       fprintf(stderr,"E: Cannot define the rain_rate variable in %s: %s\n",outfile, nc_strerror(nc_status));
+86       return_status = 1;
+87       goto finish;
+88    }
+89    if ((nc_status = nc_def_var(ncid, "rain_rate_pdf", NC_DOUBLE, 3, dimids, &rainratepdf_varid)) != NC_NOERR){
+90       fprintf(stderr,"E: Cannot define the rain_rate_pdf variable in %s: %s\n",outfile, nc_strerror(nc_status));
+91       return_status = 1;
+92       goto finish;
+93    }
+94 
+95    /*
+96     * Copy the attributes from the input file to the output file\&.
+97     */
+98    if ((nc_status = nc_open(infile, NC_NOWRITE, &in_ncid)) != NC_NOERR){
+99       fprintf(stderr,"E: Cannot open %s: %s\n",infile, nc_strerror(nc_status));
+100       return_status = 1;
+101       goto finish;
+102    }
+103 
+104    if ((nc_status = nc_inq_varid(in_ncid, "rain_rate", &varid)) != NC_NOERR){
+105       fprintf(stderr,"E: Cannot get rain_rate variable ID in %s: %s\n",infile, nc_strerror(nc_status));
+106       return_status = 1;
+107       goto finish;
+108    }
+109 
+110    if ((nc_status = nc_get_att_double(in_ncid, varid, "missing_value", &missing_value)) != NC_NOERR){
+111       fprintf(stderr,"E: Cannot read missing value attribute for rain_rate in %s: %s\n",infile, nc_strerror(nc_status));
+112       return_status = 1;
+113       goto finish;
+114    }
+115 
+116    if ((nc_status = nc_put_att_double(ncid, rainrate_varid, "missing_value", NC_DOUBLE, 1, &missing_value)) != NC_NOERR){
+117       fprintf(stderr,"E: Cannot write missing_value attribute for rain_rate to %s: %s\n", outfile, nc_strerror(nc_status));
+118       return_status = 1;
+119       goto finish;
+120    }
+121 
+122    if ((nc_status = nc_put_att_double(ncid, rainratepdf_varid, "missing_value", NC_DOUBLE, 1, &missing_value)) 
+123          != NC_NOERR){
+124       fprintf(stderr,"E: Cannot write missing_value attribute for rain_rate_pdf to %s: %s\n", outfile, nc_strerror(nc_status));
+125       return_status = 1;
+126       goto finish;
+127    }
+128 
+129    if ((nc_status = nc_put_att_text(ncid, percentile_varid, "long_name", 11, "percentile\0")) != NC_NOERR){
+130       fprintf(stderr,"E: Cannot write long_name attribute for percentile to %s: %s\n",outfile, nc_strerror(nc_status));
+131       return_status = 1;
+132       goto finish;
+133    }
+134 
+135    if ((nc_status = nc_put_att_text(ncid, percentile_varid, "units", 2, "%\0")) != NC_NOERR){
+136       fprintf(stderr,"E: Cannot write long_name attribute for percentile to %s: %s\n",outfile, nc_strerror(nc_status));
+137       return_status = 1;
+138       goto finish;
+139    }
+140 
+141    if ((nc_status = nc_close(in_ncid)) != NC_NOERR){
+142       fprintf(stderr,"E: Cannot close %s: %s\n",infile, nc_strerror(nc_status));
+143       return_status = 1;
+144       goto finish;
+145    }
+146 
+147    /*
+148     * Write the data to the file\&.
+149     */
+150    if ((nc_status = nc_enddef(ncid)) != NC_NOERR){
+151       fprintf(stderr,"E: %s\n",nc_strerror(nc_status));
+152       return_status = 1;
+153       goto finish;
+154    }
+155 
+156    for (ii=0; ii<(radar_data->nx * radar_data->ny); ++ii){
+157       start[0]   = ii/radar_data->ny;
+158       start[1]   = ii%radar_data->ny;
+159       start[2]   = 0;
+160       count[0]   = 1;
+161       count[1]   = 1;
+162       count[2]   = 100;
+163       if ((nc_status = nc_put_vara_double(ncid, rainratepdf_varid, start, count, *(radar_data->rain_rate_pdf+ii))) != NC_NOERR){
+164          fprintf(stderr,"E: Cannot write rain_rate_pdf data to %s: %s\n",outfile, nc_strerror(nc_status));
+165          return_status = 1;
+166          goto finish;
+167       }
+168    }
+169 
+170    if ((nc_status = nc_put_var_double(ncid, rainrate_varid, radar_data->rain_rate)) != NC_NOERR){
+171       fprintf(stderr,"E: Cannot write rain_rate data to %s: %s\n",outfile, nc_strerror(nc_status));
+172       return_status = 1;
+173       goto finish;
+174    }
+175 
+176    if ((nc_status = nc_put_var_double(ncid, lon_varid, radar_data->lon)) != NC_NOERR){
+177       fprintf(stderr,"E: Cannot write lon data to %s: %s\n",outfile, nc_strerror(nc_status));
+178       return_status = 1;
+179       goto finish;
+180    }
+181 
+182    if ((nc_status = nc_put_var_int(ncid, neareststn_varid, radar_data->nearest_stn)) != NC_NOERR){
+183       fprintf(stderr,"E: Cannot write nearest_stn data to %s: %s\n",outfile, nc_strerror(nc_status));
+184       return_status = 1;
+185       goto finish;
+186    }
+187 
+188    if ((nc_status = nc_put_var_double(ncid, lat_varid, radar_data->lat)) != NC_NOERR){
+189       fprintf(stderr,"E: Cannot write lat data to %s: %s\n",outfile, nc_strerror(nc_status));
+190       return_status = 1;
+191       goto finish;
+192    }
+193 
+194    for (ii=0; ii<100; ++ii) percentiles[ii] = 99\&.5 - (double)ii;
+195    if ((nc_status = nc_put_var_double(ncid, percentile_varid, percentiles)) != NC_NOERR){
+196       fprintf(stderr,"E: Cannot write percentiles data to %s: %s\n",outfile, nc_strerror(nc_status));
+197       return_status = 1;
+198       goto finish;
+199    }
+200 
+201 finish:
+202    /*
+203     * Close the file\&.
+204     */
+205    if ((nc_status = nc_close(ncid)) != NC_NOERR){
+206       fprintf(stderr,"E: Cannot close %s: %s\n",outfile, nc_strerror(nc_status));
+207       return_status = 1;
+208    }
+209 
+210    return return_status;
+211 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

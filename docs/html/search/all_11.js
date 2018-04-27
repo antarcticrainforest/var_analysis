@@ -5,6 +5,7 @@ var searchData=
   ['settings_2ef90',['settings.f90',['../settings_8f90.html',1,'']]],
   ['setup',['setup',['../namespacesetup.html',1,'']]],
   ['setup_2epy',['setup.py',['../setup_8py.html',1,'']]],
+  ['sigma',['sigma',['../structerrorstats.html#a8a84c6fc53b1562ec6a7847eb5b15a66',1,'errorstats']]],
   ['sleep',['sleep',['../namespacesetup.html#aea013977d24d48e57270f412b2c222c2',1,'setup']]],
   ['smooth',['smooth',['../namespacenumerics.html#a354d8c793bd1515de7af7cfa32c51389',1,'numerics']]],
   ['start_5fday',['start_day',['../namespacesettings.html#a9d8f79c61533111bb5efd5ee1577108f',1,'settings']]],

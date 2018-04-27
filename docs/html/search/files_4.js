@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['io_2ef90',['io.f90',['../io_8f90.html',1,'']]]
+  ['deallocate_2ec',['deallocate.c',['../deallocate_8c.html',1,'']]],
+  ['distance_2ec',['distance.c',['../distance_8c.html',1,'']]]
 ];

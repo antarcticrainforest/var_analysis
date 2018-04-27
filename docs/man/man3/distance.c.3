@@ -1,0 +1,38 @@
+.TH "/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/distance.c" 3 "Tue Apr 17 2018" "Variational Analysis" \" -*- nroff -*-
+.ad l
+.nh
+.SH NAME
+/home/unimelb.edu.au/mbergemann/va_analysis/src/raerr/distance.c \- 
+.SH SYNOPSIS
+.br
+.PP
+\fC#include 'radar_error\&.h'\fP
+.br
+
+.SS "Functions"
+
+.in +1c
+.ti -1c
+.RI "double \fBdistance\fP (double lon1, double lat1, double lon2, double lat2)"
+.br
+.in -1c
+.SH "Function Documentation"
+.PP 
+.SS "double distance (double lon1, double lat1, double lon2, double lat2)"
+
+.PP
+Definition at line 11 of file distance\&.c\&.
+.PP
+.nf
+11                                                                    {
+12    double   distance;            /* Distance between points (lon1, lat1) and (lon2, lat2) */
+13    double   r2d = 57\&.2958;         /* Factor to convert from radians to degrees   */
+14 
+15    distance = 1\&.852*60*r2d * acos(sin(lat1/r2d)*sin(lat2/r2d) + cos(lat1/r2d)*cos(lat2/r2d)*cos((lon2-lon1)/r2d));
+16 
+17    return distance;
+18 }
+.fi
+.SH "Author"
+.PP 
+Generated automatically by Doxygen for Variational Analysis from the source code\&.

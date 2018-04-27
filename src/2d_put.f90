@@ -87,8 +87,8 @@ PRINT *,'Enter the name of the file which contains the model constraint data'
 READ (FMT='(A512)', UNIT=5) INPUTFILE
 CALL IPT_2DRAW_NETCDF(INPUTFILE, 'time', T)                                         ! Time (units in NetCDF file)
 ! this is skin temperature. I recommend 2m temp
-CALL IPT_2DRAW_NETCDF(INPUTFILE, 'sktsfc', MG_T)                                    ! Surface temperature           (K)
-!CALL IPT_2DRAW_NETCDF(INPUTFILE, 'no2tsfc', MG_T)
+!CALL IPT_2DRAW_NETCDF(INPUTFILE, 'sktsfc', MG_T)                                    ! Surface temperature           (K)
+CALL IPT_2DRAW_NETCDF(INPUTFILE, 'no2tsfc', MG_T)
 CALL IPT_2DRAW_NETCDF(INPUTFILE, 'spsfc', MG_P)                                     ! Surface pressure              (hPa)
 CALL IPT_2DRAW_NETCDF(INPUTFILE, 'ewsssfc', MG_TAOX1)                               ! Surface stress (E-W dir)      (N s/m^2)
 CALL IPT_2DRAW_NETCDF(INPUTFILE, 'nssssfc', MG_TAOY1)                               ! Surface stress (N-S dir)      (N s/m^2)
@@ -102,14 +102,6 @@ CALL IPT_2DRAW_NETCDF(INPUTFILE, 'swt', MG_SWT)                                 
 CALL IPT_2DRAW_NETCDF(INPUTFILE, 'lwt', MG_LWT)                                  ! Net TOA LW radiation          (W/m^2 down)
 
 
-! This seemed to be missing from the model retrieval . Added MS Feb 2009
-CALL IPT_2DRAW_NETCDF(INPUTFILE, 'no2dsfc', MG_RH)                              ! Dew point temp (K) (will convert to RH)
-
-
-! Now convert dew point temperature to relative humidity: (Using Bolton's formula for now --> check whether this is good enough
-MG_RH = exp(17.67*((MG_RH-273.15)/(MG_RH-29.65) - ((MG_T-273.15)/(MG_T-29.65))))
-
-PRINT *,'DID IT'
 !
 ! The number of times can be determined from the size of one of the variables read in above. Once this has been done, allocate
 ! memory for some of the other MG_ variables (which have not already had memory allocated above).

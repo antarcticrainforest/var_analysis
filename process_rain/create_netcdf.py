@@ -59,6 +59,7 @@ class NC(object):
         """
         metadata={}
         #with nc(infile,'r') as s:
+        print(infile)
         s = nc(infile,'r')
         #Get the lon info
         metadata['lon']=Meta(
@@ -219,7 +220,6 @@ if __name__ == '__main__':
     #Open the infile and outfile
     if not os.path.isfile(infile):
         sys.stderr.write("%s is missing"%infile)
-
     #Get the metadata
     Meta = NC(infile)
     for tt in range(len(Meta.metadata['time'].data)):

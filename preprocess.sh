@@ -272,6 +272,10 @@ get_rain_input(){
       #Loop through all threads and distribute the dates
       #rain_loop $base_date $proc $a #&
       ${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} ${rainformat} ${workdir%/}/process_rain/ $seas $base_date ${d}
+      if [ $? -ne 0 ];then
+          echoerr "$proc : get_rain had an error, aborting"
+        fi
+
       let proc=${proc}+1
     done
     wait
@@ -384,8 +388,7 @@ fi
 seas=$(echo ${output}|rev|cut -d / -f1 |rev)
 old_output=${output}
 old_va_output=${va_output}
-split_dates="20021101_0000,20021103_1800,20021101"
-
+overwrite=false
 let n_split=0
 for d in ${split_dates};do
   DATES=$(echo $d | sed 's/,/ /g')
@@ -394,59 +397,60 @@ for d in ${split_dates};do
   last=$(echo ${DATES[1]}|cut -d '_' -f1)
   partial="$first-$last"
   
-  echo "##############################################################"
-  echo "##############################################################"
-  echo "#######                                                #######"
-  echo "#######          WORKING ON $partial          #######"
-  echo "#######                                                #######"
-  echo "##############################################################"
-  echo "##############################################################"
-
   output=${old_output%/}/$partial
   va_output=${old_va_output%/}/$partial
+  if [ ! -f "${va_output}/best_est/forcing.nc" ] || [ "$overwrite" = true ];then
+    echo "##############################################################"
+    echo "##############################################################"
+    echo "#######                                                #######"
+    echo "#######          WORKING ON $partial          #######"
+    echo "#######                                                #######"
+    echo "##############################################################"
+    echo "##############################################################"
 
-  #Call the create_2d_input_files script
-  mkdir -p ${output}
-  mkdir -p ${va_output}
 
-  ${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${seas} ${DATES[*]}
-  if [ $? -ne 0 ];then
-    echoerr "create_2d_input_files had an error, aborting"
+    #Call the create_2d_input_files script
+    mkdir -p ${output}
+    mkdir -p ${va_output}
+
+    ${workdir}/2D_create/create_2d_input_files $input ${output%/}/2D_put $filename ${seas} ${DATES[*]}
+    if [ $? -ne 0 ];then
+      echoerr "create_2d_input_files had an error, aborting"
+    fi
+
+    ###Get the 3d_data
+    ${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
+    if [ $? -ne 0 ];then
+      echoerr "concatenate_arm_data had an error, aborting"
+    fi
+    get_3d_input
+    if [ $? -ne 0 ];then
+      echoerr "get_3d_input had an error, aborting"
+    fi
+    #####Get the microwave input data
+    #clone 'smet' 'mwrlos' ${DATES[*]}
+    get_micro_input 'smet' 'mwrlos' ${DATES[*]}
+    outf=${output%/}/MWR-DATA/mwrlos_6h_interp.nc
+    echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_pwv'][:]=np.ma.masked_invalid(f.variables['be_pwv'][:]);f.close()"
+    echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_lwp'][:]=np.ma.masked_invalid(f.variables['be_lwp'][:]);f.close()"
+
+
+    if [ $? -ne 0 ];then
+      echoerr "get_micro_input had an error, aborting"
+    fi
+    ####Prepare the raindata
+    get_rain_input
+    if [ $? -ne 0 ];then
+      echoerr "get_rain_input had an error, aborting"
+    fi
+
+    echo 'Preprocessing done, running variational analysis'
+
+    ${workdir%/}/process.sh ${output} ${va_output}
+    if [ $? -ne 0 ];then
+      echoerr "3D VAR had an error, aborting"
+    fi
+    let n_split=$n_split+1
   fi
-
-  ###Get the 3d_data
-  ${workdir}/3D_create/create_netcdf/concatenate_arm_data $input ${output%/}/3D_put ${DATES[*]}
-  if [ $? -ne 0 ];then
-    echoerr "concatenate_arm_data had an error, aborting"
-  fi
-  get_3d_input
-  if [ $? -ne 0 ];then
-    echoerr "get_3d_input had an error, aborting"
-  fi
-  #####Get the microwave input data
-  #clone 'smet' 'mwrlos' ${DATES[*]}
-  get_micro_input 'smet' 'mwrlos' ${DATES[*]}
-  outf=${output%/}/MWR-DATA/mwrlos_6h_interp.nc
-  echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_pwv'][:]=np.ma.masked_invalid(f.variables['be_pwv'][:]);f.close()"
-  echo $outf |python -c "import sys;from netCDF4 import Dataset as nc;import numpy as np; f=nc([i.strip('\n') for i in sys.stdin][0],'a');f.variables['be_lwp'][:]=np.ma.masked_invalid(f.variables['be_lwp'][:]);f.close()"
-
-
-  if [ $? -ne 0 ];then
-    echoerr "get_micro_input had an error, aborting"
-  fi
-  ####Prepare the raindata
-  get_rain_input
-  if [ $? -ne 0 ];then
-    echoerr "get_rain_input had an error, aborting"
-  fi
-
-  echo 'Preprocessing done, running variational analysis'
-
-  ${workdir%/}/process.sh ${output} ${va_output}
-  if [ $? -ne 0 ];then
-    echoerr "3D VAR had an error, aborting"
-  fi
-  let n_split=$n_split+1
-  exit
 done
 echo "Var analysis for season ${seas} done"

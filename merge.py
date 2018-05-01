@@ -7,8 +7,8 @@ helpstring='''Usage:
   python %s -d path_to_va -p percentile -o path_to_output
   '''%(os.path.basename(sys.argv[0]))
 
-DIR = os.path.abspath(os.path.expanduser('~/Data'))
-OUT = os.path.abspath(os.path.expanduser('~/Data'))
+DIR = os.path.abspath(os.path.expanduser('~/Data/var_ana'))
+OUT = os.path.abspath(os.path.expanduser('~/Data/var_ana'))
 PERC= 'best_est'
 nn = 0
 try:
@@ -135,7 +135,7 @@ with pd.HDFStore(os.path.join(OUT, PERC, 'forcing.hdf5'),'w') as h5:
         jj += 1
 with pd.HDFStore(os.path.join(OUT, PERC, 'forcing.hdf5'),'a') as h5:
   with  nc(os.path.join(OUT, PERC, 'forcing.nc'),'a') as nc4:
-    T = pd.date_range(h5['/q'].index[0], h5['/q'].index[-1],freq='10 min')
+    T = pd.date_range(h5['r'].index[0], h5['r'].index[-1],freq='10 min')
     for varn in nc4.variables.keys():
       if varn not in ('time','lev'):
         if len(nc4.variables[varn].shape) == 2:
@@ -146,7 +146,7 @@ with pd.HDFStore(os.path.join(OUT, PERC, 'forcing.hdf5'),'a') as h5:
           columns = ['sfc']
 
           df = pd.DataFrame(data,columns=columns,index=T)
-          dd = h5['/'+varn]
+          dd = h5[varn]
           df.loc[dd.index] = dd
           nc4.variables[varn][:] = np.ma.masked_invalid(df.values)
       elif varn == 'time':

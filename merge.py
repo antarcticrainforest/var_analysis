@@ -145,9 +145,9 @@ with pd.HDFStore(os.path.join(OUT, PERC, 'forcing.hdf5'),'a') as h5:
           data = np.zeros([len(T)]) * np.nan
           columns = ['sfc']
 
-          df = pd.DataFrame(data,columns=columns,index=T)
-          dd = h5[varn]
-          df.loc[dd.index] = dd
-          nc4.variables[varn][:] = np.ma.masked_invalid(df.values)
+        df = pd.DataFrame(data,columns=columns,index=T)
+        dd = h5[varn]
+        df.loc[dd.index] = dd
+        nc4.variables[varn][:] = np.ma.masked_invalid(df.values)
       elif varn == 'time':
           nc4.variables[varn][:] = date2num(T.to_pydatetime(),nc4.variables[varn].units)

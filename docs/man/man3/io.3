@@ -1,4 +1,4 @@
-.TH "io" 3 "Tue Apr 17 2018" "Variational Analysis" \" -*- nroff -*-
+.TH "io" 3 "Fri Apr 27 2018" "Variational Analysis" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -1735,7 +1735,7 @@ Definition at line 1708 of file io\&.f90\&.
 1941     iost    = nf90_put_att(ncid, temp_var_id, "missing_value", REAL(-9999, kind=rk4))
 1942     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
 1943 
-1944     iost    = nf90_def_var(ncid, "q", nf90_float, (/ lev_dim_id, time_dim_id /), q_var_id)
+1944     iost    = nf90_def_var(ncid, "r", nf90_float, (/ lev_dim_id, time_dim_id /), q_var_id)
 1945     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
 1946     iost    = nf90_put_att(ncid, q_var_id, "long_name", 'Water vapour mixing ratio'//char(0))
 1947     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
@@ -1798,18 +1798,18 @@ Definition at line 1708 of file io\&.f90\&.
 2004     iost    = nf90_put_att(ncid, tadvv_var_id, "missing_value", REAL(-9999, kind=rk4))
 2005     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
 2006 
-2007     iost    = nf90_def_var(ncid, "q_adv_h", nf90_float, (/ lev_dim_id, time_dim_id /), qadvh_var_id)
+2007     iost    = nf90_def_var(ncid, "r_adv_h", nf90_float, (/ lev_dim_id, time_dim_id /), qadvh_var_id)
 2008     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
-2009     iost    = nf90_put_att(ncid, qadvh_var_id, "long_name", 'Horizontal q advection'//char(0))
+2009     iost    = nf90_put_att(ncid, qadvh_var_id, "long_name", 'Horizontal r advection'//char(0))
 2010     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
 2011     iost    = nf90_put_att(ncid, qadvh_var_id, "units", 'g/kg/hour'//char(0))
 2012     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
 2013     iost    = nf90_put_att(ncid, qadvh_var_id, "missing_value", REAL(-9999, kind=rk4))
 2014     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
 2015 
-2016     iost    = nf90_def_var(ncid, "q_adv_v", nf90_float, (/ lev_dim_id, time_dim_id /), qadvv_var_id)
+2016     iost    = nf90_def_var(ncid, "r_adv_v", nf90_float, (/ lev_dim_id, time_dim_id /), qadvv_var_id)
 2017     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
-2018     iost    = nf90_put_att(ncid, qadvv_var_id, "long_name", 'Vertical q advection'//char(0))
+2018     iost    = nf90_put_att(ncid, qadvv_var_id, "long_name", 'Vertical r advection'//char(0))
 2019     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
 2020     iost    = nf90_put_att(ncid, qadvv_var_id, "units", 'g/kg/hour'//char(0))
 2021     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
@@ -1861,7 +1861,7 @@ Definition at line 1708 of file io\&.f90\&.
 2067     iost    = nf90_put_att(ncid, dtdt_var_id, "missing_value", REAL(-9999, kind=rk4))
 2068     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
 2069 
-2070     iost    = nf90_def_var(ncid, "dqdt", nf90_float, (/ lev_dim_id, time_dim_id /), dqdt_var_id)
+2070     iost    = nf90_def_var(ncid, "drdt", nf90_float, (/ lev_dim_id, time_dim_id /), dqdt_var_id)
 2071     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
 2072     iost    = nf90_put_att(ncid, dqdt_var_id, "long_name", 'd(water vapour mixing ratio)/dt'//char(0))
 2073     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
@@ -2167,11 +2167,11 @@ Definition at line 1708 of file io\&.f90\&.
 2373     iost    = nf90_put_att(ncid, omegas_var_id, "missing_value", REAL(-9999, kind=rk4))
 2374     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
 2375 
-2376     iost    = nf90_def_var(ncid, "q_srf", nf90_float, (/ time_dim_id /), qs_var_id)
+2376     iost    = nf90_def_var(ncid, "r_srf", nf90_float, (/ time_dim_id /), qs_var_id)
 2377     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
 2378     iost    = nf90_put_att(ncid, qs_var_id, "long_name", '2m water vapour mixing ratio'//char(0))
 2379     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
-2380     iost    = nf90_put_att(ncid, qs_var_id, "units", 'kg/kg'//char(0))
+2380     iost    = nf90_put_att(ncid, qs_var_id, "units", 'g/kg'//char(0))
 2381     IF (iost \&.NE\&. nf90_noerr) GO TO 9999
 2382     iost    = nf90_put_att(ncid, qs_var_id, "missing_value", REAL(-9999, kind=rk4))
 2383     IF (iost \&.NE\&. nf90_noerr) GO TO 9999

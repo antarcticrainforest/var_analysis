@@ -33,7 +33,7 @@ do
 		echo "E: Unknown option: ${1}"
     echo "Usage:   ${0} [OPTIONS]"|sed "s#./##g"
     echo "Options:"
-    echo "-i , --input     : Folder where the data was downloaded to"
+    echo "-i , --input     : Folder where the data is copyied from"
     echo "-o , --output    : The parent folder containing the season folder"
     echo "-s , --start     : First data month that is in input (format YYYYMM)"
     echo "-e , --end       : Last data month that is in input (format YYYMM)"

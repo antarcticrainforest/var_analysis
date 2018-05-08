@@ -192,9 +192,9 @@ class NC(object):
             r_source=np.ma.masked_less(self.source.variables[
                     self.metadata['rain_rate'].varname][tstep],0.1).filled(0)
             maskf = os.path.join(os.path.dirname(sys.argv[0]),'ring_mask.npz')
-            mask = np.ma.masked_equal(np.load(maskf)['mask'],-99.9)
+            mask = np.ma.masked_less(np.load(maskf)['mask'],-1)
             r_source=np.ma.masked_invalid(r_source * mask)
-            r_source=np.ma.masked_greater(r_source,1000.)
+            r_source=np.ma.masked_greater(r_source,300.)
             t.variables['time'][:]=self.metadata['time'].data[tstep]
 
             try:

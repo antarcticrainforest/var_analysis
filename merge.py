@@ -135,7 +135,7 @@ with pd.HDFStore(os.path.join(OUT, PERC, 'forcing.hdf5'),'w') as h5:
         jj += 1
 with pd.HDFStore(os.path.join(OUT, PERC, 'forcing.hdf5'),'a') as h5:
   with  nc(os.path.join(OUT, PERC, 'forcing.nc'),'a') as nc4:
-    T = pd.date_range(h5['r'].index[0], h5['r'].index[-1],freq='10 min')
+    T = pd.date_range(h5['r'].index[0], h5['r'].index[-1],freq='6 h')
     for varn in nc4.variables.keys():
       if varn not in ('time','lev'):
         if len(nc4.variables[varn].shape) == 2:

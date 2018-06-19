@@ -7,10 +7,10 @@ def lookup(f,head):
         Get the days in a season
     """
     if head.lower() == 'cpol':
-      s = '_'.join(f.replace('-','_').replace('.','_').split('_')[-3:-2])
+      s = f.replace('-','_').replace('.','_').split('_')
     else:
-      s = '_'.join(f.replace('-','_').replace('.','_').split('_')[-3:-2])
-    return datetime.datetime.strptime(s,'%Y%m%d')
+      s = f.replace('-','_').replace('.','_').split('_')
+    return datetime.datetime.strptime(s[-2],'%Y%m%d')
 
 
 
@@ -20,7 +20,7 @@ def get_filenames(folder,head):
         Get all filenames for the months in the season
     """
     if head.lower() == 'cpol':
-      files=glob.glob(os.path.join(folder,'*_????????_*'))
+      files=glob.glob(os.path.join(folder,'*_????????.nc'))
     else:
       files=glob.glob(os.path.join(folder,'*%s*'%head.lower()))
     dates=[lookup(f,head) for f in files]

@@ -215,7 +215,7 @@ if __name__ == '__main__':
     except IndexError:
         fn = os.path.basename(outfile).replace('.nc','').replace('.nc4','').replace('-','_')
         #head = fn.replace(re.search(r'\d{8}_\d{4}', fn).group(),'')
-        head = fn.replace(re.search(r'\d{8}_level2', fn).group(),'')
+        head = fn.replace(re.search(r'\d{8}', fn).group(),'')
 
     #Open the infile and outfile
     if not os.path.isfile(infile):

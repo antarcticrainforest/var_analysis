@@ -74,7 +74,7 @@ chmod -R 777 ${opt1_dir}
 
 for date in ${dates[*]};do
   echo "$(basename $0) on $proc: Finding files for ${date}"
-	for file in $(ls ${old_dir%/}/*${date}_*.${end} 2> /dev/null); do
+	for file in $(ls ${old_dir%/}/*${date}.${end} 2> /dev/null); do
 	      infile=${file##*/}
 
         outfile=$(echo $infile|sed "s/${end}/nc/g")

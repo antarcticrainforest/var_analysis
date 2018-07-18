@@ -268,10 +268,11 @@ get_rain_input(){
     ary_split=$(python ${workdir%/}/split.py $nproc ${dates[*]})
     let proc=1
     #for a in ${ary_split[*]};do
+    tmp_cpol=$(dirname ${output%/})/tmp_cpol
     for d in ${dates[*]};do
       #Loop through all threads and distribute the dates
       #rain_loop $base_date $proc $a #&
-      ${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} ${rainformat} ${workdir%/}/process_rain/ $seas $base_date ${d}
+      ${workdir%/}/process_rain/create_dom_avg_pdf ${raininput%/} $tmp_cpol ${rainformat} ${workdir%/}/process_rain/ $seas $base_date ${d}
       if [ $? -ne 0 ];then
           echoerr "$proc : get_rain had an error, aborting"
         fi
@@ -281,9 +282,9 @@ get_rain_input(){
     wait
     # Create the rain ensemble time series
         ${workdir%/}/process_rain/create_timeseries \
-        ${raininput%/}/new/domain_avg_6hr ${output%/}/radar_rain \
+        ${tmp_cpol%/}/domain_avg_6hr ${output%/}/radar_rain \
         ${array[0]} 0000 ${array[${#array[@]} - 1]} 2300 ${base_date} 6
-    rm -rf ${raininput%/}/new
+    rm -rf $tmp_cpol
     rm -f ${workdir%/}process_rain/mask_${seas}.nc
 }
 
@@ -452,5 +453,6 @@ for d in ${split_dates};do
     fi
     let n_split=$n_split+1
   fi
+exit
 done
 echo "Var analysis for season ${seas} done"

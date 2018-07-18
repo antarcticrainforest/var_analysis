@@ -44,12 +44,12 @@ domavg_suffix="domavg_pdf"	# suffix to domain averaged files
 
 # set the full paths to input and output directories
 old_dir=${1%/}
-format=${2%/}
-workdir=${3%/}
-proc=${4}
-base_date=${5}
-dates=${@:6}
-ipt_dir=${old_dir%/}/new
+ipt_dir=${2%/}
+format=${3%/}
+workdir=${4%/}
+proc=${5}
+base_date=${6}
+dates=${@:7}
 
 
 if [ "${format}" == 'ascii' ];then
@@ -76,7 +76,7 @@ for date in ${dates[*]};do
   echo "$(basename $0) on $proc: Finding files for ${date}"
 	for file in $(ls ${old_dir%/}/*${date}.${end} 2> /dev/null); do
 	      infile=${file##*/}
-
+        
         outfile=$(echo $infile|sed "s/${end}/nc/g")
         if [ ! -f ${ipt_dir%/}/${outfile} ];then
             if [ ${format} == 'ascii' ];then
@@ -86,8 +86,8 @@ for date in ${dates[*]};do
                   echoerr "$(basename $0) on $proc : cappi_read_radar_rain failed"
                 fi
             else
-              echo "$(basename $0) on $proc : call create_netcdf.py"
-                python ${workdir%/}/create_netcdf.py ${old_dir%/}/${infile} ${ipt_dir%/}/${outfile}
+              echo "$(basename $0) for $proc : call create_netcdf.py"
+                python ${workdir%/}/create_netcdf.py ${old_dir%/}/${infile} ${ipt_dir%/}
                 if [ $? -ne 0 ];then
                   echoerr "$(basename $0) on $proc : create_netcdf failed"
                 fi

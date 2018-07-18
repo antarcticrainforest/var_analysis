@@ -7,8 +7,9 @@ helpstring='''Usage:
   python %s -d path_to_va -p percentile -o path_to_output
   '''%(os.path.basename(sys.argv[0]))
 
-DIR = os.path.abspath(os.path.expanduser('~/Data/var_ana'))
-OUT = os.path.abspath(os.path.expanduser('~/Data/var_ana'))
+DIR = os.path.abspath(os.path.join('g', 'data', 'ua8', 'Martin', 'va_analysis', os.getenv('USER'))
+OUT = os.path.abspath(os.path.join('g', 'data', 'ua8', 'Martin', 'va_analysis', os.getenv('USER'))
+outfile = os.path.join(OUT, 'CPOL_large-scale_forcing')
 PERC= 'best_est'
 nn = 0
 try:
@@ -64,15 +65,15 @@ if not os.path.isdir(os.path.join(OUT,PERC)):
 seas = ('0102', '0203', '0304', '0405', '0506', '0607', '0910', '1011', '1112', '1213', '1314' , '1415')
 exclude = ('base_time', 'time_offset', 'year', 'month', 'day', 'hour', 'minute', 'lat', 'lon', 'lev', 'time', 'phis')
 
-with pd.HDFStore(os.path.join(OUT, PERC, 'forcing.hdf5'),'w') as h5:
-  with  nc(os.path.join(OUT, PERC, 'forcing.nc'),'w') as nc4:
+with pd.HDFStore('%s.hdf5'%outfile),'w') as h5:
+  with  nc('%s.nc'%outfile),'w') as nc4:
     dims = ('time', 'lev')
     jj = 0
     for i in seas:
-      individual = glob.glob(os.path.join(DIR,'va_inputs','%s/*'%i))
+      individual = glob.glob(os.path.join(DIR,'va_input','%s/*'%i))
       individual.sort()
       for split in individual:
-        output = split.replace('va_inputs', 'va_output')
+        output = split.replace('va_input', 'va_output')
         merger = os.path.join(output, 'best_est', 'forcing.nc')
         inp = os.path.join(split, '2D_put', 'ecmwf.nc')
         sys.stdout.flush()
@@ -133,8 +134,8 @@ with pd.HDFStore(os.path.join(OUT, PERC, 'forcing.hdf5'),'w') as h5:
 
         sys.stdout.write('ok\n')
         jj += 1
-with pd.HDFStore(os.path.join(OUT, PERC, 'forcing.hdf5'),'a') as h5:
-  with  nc(os.path.join(OUT, PERC, 'forcing.nc'),'a') as nc4:
+with pd.HDFStore('%s.hdf5'%outfile),'a') as h5:
+  with  nc('%s.nc'%outfile),'a') as nc4:
     T = pd.date_range(h5['r'].index[0], h5['r'].index[-1],freq='6 h')
     for varn in nc4.variables.keys():
       if varn not in ('time','lev'):

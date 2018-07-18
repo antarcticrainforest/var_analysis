@@ -27,7 +27,7 @@ def getlat(c,dw):
         R*= 1000.
     return np.round(c + (dw/R * 180./np.pi),3)
 class NC(object):
-    def __init__(self,infile,metadata=None,units='seconds since 1970-01-01 00:00:00Z'):
+    def __init__(self,infile, outdir, metadata=None,units='seconds since 1970-01-01 00:00:00Z'):
         '''
             Class to creat 10 minute netcdfiles from arbitry netcdf files
             as input.
@@ -35,12 +35,13 @@ class NC(object):
             Instances:
                 infile (str-object) : The filename of containing the input
                                       data
+                outdir (str-object) : The  output directory
                 metadata (NC-object) : A class containing the metadata
                                        None if not assigned yet
 
         '''
         self.infile = infile
-        self.dirname = os.path.join(os.path.dirname(os.path.abspath(infile)),'new')
+        self.dirname = os.path.abspath(outdir)
         if type(metadata) == type(None):
             # No metadata has been assigned yet, create it
             self.metadata = self.get_metadata(self.infile)
@@ -59,40 +60,40 @@ class NC(object):
         """
         metadata={}
         #with nc(infile,'r') as s:
-        print(infile)
+        #print(infile)
         s = nc(infile,'r')
         #Get the lon info
         metadata['lon']=Meta(
-                dim = (len(s.dimensions['x']),),
+                dim = (len(s.dimensions['longitude']),),
                 dim_name = 'lon',
                 dims=('i','j'),
                 long_name = 'longitude',
                 units = 'degrees_east',
                 axis = 'X',
-                data = s.variables['x'][:])
+                data = s.variables['longitude'][:])
         metadata['j']=Meta(
-                dim = (len(s.dimensions['x']),),
+                dim = (len(s.dimensions['longitude']),),
                 dim_name = 'j',
                 dims=('j',),
                 long_name = 'longitude',
                 units = 'degrees_east',
                 axis = 'X',
-                data = s.variables['x'][:])
+                data = s.variables['longitude'][:])
         metadata['i'] = Meta(
-                dim = (len(s.dimensions['y']),),
+                dim = (len(s.dimensions['latitude']),),
                 dims = ('i',),
                 long_name = 'longitude',
                 units = 'degrees_east',
                 axis = 'Y',
-                data = s.variables['y'][:])
+                data = s.variables['latitude'][:])
         metadata['lat'] = Meta(
-                dim = (len(s.dimensions['y']),),
+                dim = (len(s.dimensions['latitude']),),
                 dim_name = 'lat',
                 dims = ('i','j'),
-                long_name = 'longitude',
+                long_name = 'latitude',
                 units = 'degrees_east',
                 axis = 'Y',
-                data = s.variables['y'][:])
+                data = s.variables['latitude'][:])
         metadata['time'] = Meta(
                 dim = (None,),
                 dims = ('time',),
@@ -207,13 +208,13 @@ class NC(object):
 if __name__ == '__main__':
     try:
         infile=sys.argv[1]
-        outfile=sys.argv[2]
+        outdir=sys.argv[2]
     except IndexError:
         sys.exit('Error: \n Usage: %s infile.nc outfile.nc' %sys.argv[0])
     try:
         head=sys.argv[3]
     except IndexError:
-        fn = os.path.basename(outfile).replace('.nc','').replace('.nc4','').replace('-','_')
+        fn = os.path.basename(infile).replace('.nc','').replace('.nc4','').replace('-','_')
         #head = fn.replace(re.search(r'\d{8}_\d{4}', fn).group(),'')
         head = fn.replace(re.search(r'\d{8}', fn).group(),'')
 
@@ -221,7 +222,7 @@ if __name__ == '__main__':
     if not os.path.isfile(infile):
         sys.stderr.write("%s is missing"%infile)
     #Get the metadata
-    Meta = NC(infile)
+    Meta = NC(infile, outdir)
     for tt in range(len(Meta.metadata['time'].data)):
         Meta.create_ncfile(tt,head)
     Meta.source.close()

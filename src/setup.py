@@ -33,12 +33,12 @@ def checkenv(var,alt):
 
 FC=checkenv('FC','gfortran')
 CC=checkenv('CC','gcc')
-FFLAGS=checkenv('FFLAGS','-ffixed-line-length-0 -std=legacy -g -O3 -fimplicit-none -fsign-zero -fbounds-check -Wpedantic -fno-automatic')
-CFLAGS=checkenv('CFLAGS','-O3 -Wpedantic')
+FFLAGS=checkenv('FFLAGS','-ffixed-line-length-0 -std=legacy -g -O3 -fimplicit-none -fsign-zero -fbounds-check -fno-automatic')
+CFLAGS=checkenv('CFLAGS','-O3')
 INCLUDE=checkenv('INCLUDE',os.path.join(Path,'include')).replace(':',',')
 LDFLAGS=checkenv('LD_LIBRARY_PATH',os.path.join(Path,'lib')).replace(':',',')
 FLIBS=checkenv('FLIBS','netcdff')
-CLIBS=checkenv('CLIBS','netcdf,m')
+CLIBS=checkenv('CLIBS','netcdf')
 BATCH=checkenv('BATCH',0)
 PROJECT=checkenv('PROJECT',None)
 MAIL=checkenv('EMAIL','')
@@ -149,6 +149,7 @@ missing_package=[]
 checkbin=(\
         ('gnu make','make',1),
         ('fortran compiler',FC,1),
+        ('C compiler',CC,1),
         ('nc-config','nc-config',1),
         ('ncap','ncap',1),
         ('ncatted','ncatted',1),
@@ -376,6 +377,8 @@ for libs in (CLIBS.split(','),FLIBS.split(',')):
         for path in LDFLAGS:
             if len(glob.glob(os.path.join(path,'*'+l+'*'))):
                 status=True
+            elif len(glob.glob(os.path.join(path, 'GNU', '*'+l+'*'))):
+                status=True
         if status:
             sys.stdout.write('ok \n')
         else:
@@ -445,11 +448,11 @@ source:		$(OBJS)
 		$(FC) $(FFLAGS) lu.o time.o constants.o portable.o settings.o process_va_output.o io.o physics.o numerics.o \\
 			-o test/process_va_output $(LIBS)
 		cd ./raerr; make
-		#@echo "########### MAKE TESTS #############################"
-		#cd test ; ./preprocess.sh all 2> ../test.out
-		#@echo    Test output wirtten to test.out
-		#@echo    Check test result for errors if desired
-		#@echo "########### TESTS DONE ############################"
+		@echo "########### MAKE TESTS #############################"
+		cd test ; ./preprocess.sh all 2> ../test.out
+		@echo    Test output wirtten to test.out
+		@echo    Check test result for errors if desired
+		@echo "########### TESTS DONE ############################"
 		@echo " Now type 'make install' and 'make clean' "
 
 clean:

@@ -1,8 +1,7 @@
-<<<<<<< HEAD
-The program `XXX' is Copyright (C) 2013 through 2015 Martin Bergemann and
+The program `var_analysis' is Copyright (C) 2013 through 2015 Martin Bergemann and
 is subject to the terms and conditions of the Gnu General Public License,
-Version 3. For information on copying, modifying, or distributing `XXX',
-type `XXX -c'.
+Version 3. For information on copying, modifying, or distributing `var_analysis',
+type `va_analysis -c'.
 
 This License Agreement applies to any program or other work which
 contains a notice placed by the copyright holder saying it may be
@@ -36,10 +35,8 @@ POSSIBILITY OF SUCH DAMAGES.
 
 
                     GNU GENERAL PUBLIC LICENSE
-=======
-GNU GENERAL PUBLIC LICENSE
->>>>>>> e5a6094b9ca18a1c55f7232e238eda5dccedddb8
-                       Version 3, 29 June 2007
+
+GNU GENERAL PUBLIC LICENSE  Version 3, 29 June 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>
  Everyone is permitted to copy and distribute verbatim copies
@@ -671,13 +668,9 @@ to attach them to the start of each source file to most effectively
 state the exclusion of warranty; and each file should have at least
 the "copyright" line and a pointer to where the full notice is found.
 
-<<<<<<< HEAD
-    <one line to give the program's name and a brief idea of what it does.>
-    Copyright (C) <year>  <name of author>
-=======
+
     {one line to give the program's name and a brief idea of what it does.}
     Copyright (C) {year}  {name of author}
->>>>>>> e5a6094b9ca18a1c55f7232e238eda5dccedddb8
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -697,11 +690,8 @@ Also add information on how to contact you by electronic and paper mail.
   If the program does terminal interaction, make it output a short
 notice like this when it starts in an interactive mode:
 
-<<<<<<< HEAD
-    <program>  Copyright (C) <year>  <name of author>
-=======
     {project}  Copyright (C) {year}  {fullname}
->>>>>>> e5a6094b9ca18a1c55f7232e238eda5dccedddb8
+    
     This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
     This is free software, and you are welcome to redistribute it
     under certain conditions; type `show c' for details.
@@ -721,7 +711,3 @@ may consider it more useful to permit linking proprietary applications with
 the library.  If this is what you want to do, use the GNU Lesser General
 Public License instead of this License.  But first, please read
 <http://www.gnu.org/philosophy/why-not-lgpl.html>.
-<<<<<<< HEAD
-=======
-
->>>>>>> e5a6094b9ca18a1c55f7232e238eda5dccedddb8
